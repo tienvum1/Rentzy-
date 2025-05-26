@@ -1,0 +1,70 @@
+/* Header styles */ 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 68px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.header__logo {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #222;
+  letter-spacing: 1px;
+}
+.header__nav {
+  display: flex;
+  gap: 100px;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #222;
+  letter-spacing: 1px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.header__link {
+  color: #222;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.header__link:hover {
+  color: #ff914d;
+}
+.header__actions {
+  display: flex;
+  gap: 16px;
+}
+.header__login {
+  background: #fff;
+  border: 1px solid #ddd;
+  color: #222;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border 0.2s, color 0.2s;
+}
+.header__login:hover {
+  border: 1px solid #ff914d;
+  color: #ff914d;
+}
+.header__signup {
+  background: #ff914d;
+  color: #fff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.header__signup:hover {
+  background: #ff7b1a;
+} 

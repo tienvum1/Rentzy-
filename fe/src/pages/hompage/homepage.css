@@ -1,0 +1,22 @@
+.homepage-container {
+    margin-top: 0;
+    margin-bottom: 0;
+    background: #ffffff;
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding-bottom: 40px;
+  }
+  
+  @media (max-width: 900px) {
+    .homepage-container {
+      margin-left: 0;
+      margin-right: 0;
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+  }
+  
+  /* Đảm bảo các section cách nhau đều */
+  .homepage-container > *:not(:first-child) {
+    margin-top: 32px;
+  }
