@@ -1,0 +1,169 @@
+.car-card {
+    background: #ffffff;
+    border: 1.5px solid #ececec;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+    display: flex;
+    flex-direction: column;
+    margin: 20px 10px;
+    overflow: hidden;
+    transition: box-shadow 0.25s ease, border 0.25s ease;
+    width: 300px;
+  }
+  
+  .car-card:hover {
+    border: 1.5px solid #ff914d;
+    box-shadow: 0 10px 36px rgba(255, 145, 77, 0.15);
+  }
+  
+  .car-card__image-container {
+    height: 180px;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+  }
+  
+  .car-card__image {
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+    width: 100%;
+  }
+  
+  .car-card:hover .car-card__image {
+    transform: scale(1.05);
+  }
+  
+  .car-card__save-btn {
+    align-items: center;
+    background: #ffffff;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    display: flex;
+    height: 38px;
+    justify-content: center;
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    transition: background 0.2s ease, transform 0.2s ease;
+    width: 38px;
+  }
+  
+  .car-card__save-btn:hover {
+    background: #f7f7f7;
+    transform: scale(1.1);
+  }
+  
+  .car-card__save-btn.saved svg {
+    stroke: #ff914d;
+  }
+  
+  .car-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px 20px;
+  }
+  
+  .car-card__title {
+    color: #17223b;
+    font-size: 1.15rem;
+    font-weight: 800;
+    margin: 0;
+  }
+  
+  .car-card__location {
+    align-items: center;
+    color: #4ec9b4;
+    display: flex;
+    font-size: 0.95rem;
+    font-weight: 500;
+    gap: 8px;
+    margin: 0;
+  }
+  
+  .car-card__location::before {
+    background: url('https://cdn-icons-png.flaticon.com/512/684/684908.png') no-repeat center/contain;
+    content: '';
+    display: inline-block;
+    height: 16px;
+    width: 16px;
+  }
+  
+  .car-card__specs {
+    color: #222222;
+    display: flex;
+    font-size: 0.95rem;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+  
+  .car-card__specs span {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+  }
+  
+  .car-card__mileage {
+    color: #222222;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+  }
+  
+  .car-card__price {
+    color: #17223b;
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+  
+  .car-card__price-row {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  
+  .car-card__price-hour,
+  .car-card__price-day {
+    background: #fff6f0;
+    border: 1.2px solid rgba(255, 145, 77, 0.15);
+    border-radius: 8px;
+    color: #ff914d;
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    box-shadow: 0 2px 6px rgba(255, 145, 77, 0.1);
+  }
+  
+  .car-card__details-btn {
+    align-items: center;
+    background: none;
+    border: none;
+    color: #ff914d;
+    cursor: pointer;
+    display: flex;
+    font-size: 1rem;
+    font-weight: 600;
+    gap: 6px;
+    margin-top: 4px;
+    text-align: left;
+    transition: color 0.2s ease;
+  }
+  
+  .car-card__details-btn:hover {
+    color: #e67a00;
+  }
+  
+  @media (max-width: 600px) {
+    .car-card {
+      margin: 12px 0;
+      width: 100%;
+    }
+  
+    .car-card__body {
+      padding: 20px 16px;
+    }
+  }
