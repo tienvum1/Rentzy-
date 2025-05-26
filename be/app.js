@@ -4,9 +4,12 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const authRoutes = require('./route/auth');
+const cookieParser = require('cookie-parser');
 
 dotenv.config();
 const app = express();
+
+app.use(cookieParser());
 
 app.use(cors({
     origin: 'http://localhost:3000',
