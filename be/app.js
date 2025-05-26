@@ -5,6 +5,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const authRoutes = require('./route/auth');
 const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
 
 dotenv.config();
 const app = express();
@@ -15,6 +16,8 @@ app.use(cors({
     origin: 'http://localhost:3000',
     credentials: true
   }));
+
+app.use(morgan('dev'));
   
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
