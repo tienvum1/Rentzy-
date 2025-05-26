@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
+const passport = require('passport');
 
 exports.register = async (req, res) => {
   const { name, email, password, phone } = req.body;
@@ -51,25 +52,51 @@ exports.verifyEmail = async (req, res) => {
     }
   };
 
-  exports.login = async (req, res) => {
-    const { email, password } = req.body;
-    try {
-      const user = await User.findOne({ where: { email } });
-      if (!user) return res.status(400).json({ message: 'Invalid credentials' });
-      if (!user.is_verified) return res.status(400).json({ message: 'Please verify your email' });
-  
-      const valid = await bcrypt.compare(password, user.password_hash);
-      if (!valid) return res.status(400).json({ message: 'Invalid credentials' });
-  
-      // Tạo JWT
-      const token = jwt.sign({ user_id: user.user_id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-      res.json({ token, user: { user_id: user.user_id, name: user.name, email: user.email, role: user.role } });
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  };
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!user.is_verified) return res.status(400).json({ message: 'Please verify your email' });
 
-  exports.logout = (req, res) => {
-    // FE chỉ cần xóa token, BE không cần xử lý gì thêm
-    res.json({ message: 'Logged out' });
-  };
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) return res.status(400).json({ message: 'Invalid credentials' });
+
+    const token = jwt.sign({ user_id: user._id || user.user_id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+        message: 'Logged in successfully',
+        user: {
+            user_id: user._id || user.user_id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+        }
+     });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+exports.logout = (req, res) => {
+  // FE chỉ cần xóa token, BE không cần xử lý gì thêm
+  res.json({ message: 'Logged out' });
+};
+
+exports.googleCallback = (req, res) => {
+  const token = jwt.sign({ user_id: req.user._id || req.user.user_id, role: req.user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+  res.cookie('token', token, {
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.redirect(`${process.env.FRONTEND_URL}/login-success`);
+};
