@@ -1,5 +1,5 @@
 import React from 'react';
-import VehicleCard from './vehicleCard';
+import VehicleCard from './VehicleCard';
 import './VehicleList.css';
 
 const vehicles = [

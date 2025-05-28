@@ -9,7 +9,7 @@ dotenv.config();
 // REGISTER
 exports.register = async (req, res) => {
   const { name, email, password, phone } = req.body;
-
+  console.log(req.body);
   try {
     // Validate input
     if (!name || !email || !password) {
@@ -49,7 +49,7 @@ exports.register = async (req, res) => {
       expiresIn: "1d",
     });
 
-    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${emailToken}`;
+    const verificationUrl = `${process.env.CLIENT_ORIGIN}/verify-email?token=${emailToken}`;
 
     // Send email
     const transporter = nodemailer.createTransport({
@@ -66,11 +66,9 @@ exports.register = async (req, res) => {
       html: `<p>Please click <a href="${verificationUrl}">here</a> to verify your email.</p>`,
     });
 
-    res
-      .status(201)
-      .json({
-        message: "Register successful! Please check your email to verify.",
-      });
+    res.status(201).json({
+      message: "Register successful! Please check your email to verify.",
+    });
   } catch (err) {
     console.error("Register error:", err);
     res.status(500).json({ message: "Internal server error" });
@@ -127,21 +125,31 @@ exports.login = async (req, res) => {
         .json({ message: "Email and password are required" });
     }
 
-    const user = await User.findOne({ email, is_verified: true });
+    // Find user by email first
+    const user = await User.findOne({ email });
 
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    // Check if user exists
+    if (!user) {
+      return res.status(400).json({ message: "Email not found" });
+    }
+
+    // Check if email is verified
     if (!user.is_verified)
       return res.status(400).json({ message: "Please verify your email" });
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+    // Check if password matches
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect password" });
+    }
 
     const token = jwt.sign(
-      { user_id: user.user_id, role: user.role },
+      { user_id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
+
+    console.log("login token", token);
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -157,9 +165,35 @@ exports.login = async (req, res) => {
         role: user.role,
       },
     });
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ message: "Internal server error" });
+  } catch (error) {
+    console.error("Đăng nhập thất bại:", error.response?.data || error.message);
+
+    let errorMessage = "Đã xảy ra lỗi trong quá trình đăng nhập."; // Default error message
+
+    if (error.response) {
+      // Check if there's a specific message from the backend
+      if (error.response.data && error.response.data.message) {
+        const backendMessage = error.response.data.message;
+
+        // Handle specific backend messages
+        if (backendMessage === "Invalid credentials") {
+          errorMessage = "Sai email hoặc mật khẩu.";
+        } else if (backendMessage === "Please verify your email") {
+          errorMessage =
+            "Tài khoản chưa xác thực. Vui lòng kiểm tra email để xác thực.";
+        } else {
+          // For other backend messages, display them directly
+          errorMessage = `Đăng nhập thất bại: ${backendMessage}`;
+        }
+      } else {
+        // If no specific message in data, use status text or a generic message
+        errorMessage = `Đăng nhập thất bại: ${
+          error.response.statusText || "Lỗi không xác định từ server."
+        }`;
+      }
+    }
+
+    res.status(500).json({ message: errorMessage });
   }
 };
 
@@ -170,18 +204,193 @@ exports.logout = (req, res) => {
   res.json({ message: "Logged out successfully" });
 };
 
+
 // GOOGLE LOGIN CALLBACK
 exports.googleCallback = (req, res) => {
-  const token = jwt.sign(
-    { user_id: req.user.user_id, role: req.user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+  console.log("Inside googleCallback");
+  console.log("req.user:", req.user);
 
-  res.cookie("token", token, {
-    httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  if (!req.user) {
+    console.error("req.user is not defined in googleCallback");
+    return res.redirect(
+      `${process.env.CLIENT_ORIGIN}/login?error=google_auth_failed`
+    );
+  }
 
-  res.redirect(`${process.env.FRONTEND_URL}/login-success`);
+  try {
+    const token = jwt.sign(
+      { user_id: req.user._id, role: req.user.role }, // Đã sửa
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    console.log("JWT token created");
+
+    // Always set the cookie after successful Google auth
+    res.cookie("token", token, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      // secure: process.env.NODE_ENV === 'production',
+      // sameSite: 'Lax'
+    });
+    console.log("Cookie set after Google auth.");
+
+    let redirectUrl;
+    const user = req.user;
+
+    if (!user.password_hash) {
+      redirectUrl = `${process.env.CLIENT_ORIGIN}/set-password`;
+      console.log(
+        "Redirecting to set-password (expecting cookie):",
+        redirectUrl
+      );
+    } else {
+      redirectUrl = `${process.env.CLIENT_ORIGIN}/homepage`;
+      console.log("Redirecting to homepage (cookie set):", redirectUrl);
+    }
+
+    res.redirect(redirectUrl);
+  } catch (error) {
+    console.error("Error in googleCallback:", error);
+    res.redirect(
+      `${process.env.CLIENT_ORIGIN}/login?error=internal_server_error`
+    );
+  }
 };
+
+// Modified middleware to protect the setPassword route
+const protectSetPassword = (req, res, next) => {
+  let token;
+
+  console.log("Inside protectSetPassword middleware");
+  console.log("Request Cookies:", req.cookies);
+  console.log("Request Query:", req.query);
+  console.log("Request Headers:", req.headers.authorization);
+
+  // 1. Check for token in cookies (primary)
+  if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+    console.log("Token found in cookie:", token);
+  }
+
+  // 2. Fallback: Query parameter (less likely now but kept for robustness)
+  if (!token && req.query.token) {
+    token = req.query.token;
+    console.log("Token found in query parameter (fallback):", token);
+  }
+
+  // 3. Fallback: Authorization header (Bearer token)
+  if (
+    !token &&
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+    console.log("Token found in Authorization header (fallback):", token);
+  }
+
+  if (!token) {
+    console.error(
+      "ProtectSetPassword: No token found in cookie, query, or header. Rejecting request."
+    );
+    return res.status(401).json({ message: "Not authorized, no token" });
+  }
+
+  try {
+    console.log("Attempting to verify token:", token);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("ProtectSetPassword: Token verified successfully:", decoded);
+    // *** Gắn user_id vào req object với tên khác để tránh ghi đè req.user ***
+    req.authenticatedUserId = decoded.user_id;
+    console.log(
+      "ProtectSetPassword: Attached authenticatedUserId:",
+      req.authenticatedUserId
+    );
+
+    next();
+  } catch (error) {
+    console.error(
+      "ProtectSetPassword: Token verification failed:",
+      error.message
+    );
+    if (req.cookies.token) {
+      res.clearCookie("token");
+      console.log("ProtectSetPassword: Cleared invalid cookie.");
+    }
+    res.status(401).json({ message: "Not authorized, token failed" });
+  }
+};
+
+// Set password for a user (e.g., after Google login)
+exports.setPassword = [
+  protectSetPassword, // Use the custom middleware
+  async (req, res) => {
+    const { password } = req.body;
+
+    // *** Lấy user_id từ req.authenticatedUserId ***
+    const userId = req.authenticatedUserId;
+
+    // Ensure user ID is available from middleware
+    if (!userId) {
+      // Check for userId directly
+      console.error(
+        "setPassword handler: authenticatedUserId not found in req."
+      );
+      return res
+        .status(401)
+        .json({ message: "Authentication failed, user ID missing" });
+    }
+
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
+    }
+
+    try {
+      const user = await User.findById(userId);
+
+      if (!user) {
+        console.error(
+          `setPassword handler: User not found with ID from token: ${userId}`
+        );
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password_hash = hashedPassword;
+      await user.save();
+
+      res.json({ message: "Mật khẩu đã được thiết lập thành công." });
+    } catch (error) {
+      console.error("Error setting password:", error);
+      res
+        .status(500)
+        .json({ message: "Đã xảy ra lỗi khi thiết lập mật khẩu." });
+    }
+  },
+];
+
+// ... (Hàm protect ban đầu, nếu có sử dụng ở route khác) ...
+exports.protect = (req, res, next) => {
+  let token;
+  if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  }
+  if (!token) {
+    return res.status(401).json({ message: "Not authorized, no token" });
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = { user_id: decoded.user_id, role: decoded.role };
+    next();
+  } catch (error) {
+    console.error("Token verification failed:", error);
+    res.status(401).json({ message: "Not authorized, token failed" });
+  }
+};
+
+// New: Get logged-in user profile
