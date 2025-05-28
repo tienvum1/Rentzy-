@@ -1,39 +1,57 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const authRoutes = require('./route/auth');
-const cookieParser = require('cookie-parser');
-const morgan = require('morgan');
+const express = require("express");
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const dotenv = require("dotenv");
+
+const cookieParser = require("cookie-parser");
+const morgan = require("morgan");
+const passport = require("passport");
+require("./auth/auth");
+
+//routes
+const authRoutes = require("./route/auth");
+const userRoutes = require("./route/userRoutes");
 
 dotenv.config();
 const app = express();
 
 app.use(cookieParser());
 
-app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true
-  }));
+// Lấy PORT và origin từ biến môi trường
+const PORT = process.env.PORT || 4999;
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:3000";
 
-app.use(morgan('dev'));
-  
+// Cấu hình CORS
+app.use(
+  cors({
+    origin: CLIENT_ORIGIN,
+    credentials: true,
+  })
+);
+
+app.use(morgan("dev"));
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-mongoose.connect(process.env.MONGO_URI , {
+app.use(passport.initialize());
+
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   connectTimeoutMS: 10000,
-  socketTimeoutMS: 10000
-
+  socketTimeoutMS: 10000,
 });
 
 const db = mongoose.connection;
-app.use('/api/auth', authRoutes);
-app.get('/', (req, res) => {
-  res.send('Hello World');
+
+// Check connection
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
+
+app.get("/", (req, res) => {
+  res.send("Hello World");
 });
 
 const port = process.env.PORT || 5000;
