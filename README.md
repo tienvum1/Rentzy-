@@ -11,3 +11,6 @@ const RecipeList = () => { ... }
 
 Đặt tên foler thì chữ đầu  viết thường ví dụ 
 homePage
+
+Đừng bỏ file .env lên git nhé
+

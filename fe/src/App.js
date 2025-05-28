@@ -9,6 +9,7 @@ import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import VerifyEmail from "./pages/verifyEmail/VerifyEmail";
 import SetPassword from "./pages/setPassword/SetPassword";
+import Profile from "./pages/profile/Profile";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/set-password" element={<SetPassword />} />
+            <Route path="/profile" element={<Profile />} />
             {/* Add a root route if needed */}
              <Route path="/" element={<Homepage />} />
           </Routes>
