@@ -10,11 +10,15 @@ import Register from "./pages/register/Register";
 import VerifyEmail from "./pages/verifyEmail/VerifyEmail";
 import SetPassword from "./pages/setPassword/SetPassword";
 import Profile from "./pages/profile/Profile";
+import ForgotPassword from "./pages/login/ForgotPassword";
+import ResetPassword from "./pages/login/ResetPassword";
 
 function App() {
   return (
     <Router>
-      <AuthProvider> {/* Wrap the application with AuthProvider */}
+      <AuthProvider>
+        {" "}
+        {/* Wrap the application with AuthProvider */}
         <div className="App">
           <Routes>
             <Route path="/homepage" element={<Homepage />} />
@@ -23,8 +27,10 @@ function App() {
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/set-password" element={<SetPassword />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             {/* Add a root route if needed */}
-             <Route path="/" element={<Homepage />} />
+            <Route path="/" element={<Homepage />} />
           </Routes>
         </div>
       </AuthProvider>

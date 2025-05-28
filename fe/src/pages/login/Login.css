@@ -1,81 +1,143 @@
+/* General container styling */
 .login-container {
+  min-height: 80vh;
+  background: linear-gradient(135deg, #f7f9fc 0%, #ffffff 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+/* Card styling for the login form */
+.login-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  max-width: 400px;
-  margin: 50px auto;
-  background-color: #f9f9f9;
+  gap: 20px;
 }
 
-.login-container h2 {
-  margin-bottom: 20px;
+/* Heading */
+.login-card h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
   color: #333;
+  text-align: center;
+  margin-bottom: 10px;
 }
 
+/* Form group styling */
 .form-group {
-  margin-bottom: 15px;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #555;
 }
 
-.form-group input[type="email"],
-.form-group input[type="password"] {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box; /* Ensure padding doesn't affect the overall width */
+.form-group input {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #f9fafb;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.login-container button {
-  width: 100%;
-  padding: 10px;
-  background-color: #007bff;
-  color: white;
+.form-group input:focus {
+  border-color: #ff914d;
+  box-shadow: 0 0 0 3px rgba(255, 145, 77, 0.1);
+  outline: none;
+}
+
+.form-group input::placeholder {
+  color: #999;
+}
+
+/* Submit button */
+.submit-button {
+  background: linear-gradient(90deg, #ff914d 0%, #ffaa33 100%);
+  color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 16px;
+  transition: background 0.3s ease, transform 0.1s ease;
 }
 
-.login-container button:hover {
-  background-color: #0056b3;
-} 
+.submit-button:hover {
+  background: linear-gradient(90deg, #ff7b1a 0%, #ff9a00 100%);
+  transform: translateY(-1px);
+}
 
+.submit-button:active {
+  transform: translateY(0);
+}
+
+/* Message styling */
 .message {
   text-align: center;
-  margin-bottom: 15px;
   padding: 10px;
-  border-radius: 4px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .message.success {
-  color: #155724;
-  background-color: #d4edda;
-  border-color: #c3e6cb;
+  background: #e6f4ea;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
 }
 
 .message.error {
-  color: #721c24;
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
+  background: #fce4e4;
+  color: #d32f2f;
+  border: 1px solid #ef9a9a;
 }
 
+/* Login links */
+.login-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.login-link {
+  background: none;
+  border: none;
+  color: #ff914d;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.login-link:hover {
+  color: #ff7b1a;
+  text-decoration: underline;
+}
+
+/* Divider */
 .or-divider {
   text-align: center;
-  margin: 20px 0;
-  position: relative;
   font-size: 0.9rem;
   color: #777;
+  position: relative;
+  margin: 20px 0;
 }
 
 .or-divider::before,
@@ -83,9 +145,9 @@
   content: '';
   position: absolute;
   top: 50%;
-  width: 40%;
+  width: 45%;
   height: 1px;
-  background-color: #ccc;
+  background: #e0e0e0;
 }
 
 .or-divider::before {
@@ -96,24 +158,37 @@
   right: 0;
 }
 
+/* Google login button */
 .google-login-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: white;
-  cursor: pointer;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
   font-size: 1rem;
-  color: #555;
-  transition: background-color 0.3s ease;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.1s ease;
 }
 
 .google-login-button:hover {
-  background-color: #f0f0f0;
+  background: #f5f6f5;
+  border-color: #ccc;
+  transform: translateY(-1px);
 }
 
-/* Add an icon if desired, e.g., using a background image */
-/* .google-login-button::before { content: '' /* Google Icon */
+.google-login-button:active {
+  transform: translateY(0);
+}
+
+.google-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Responsive design */
+@media (max-width: 480px)
