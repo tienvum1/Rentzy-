@@ -74,11 +74,6 @@ const Profile = () => {
     }
   };
 
-  // Xử lý đăng xuất
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   if (isLoading || !user) return <div>Đang tải thông tin...</div>;
 
@@ -163,7 +158,7 @@ const Profile = () => {
               ) : (
                 <button type="button" className="profile__edit-btn" onClick={() => setEditMode(true)}>Chỉnh sửa hồ sơ</button>
               )}
-              <button type="button" className="profile__logout-btn" onClick={handleLogout}>Đăng xuất</button>
+           
             </div>
           </form>
         </div>
