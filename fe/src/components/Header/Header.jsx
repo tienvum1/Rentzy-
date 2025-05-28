@@ -86,9 +86,10 @@ const Header = () => {
             </div>
             {showDropdown && (
               <div className="header__dropdown" ref={dropdownRef}>
-                <button className="header__dropdown-item" onClick={handleAccountSettings}>
-                  Cài đặt tài khoản
+                <button className="header__dropdown-item" onClick={handleViewProfile}>
+                  Xem hồ sơ
                 </button>
+              
                 <button className="header__dropdown-item" onClick={handleLogout}>
                   Logout
                 </button>
