@@ -1,8 +1,19 @@
 import React from 'react';
 import './OwnerDashboard.css';
-import { MdOutlineDashboard, MdDirectionsCar, MdCalendarMonth, MdNotifications, MdShowChart } from 'react-icons/md';
+import { MdOutlineDashboard, MdDirectionsCar, MdCalendarMonth, MdNotifications, MdShowChart, MdLogout  } from 'react-icons/md';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const OwnerPage = () => {
+    const navigate = useNavigate();
+    const { logout } = useAuth();
+
+    const handleLogout = async (e) => {
+        e.preventDefault();
+        await logout();
+        navigate('/');
+    };
+
     return(
         <div className="dashboard-container">
             <div className="sidebar">
@@ -41,6 +52,13 @@ const OwnerPage = () => {
                             <a href="#" className="nav-link">
                                 <MdShowChart />
                                 Revenue
+                            </a>
+                        </li>
+                        <li className="divider"></li>
+                        <li>
+                            <a href="#" className="nav-link" onClick={handleLogout}>
+                                <MdLogout />
+                                Logout
                             </a>
                         </li>
                         <li className="divider"></li>
