@@ -1,11 +1,11 @@
 import React from 'react';
 import './Homepage.css';
-import Header from '../../components/header/Header';
+import Header from '../../components/Header/Header';
 import Footer from '../../components/footer/Footer';
-import HeroSection from '../../components/heroSection/HeroSection';
-import StatsSection from '../../components/statsSection/StatsSection';
-import BrandsSection from '../../components/brandsSection/BrandsSection';
-import VehicleList from '../../components/vehicleCard/VehicleList';
+import HeroSection from '../../components/HeroSection/HeroSection';
+import StatsSection from '../../components/StatsSection/StatsSection';
+import BrandsSection from '../../components/BrandsSection/BrandsSection';
+import VehicleList from '../../components/VehicleCard/VehicleList';
 
 function Homepage() {
   return (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'; // Keep useEffect if needed for other logic
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom'; // No longer need useSearchParams
-import Header from '../../components/header/Header';
+import Header from '../../components/Header/Header';
 import Footer from '../../components/footer/Footer';
 import './SetPassword.css';
 
