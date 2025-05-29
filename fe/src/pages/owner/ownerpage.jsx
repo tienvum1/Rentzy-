@@ -1,17 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './OwnerDashboard.css';
 import { MdOutlineDashboard, MdDirectionsCar, MdCalendarMonth, MdNotifications, MdShowChart, MdLogout  } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import VehicleManagement from '../vehiclemanagement/VehicleManagement';
 
 const OwnerPage = () => {
     const navigate = useNavigate();
     const { logout } = useAuth();
+    const [activeMenuItem, setActiveMenuItem] = useState('overview');
 
     const handleLogout = async (e) => {
         e.preventDefault();
         await logout();
         navigate('/');
+    };
+
+    const renderContent = () => {
+        switch (activeMenuItem) {
+            case 'overview':
+                return (
+                    <>
+                        <h1>Welcome to your Owner Dashboard</h1>
+                        <p>Select an option from the sidebar to manage your properties.</p>
+                    </>
+                );
+            case 'vehicle-management':
+                return <VehicleManagement />;
+            default:
+                return (
+                    <>
+                        <h1>Welcome to your Owner Dashboard</h1>
+                        <p>Select an option from the sidebar to manage your properties.</p>
+                    </>
+                );
+        }
     };
 
     return(
@@ -21,42 +44,62 @@ const OwnerPage = () => {
                 <nav className="sidebar-nav">
                     <ul>
                         <li>
-                            <a href="#" className="nav-link">
+                            <a 
+                                href="#"
+                                className={`nav-link ${activeMenuItem === 'overview' ? 'active' : ''}`}
+                                onClick={() => setActiveMenuItem('overview')}
+                            >
                                 <MdOutlineDashboard />
                                 Overview
                             </a>
                         </li>
                         <li className="divider"></li>
                         <li>
-                            <a href="#" className="nav-link">
+                            <a 
+                                href="#"
+                                className={`nav-link ${activeMenuItem === 'vehicle-management' ? 'active' : ''}`}
+                                onClick={() => setActiveMenuItem('vehicle-management')}
+                            >
                                 <MdDirectionsCar />
                                 Vehicle management
                             </a>
                         </li>
                         <li className="divider"></li>
                         <li>
-                            <a href="#" className="nav-link">
+                            <a 
+                                href="#"
+                                className={`nav-link ${activeMenuItem === 'booking-management' ? 'active' : ''}`}
+                                onClick={() => setActiveMenuItem('booking-management')}
+                            >
                                 <MdCalendarMonth />
                                 Booking management
                             </a>
                         </li>
                         <li className="divider"></li>
                         <li>
-                            <a href="#" className="nav-link">
+                            <a 
+                                href="#"
+                                className={`nav-link ${activeMenuItem === 'notification' ? 'active' : ''}`}
+                                onClick={() => setActiveMenuItem('notification')}
+                            >
                                 <MdNotifications />
                                 Notification
                             </a>
                         </li>
                         <li className="divider"></li>
                         <li>
-                            <a href="#" className="nav-link">
+                            <a 
+                                href="#"
+                                className={`nav-link ${activeMenuItem === 'revenue' ? 'active' : ''}`}
+                                onClick={() => setActiveMenuItem('revenue')}
+                            >
                                 <MdShowChart />
                                 Revenue
                             </a>
                         </li>
                         <li className="divider"></li>
                         <li>
-                            <a href="#" className="nav-link" onClick={handleLogout}>
+                            <a href="/" className="nav-link" onClick={handleLogout}>
                                 <MdLogout />
                                 Logout
                             </a>
@@ -66,9 +109,7 @@ const OwnerPage = () => {
                 </nav>
             </div>
             <div className="main-content">
-                {/* Content will be rendered here based on selected menu item */}
-                <h1>Welcome to your Owner Dashboard</h1>
-                <p>Select an option from the sidebar to manage your properties.</p>
+                {renderContent()}
             </div>
         </div>
     );
