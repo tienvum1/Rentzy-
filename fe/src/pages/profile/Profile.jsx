@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import Header from '../../components/header/Header';
+import Header from '../../components/Header/Header';
 import Footer from '../../components/footer/Footer';
 import AvatarPopup from './AvatarPopup';
 import './Profile.css';
+
 
 const Profile = () => {
   const { user, isAuthenticated, isLoading, fetchUserProfile, logout } = useAuth();
@@ -144,7 +145,14 @@ const Profile = () => {
             </div>
             <div className="profile__field">
               <span className="profile__label">Ngày tạo:</span>{' '}
-              <span className="profile__value">{new Date(user.created_at).toLocaleDateString()}</span>
+              <span className="profile__value">
+  {user?.created_at && !isNaN(Date.parse(String(user.created_at)))
+    ? new Date(String(user.created_at)).toLocaleDateString('vi-VN')
+    : 'Ngày không hợp lệ'}
+</span>
+
+
+
             </div>
             {msg && <div className="profile__msg">{msg}</div>}
             <div className="profile__actions">

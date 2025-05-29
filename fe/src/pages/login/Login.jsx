@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import './Login.css';
-import Header from '../../components/header/Header';
+import Header from '../../components/Header/Header';
 import Footer from '../../components/footer/Footer';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
