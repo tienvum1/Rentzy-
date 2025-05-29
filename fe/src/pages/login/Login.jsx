@@ -25,9 +25,20 @@ const Login = () => {
       setMessage(response.data.message || 'Đăng nhập thành công!');
       setIsError(false);
 
+      // Check user role and redirect accordingly
+      const userRole = response.data.user?.role;
+      let redirectPath = '/homepage'; // Default redirect
+      if (userRole === 'owner') {
+        redirectPath = '/ownerpage';
+      } else if (userRole === 'admin') {
+        redirectPath = '/adminpage'; // Assuming an admin page exists
+      }
+      // Add more roles and paths if needed
+
       setTimeout(() => {
-        navigate('/homepage');
-      }, 1000);
+        navigate(redirectPath);
+      }, 1000); // Delay for message visibility
+
     } catch (error) {
       console.error('Đăng nhập thất bại:', error.response?.data || error.message);
       setIsError(true);
@@ -35,7 +46,8 @@ const Login = () => {
 
       if (error.response) {
         if (error.response.data && error.response.data.message) {
-          const backendMessage = error.response.data.data.message;
+          const backendMessage = error.response.data.message;
+
           if (backendMessage === 'Email not found') {
             errorMessage = 'Email không tồn tại.';
           } else if (backendMessage === 'Incorrect password') {
