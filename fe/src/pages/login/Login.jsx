@@ -42,7 +42,44 @@ const Login = () => {
       setMessage(response.data.message || 'Đăng nhập thành công!');
       setIsError(false);
 
+      // Check user role and redirect accordingly
+      const userRole = response.data.user?.role;
+      let redirectPath = '/homepage'; // Default redirect
+      if (userRole === 'owner') {
+        redirectPath = '/ownerpage';
+      } else if (userRole === 'admin') {
+        redirectPath = '/adminpage'; // Assuming an admin page exists
+      }
+      // Add more roles and paths if needed
+
       setTimeout(() => {
+
+        navigate(redirectPath);
+      }, 1000); // Delay for message visibility
+
+    } catch (error) {
+      console.error('Đăng nhập thất bại:', error.response?.data || error.message);
+      setIsError(true);
+      let errorMessage = 'Đã xảy ra lỗi trong quá trình đăng nhập.';
+
+      if (error.response) {
+        if (error.response.data && error.response.data.message) {
+          const backendMessage = error.response.data.message;
+
+          if (backendMessage === 'Email not found') {
+            errorMessage = 'Email không tồn tại.';
+          } else if (backendMessage === 'Incorrect password') {
+            errorMessage = 'Mật khẩu không đúng.';
+          } else if (backendMessage === 'Please verify your email') {
+            errorMessage = 'Tài khoản chưa xác thực. Vui lòng kiểm tra email để xác thực.';
+          } else {
+            errorMessage = `Đăng nhập thất bại: ${backendMessage}`;
+          }
+        } else {
+          errorMessage = `Đăng nhập thất bại: ${error.response.statusText || 'Lỗi không xác định từ server.'}`;
+        }
+      }
+
         if (!isError) {
           navigate('/homepage');
         }
@@ -53,6 +90,7 @@ const Login = () => {
       const errorMessage = error.response?.data?.message
         ? `Đăng nhập thất bại: ${error.response.data.message}`
         : 'Đã xảy ra lỗi trong quá trình đăng nhập.';
+
       setMessage(errorMessage);
     }
   };
