@@ -6,6 +6,21 @@ const User = require("../models/User");
 const dotenv = require("dotenv");
 dotenv.config();
 
+// Helper function to generate JWT token and set cookie
+const generateTokenAndSetCookie = (user, res) => {
+  const token = jwt.sign(
+    { user_id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+  res.cookie("token", token, {
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    // secure: process.env.NODE_ENV === 'production',
+    // sameSite: 'Lax'
+  });
+};
+
 // REGISTER
 exports.register = async (req, res) => {
   const { name, email, password, phone } = req.body;
@@ -27,22 +42,25 @@ exports.register = async (req, res) => {
     }
 
     // Check if email exists
-    const existing = await User.findOne({ where: { email } });
-    if (existing)
+    const existingUser = await User.findOne({ email });
+    if (existingUser)
       return res.status(400).json({ message: "Email already exists" });
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const user = await User.create({
+    const user = new User({
       name,
       email,
       password_hash: hashedPassword,
       phone,
       is_verified: false,
       role: "renter",
+      loginMethods: ['password'] // Set login method to password
     });
+
+    await user.save();
 
     // Generate email verification token
     const emailToken = jwt.sign({ user_id: user._id }, process.env.JWT_SECRET, {
@@ -114,7 +132,7 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
-// LOGIN
+// LOGIN (Email/Password)
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   console.log(email, password);
@@ -125,75 +143,42 @@ exports.login = async (req, res) => {
         .json({ message: "Email and password are required" });
     }
 
-    // Find user by email first
+    // Find user by email
     const user = await User.findOne({ email });
 
-    // Check if user exists
-    if (!user) {
-      return res.status(400).json({ message: "Email not found" });
+    // Check if user exists and if password login is enabled for this account
+    if (!user || !user.loginMethods.includes('password')) {
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Check if email is verified
+    // Check if email is verified (optional based on your flow, but good practice)
     if (!user.is_verified)
       return res.status(400).json({ message: "Please verify your email" });
 
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    // Check if password matches
-    if (!isMatch) {
-      return res.status(400).json({ message: "Incorrect password" });
+    // Check if password matches (only if password_hash exists)
+    if (!user.password_hash || !(await bcrypt.compare(password, user.password_hash))) {
+        return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign(
-      { user_id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    console.log("login token", token);
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    // Generate token and set cookie
+    generateTokenAndSetCookie(user, res);
 
     res.status(200).json({
       message: "Logged in successfully",
       user: {
-        user_id: user.user_id,
+        user_id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
+        // Có thể trả về loginMethods nếu client cần biết
+        // loginMethods: user.loginMethods,
       },
     });
   } catch (error) {
-    console.error("Đăng nhập thất bại:", error.response?.data || error.message);
+    console.error("Đăng nhập thất bại:", error);
 
-    let errorMessage = "Đã xảy ra lỗi trong quá trình đăng nhập."; // Default error message
-
-    if (error.response) {
-      // Check if there's a specific message from the backend
-      if (error.response.data && error.response.data.message) {
-        const backendMessage = error.response.data.message;
-
-        // Handle specific backend messages
-        if (backendMessage === "Invalid credentials") {
-          errorMessage = "Sai email hoặc mật khẩu.";
-        } else if (backendMessage === "Please verify your email") {
-          errorMessage =
-            "Tài khoản chưa xác thực. Vui lòng kiểm tra email để xác thực.";
-        } else {
-          // For other backend messages, display them directly
-          errorMessage = `Đăng nhập thất bại: ${backendMessage}`;
-        }
-      } else {
-        // If no specific message in data, use status text or a generic message
-        errorMessage = `Đăng nhập thất bại: ${
-          error.response.statusText || "Lỗi không xác định từ server."
-        }`;
-      }
-    }
-
-    res.status(500).json({ message: errorMessage });
+    // Simplified error handling for production to prevent leaking info
+    res.status(500).json({ message: "Đã xảy ra lỗi trong quá trình đăng nhập." });
   }
 };
 
@@ -204,56 +189,80 @@ exports.logout = (req, res) => {
   res.json({ message: "Logged out successfully" });
 };
 
-
 // GOOGLE LOGIN CALLBACK
-exports.googleCallback = (req, res) => {
+exports.googleCallback = async (req, res) => {
   console.log("Inside googleCallback");
-  console.log("req.user:", req.user);
+  console.log("req.user from Google strategy:", req.user);
 
-  if (!req.user) {
-    console.error("req.user is not defined in googleCallback");
+  if (!req.user || !req.user.email) {
+    console.error("Google authentication failed or email not provided");
     return res.redirect(
       `${process.env.CLIENT_ORIGIN}/login?error=google_auth_failed`
     );
   }
 
+  const googleProfile = req.user; // This is the profile object from Passport-Google-OAuth2
+
   try {
-    const token = jwt.sign(
-      { user_id: req.user._id, role: req.user.role }, // Đã sửa
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-    console.log("JWT token created");
+    // 1. Find user by Google ID
+    let user = await User.findOne({ googleId: googleProfile.id });
 
-    // Always set the cookie after successful Google auth
-    res.cookie("token", token, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      // secure: process.env.NODE_ENV === 'production',
-      // sameSite: 'Lax'
-    });
-    console.log("Cookie set after Google auth.");
-
-    let redirectUrl;
-    const user = req.user;
-
-    if (!user.password_hash) {
-      redirectUrl = `${process.env.CLIENT_ORIGIN}/set-password`;
-      console.log(
-        "Redirecting to set-password (expecting cookie):",
-        redirectUrl
-      );
+    if (user) {
+      // User found by Google ID, implies existing Google login or already linked
+      console.log("User found by googleId:", user._id);
+      // Ensure loginMethods includes 'google' - might be redundant if user exists via googleId but safe
+      if (!user.loginMethods.includes('google')) {
+        user.loginMethods.push('google');
+        await user.save();
+      }
     } else {
-      redirectUrl = `${process.env.CLIENT_ORIGIN}/homepage`;
-      console.log("Redirecting to homepage (cookie set):", redirectUrl);
+      // 2. User not found by Google ID, try finding by email
+      user = await User.findOne({ email: googleProfile.email });
+
+      if (user) {
+        // User found by email, implies existing email/password account (or previously google but googleId was somehow lost)
+        console.log("User found by email, linking Google ID:", user._id);
+        // Link Google ID to existing account if not already linked
+        if (!user.googleId) {
+          user.googleId = googleProfile.id;
+        }
+        // Ensure loginMethods includes 'google'
+        if (!user.loginMethods.includes('google')) {
+          user.loginMethods.push('google');
+        }
+        // Update name/avatar if they are empty and provided by Google (optional)
+        if (!user.name && googleProfile.displayName) user.name = googleProfile.displayName;
+        if (!user.avatar_url && googleProfile.photos && googleProfile.photos[0]) user.avatar_url = googleProfile.photos[0].value;
+
+        await user.save();
+
+      } else {
+        // 3. User not found by Google ID or email, create new account (auto sign-up)
+        console.log("New user via Google, creating account:", googleProfile.email);
+        user = new User({
+          name: googleProfile.displayName,
+          email: googleProfile.email,
+          googleId: googleProfile.id,
+          is_verified: true, // Assume email from Google is verified
+          role: "renter", // Default role
+          avatar_url: googleProfile.photos && googleProfile.photos[0] ? googleProfile.photos[0].value : null,
+          loginMethods: ['google'] // Set login method to google
+        });
+        await user.save();
+      }
     }
 
+    // After finding/creating/linking the user, generate token and redirect
+    generateTokenAndSetCookie(user, res);
+
+    // Redirect logic (simplified - always redirect to homepage)
+    const redirectUrl = `${process.env.CLIENT_ORIGIN}/homepage`;
+    console.log("Redirecting to homepage after Google auth:", redirectUrl);
     res.redirect(redirectUrl);
-  } catch (error) {
-    console.error("Error in googleCallback:", error);
-    res.redirect(
-      `${process.env.CLIENT_ORIGIN}/login?error=internal_server_error`
-    );
+
+  } catch (err) {
+    console.error("Google callback error:", err);
+    res.redirect(`${process.env.CLIENT_ORIGIN}/login?error=google_auth_failed_server`);
   }
 };
 

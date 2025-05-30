@@ -128,4 +128,19 @@
   color: #ff914d;
   letter-spacing: 2px;
   text-shadow: 0 2px 8px #ff914d11;
+}
+.header__consign-btn {
+  background: #4ec9b4;
+  color: #fff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-right: 8px;
+}
+.header__consign-btn:hover {
+  background: #38b29a;
 } 

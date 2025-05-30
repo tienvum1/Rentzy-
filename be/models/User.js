@@ -10,7 +10,9 @@ const userSchema = new mongoose.Schema({
   cccd_number: String,
   driver_license: String,
   avatar_url: String,
-  created_at: { type: Date, default: Date.now }
+  created_at: { type: Date, default: Date.now },
+  googleId: { type: String, unique: true, sparse: true },
+  loginMethods: { type: [String], default: ['password'] }
 });
 
 module.exports = mongoose.model('User', userSchema);
