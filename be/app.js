@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const path = require("path");
 
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
@@ -13,7 +12,6 @@ require("./auth/auth");
 //routes
 const authRoutes = require("./route/auth");
 const userRoutes = require("./route/userRoutes");
-const vehicleRoutes = require("./route/vehicleRoutes");
 
 dotenv.config();
 const app = express();
@@ -46,30 +44,15 @@ mongoose.connect(process.env.MONGO_URI, {
   socketTimeoutMS: 10000,
 });
 
-const db = mongoose.connection;
+
 
 // Check connection
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', function() {
-  console.log("MongoDB connected successfully");
-});
-
-// Sequelize connection (ensure this is also set up somewhere, e.g., in db.js)
-// Assuming your db.js handles Sequelize connection
-require('./db'); // Execute db.js to establish connection
-
-// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
-app.use("/api/vehicles", vehicleRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
-
-// Serve static files (for locally stored images)
-// Configure this only if you are saving images locally as implemented in vehicleController
-app.use('/uploads/vehicles', express.static(path.join(__dirname, 'uploads', 'vehicles')));
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {

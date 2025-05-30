@@ -1,33 +1,30 @@
-const { Op } = require('sequelize');
+const mongoose = require('mongoose');
 const Vehicle = require('../models/Vehicle');
 const Car = require('../models/Car');
 const Motorbike = require('../models/Motorbike');
 const VehicleImage = require('../models/VehicleImage');
-const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
 
-// Helper function to save images locally
-const saveImageLocally = async (imageFile) => {
-    const uploadDir = path.join(__dirname, '..', 'uploads', 'vehicles');
-    // Ensure upload directory exists
-    if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-    }
+// Configure Cloudinary using the details from the image
+cloudinary.config({
+  cloud_name: 'dzoedops0',
+  api_key: '983115579923496',
+  api_secret: '7id18W5a26HNS-aKculDmkH1_vE'
+});
 
-    const fileName = `${Date.now()}-${imageFile.originalname}`;
-    const filePath = path.join(uploadDir, fileName);
-
-    // Use a promise-based approach for writing file
+// Helper function to upload image to Cloudinary
+const uploadImageToCloudinary = async (imageFile) => {
     return new Promise((resolve, reject) => {
-        fs.writeFile(filePath, imageFile.buffer, (err) => {
-            if (err) {
-                return reject(err);
+        const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'vehicles' }, // Optional: specify a folder in Cloudinary
+            (error, result) => {
+                if (error) {
+                    return reject(error);
+                }
+                resolve(result.secure_url); // Use secure_url for HTTPS
             }
-            // Return the relative path or URL where the image can be accessed
-            // For local serving, this might be something like /uploads/vehicles/filename
-            // In a real app, you'd configure static file serving or use a CDN URL
-            resolve(`/uploads/vehicles/${fileName}`);
-        });
+        );
+        uploadStream.end(imageFile.buffer);
     });
 };
 
@@ -48,9 +45,12 @@ exports.addVehicle = async (req, res) => {
     
     const owner_id = req.user.user_id; // Assuming user info is in req.user from auth middleware
 
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         // 1. Create the general Vehicle entry
-        const vehicle = await Vehicle.create({
+        const vehicle = new Vehicle({
             owner_id,
             brand,
             model,
@@ -61,28 +61,30 @@ exports.addVehicle = async (req, res) => {
             price_per_day,
             deposit_required,
             terms,
-            created_at: new Date(), // Set created_at explicitly if timestamps are false
+            created_at: new Date(),
         });
+
+        await vehicle.save({ session });
 
         // 2. Create the specific vehicle type entry (Car or Motorbike)
         if (type === 'Car') {
-            await Car.create({
-                vehicle_id: vehicle.vehicle_id,
+            const car = new Car({
+                vehicle_id: vehicle._id, // Use Mongoose _id
                 seats: specificData.seats,
                 body_type: specificData.body_type,
                 transmission: specificData.transmission,
                 fuel_type: specificData.fuel_type,
             });
+             await car.save({ session });
         } else if (type === 'Motorbike') {
-             await Motorbike.create({
-                vehicle_id: vehicle.vehicle_id,
+             const motorbike = new Motorbike({
+                vehicle_id: vehicle._id, // Use Mongoose _id
                 engine_capacity: specificData.engine_capacity,
                 has_gear: specificData.has_gear === 'true' || specificData.has_gear === true, // Handle boolean
             });
+             await motorbike.save({ session });
         } else {
-            // If type is invalid, clean up the created Vehicle entry
-            await vehicle.destroy();
-            return res.status(400).json({ message: 'Invalid vehicle type specified.' });
+            throw new Error('Invalid vehicle type specified.');
         }
 
         // 3. Handle image uploads
@@ -90,27 +92,32 @@ exports.addVehicle = async (req, res) => {
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
                 try {
-                    const imageUrl = await saveImageLocally(file);
-                     uploadedImages.push({ vehicle_id: vehicle.vehicle_id, image_url: imageUrl });
+                    const imageUrl = await uploadImageToCloudinary(file);
+                     uploadedImages.push({
+                        vehicle_id: vehicle._id, // Use Mongoose _id
+                        image_url: imageUrl,
+                        is_primary: uploadedImages.length === 0 // Set the first image as primary
+                     });
                 } catch (imageError) {
-                    console.error('Error saving image locally:', imageError);
-                    // Decide how to handle image upload errors:
-                    // - Continue without the failed image
-                    // - Rollback the entire vehicle creation (more complex)
+                    console.error('Error uploading image to Cloudinary:', imageError);
+                    // Decide how to handle image upload errors: Log and continue for now
                 }
             }
 
-            // Bulk create image entries in the database
+            // Create image entries in the database
             if (uploadedImages.length > 0) {
-                await VehicleImage.bulkCreate(uploadedImages);
+                await VehicleImage.insertMany(uploadedImages, { session });
             }
         }
 
-        res.status(201).json({ message: 'Vehicle added successfully!', vehicleId: vehicle.vehicle_id });
+        await session.commitTransaction();
+        res.status(201).json({ message: 'Vehicle added successfully!', vehicleId: vehicle._id });
 
     } catch (error) {
+        await session.abortTransaction();
         console.error('Error adding vehicle:', error);
-        // Implement rollback logic if needed (e.g., if image upload failed after vehicle creation)
         res.status(500).json({ message: 'Failed to add vehicle.', error: error.message });
+    } finally {
+        session.endSession();
     }
 }; 
