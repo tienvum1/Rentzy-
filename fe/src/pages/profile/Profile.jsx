@@ -21,6 +21,8 @@ const Profile = () => {
   });
   const [msg, setMsg] = useState('');
   const [showAvatarPopup, setShowAvatarPopup] = useState(false);
+  const [driverLicenseFront, setDriverLicenseFront] = useState(null);
+  const [driverLicenseBack, setDriverLicenseBack] = useState(null);
 
   React.useEffect(() => {
     if (!isLoading && !isAuthenticated) navigate('/login');
@@ -40,11 +42,17 @@ const Profile = () => {
     e.preventDefault();
     setMsg('');
     try {
+      const formData = new FormData();
+      formData.append('name', form.name);
+      formData.append('phone', form.phone);
+      formData.append('cccd_number', form.cccd_number);
+      formData.append('driver_license', form.driver_license);
+      if (driverLicenseFront) formData.append('driver_license_front', driverLicenseFront);
+      if (driverLicenseBack) formData.append('driver_license_back', driverLicenseBack);
       const res = await fetch('/api/user/update-profile', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(form)
+        body: formData,
+        credentials: 'include'
       });
       if (!res.ok) throw new Error();
       setMsg('Cập nhật thành công!');
@@ -125,14 +133,50 @@ const Profile = () => {
           <div className="profile__avatar-note">Click vào avatar để đổi ảnh</div>
           {/* Form thông tin cá nhân */}
           <form onSubmit={handleSaveProfile} className="profile__form">
-            {renderField('Tên', user.name, 'name')}
+            {renderField('Tên', form.name, 'name')}
             <div className="profile__field">
               <span className="profile__label">Email:</span>{' '}
               <span className="profile__value">{user.email}</span>
             </div>
-            {renderField('Số điện thoại', user.phone, 'phone')}
-            {renderField('CCCD', user.cccd_number, 'cccd_number')}
-            {renderField('Bằng lái', user.driver_license, 'driver_license')}
+            {renderField('Số điện thoại', form.phone, 'phone')}
+            {renderField('CCCD', form.cccd_number, 'cccd_number')}
+            {editMode ? (
+              <>
+                <div className="profile__field">
+                  <span className="profile__label">Ảnh mặt trước bằng lái:</span>
+                  <input type="file" accept="image/*" onChange={e => setDriverLicenseFront(e.target.files[0])} />
+                  {user.driver_license_front_url && (
+                    <img src={user.driver_license_front_url} alt="Mặt trước bằng lái" style={{maxWidth: 180, borderRadius: 8, border: '1px solid #eee', marginLeft: 12}} />
+                  )}
+                </div>
+                <div className="profile__field">
+                  <span className="profile__label">Ảnh mặt sau bằng lái:</span>
+                  <input type="file" accept="image/*" onChange={e => setDriverLicenseBack(e.target.files[0])} />
+                  {user.driver_license_back_url && (
+                    <img src={user.driver_license_back_url} alt="Mặt sau bằng lái" style={{maxWidth: 180, borderRadius: 8, border: '1px solid #eee', marginLeft: 12}} />
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="profile__field">
+                  <span className="profile__label">Ảnh mặt trước bằng lái:</span>
+                  {user.driver_license_front_url ? (
+                    <img src={user.driver_license_front_url} alt="Mặt trước bằng lái" style={{maxWidth: 180, borderRadius: 8, border: '1px solid #eee'}} />
+                  ) : (
+                    <span className="profile__empty">Chưa có</span>
+                  )}
+                </div>
+                <div className="profile__field">
+                  <span className="profile__label">Ảnh mặt sau bằng lái:</span>
+                  {user.driver_license_back_url ? (
+                    <img src={user.driver_license_back_url} alt="Mặt sau bằng lái" style={{maxWidth: 180, borderRadius: 8, border: '1px solid #eee'}} />
+                  ) : (
+                    <span className="profile__empty">Chưa có</span>
+                  )}
+                </div>
+              </>
+            )}
             <div className="profile__field">
               <span className="profile__label">Vai trò:</span>{' '}
               <span className="profile__role">{user.role}</span>
@@ -155,20 +199,24 @@ const Profile = () => {
 
             </div>
             {msg && <div className="profile__msg">{msg}</div>}
-            <div className="profile__actions">
-              {editMode ? (
-                <>
-                  <button type="submit" className="profile__save-btn">Lưu thay đổi</button>
-                  <button type="button" className="profile__cancel-btn" onClick={() => { setEditMode(false); setMsg(''); setForm({
-                    name: user.name || '', phone: user.phone || '', cccd_number: user.cccd_number || '', driver_license: user.driver_license || ''
-                  }); }}>Hủy</button>
-                </>
-              ) : (
-                <button type="button" className="profile__edit-btn" onClick={() => setEditMode(true)}>Chỉnh sửa hồ sơ</button>
-              )}
-           
-            </div>
+            {editMode && (
+              <div className="profile__actions">
+                <button type="submit" className="profile__save-btn">Lưu thay đổi</button>
+                <button type="button" className="profile__cancel-btn" onClick={() => { setEditMode(false); setMsg(''); setForm({
+                  name: user.name || '', phone: user.phone || '', cccd_number: user.cccd_number || '', driver_license: user.driver_license || ''
+                }); setDriverLicenseFront(null); setDriverLicenseBack(null); }}>Hủy</button>
+              </div>
+            )}
           </form>
+          {!editMode && (
+            <div className="profile__actions">
+              <button type="button" className="profile__edit-btn" onClick={() => { setEditMode(true); setForm({
+                name: user.name || '', phone: user.phone || '', cccd_number: user.cccd_number || '', driver_license: user.driver_license || ''
+              }); setMsg(''); }}>
+                Chỉnh sửa hồ sơ
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <AvatarPopup open={showAvatarPopup} onClose={() => setShowAvatarPopup(false)} onSave={handleAvatarSave} />

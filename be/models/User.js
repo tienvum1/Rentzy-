@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema({
   cccd_number: String,
   driver_license: String,
   avatar_url: String,
+  driver_license_front_url: String,
+  driver_license_back_url: String,
   created_at: { type: Date, default: Date.now }
 });
 
