@@ -13,9 +13,8 @@ const userSchema = new mongoose.Schema({
 
   driver_license_front_url: String,
   driver_license_back_url: String,
-  created_at: { type: Date, default: Date.now }
-
   created_at: { type: Date, default: Date.now },
+
   googleId: { type: String, unique: true, sparse: true },
   loginMethods: { type: [String], default: ['password'] }
 

@@ -43,6 +43,7 @@ app.use(passport.initialize());
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Mongoose Connection (Centralized here)
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -50,17 +51,11 @@ mongoose.connect(process.env.MONGO_URI, {
   socketTimeoutMS: 10000,
 });
 
-const db = mongoose.connection;
-
-// Check connection
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', function() {
+// Check connection events directly on mongoose.connection
+mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
+mongoose.connection.once('open', function() {
   console.log("MongoDB connected successfully");
 });
-
-// Sequelize connection (ensure this is also set up somewhere, e.g., in db.js)
-// Assuming your db.js handles Sequelize connection
-require('./db'); // Execute db.js to establish connection
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -74,6 +69,12 @@ app.get("/", (req, res) => {
 // Serve static files (for locally stored images)
 // Configure this only if you are saving images locally as implemented in vehicleController
 app.use('/uploads/vehicles', express.static(path.join(__dirname, 'uploads', 'vehicles')));
+
+// Basic error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
