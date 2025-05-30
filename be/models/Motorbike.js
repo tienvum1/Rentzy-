@@ -1,27 +1,23 @@
 const mongoose = require('mongoose');
 
 const motorbikeSchema = new mongoose.Schema({
-  _id: {
-    type: String,
-    required: true,
-  },
+
   vehicle_id: {
     type: String,
     ref: 'Vehicle',
-    required: true,
+    required: true
   },
   engine_capacity: {
     type: Number,
-    required: false,
+    required: true
   },
   has_gear: {
     type: Boolean,
-    required: false,
-  },
+    required: true
+  }
 }, {
-  collection: 'motorbikes',
-  timestamps: false,
-  _id: false
+  timestamps: false
+
 });
 
 const Motorbike = mongoose.model('Motorbike', motorbikeSchema);

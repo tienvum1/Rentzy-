@@ -3,8 +3,9 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const dotenv = require("dotenv");
-// oke cái này
+
 const path = require('path');
+
 
 
 const cookieParser = require("cookie-parser");
@@ -15,7 +16,6 @@ require("./auth/auth");
 //routes
 const authRoutes = require("./route/auth");
 const userRoutes = require("./route/userRoutes");
-const vehicleRoutes = require("./route/vehicleRoutes");
 
 dotenv.config();
 const app = express();
@@ -51,6 +51,7 @@ mongoose.connect(process.env.MONGO_URI, {
   socketTimeoutMS: 10000,
 });
 
+
 // Check connection events directly on mongoose.connection
 mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
 mongoose.connection.once('open', function() {
@@ -58,13 +59,14 @@ mongoose.connection.once('open', function() {
 });
 
 // Routes
+
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
-app.use("/api/vehicles", vehicleRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
+
 
 // Serve static files (for locally stored images)
 // Configure this only if you are saving images locally as implemented in vehicleController
