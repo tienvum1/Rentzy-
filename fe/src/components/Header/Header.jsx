@@ -1,12 +1,11 @@
-// fe/src/components/Header/Header.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import './Header.css';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext'; // Import the custom hook
+import { useAuth } from '../../context/AuthContext';
+import './Header.css';
 
 const Header = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout, isLoading } = useAuth(); // Sử dụng hook để lấy state và hàm từ context
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const avatarRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -33,20 +32,14 @@ const Header = () => {
     };
   }, [showDropdown]);
 
-  // Hiển thị loading hoặc header trống tạm thời nếu đang kiểm tra trạng thái đăng nhập ban đầu
   if (isLoading) {
-      return <header className="header-modern"><div>Loading...</div></header>;
+    return <header className="header-modern"><div>Loading...</div></header>;
   }
 
   const handleLogout = () => {
     setShowDropdown(false);
-    logout(); // Gọi hàm logout từ context
-    navigate('/login'); // Redirect đến trang login sau khi logout
-  };
-
-  const handleAccountSettings = () => {
-    setShowDropdown(false);
-    navigate('/account-settings'); // Đường dẫn đến trang cài đặt tài khoản
+    logout();
+    navigate('/login');
   };
 
   const handleViewProfile = () => {
@@ -56,9 +49,12 @@ const Header = () => {
 
   return (
     <header className="header-modern">
-      <div className="header__logo-row-modern" onClick={() => navigate('/')} style={{cursor: 'pointer'}}
->
-        <img src="https://cdn-icons-png.flaticon.com/512/854/854894.png" alt="Car Logo" className="header__logo-modern" />
+      <div className="header__logo-row-modern" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/854/854894.png"
+          alt="Car Logo"
+          className="header__logo-modern"
+        />
         <span className="header__brand-name-modern">Rentzy</span>
       </div>
       <nav className="header__nav">
@@ -68,6 +64,12 @@ const Header = () => {
         <Link to="/contact" className="header__link">Contact</Link>
       </nav>
       <div className="header__actions">
+        <button
+          className="header__consign-btn"
+          onClick={() => navigate('/consignForm')}
+        >
+          Ký gửi xe
+        </button>
         {isAuthenticated ? (
           <div className="header__user-actions">
             <div
@@ -89,7 +91,6 @@ const Header = () => {
                 <button className="header__dropdown-item" onClick={handleViewProfile}>
                   Xem hồ sơ
                 </button>
-              
                 <button className="header__dropdown-item" onClick={handleLogout}>
                   Logout
                 </button>
