@@ -3,7 +3,9 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const path = require("path");
+// oke cái này
+const path = require('path');
+
 
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
@@ -38,6 +40,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(passport.initialize());
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,

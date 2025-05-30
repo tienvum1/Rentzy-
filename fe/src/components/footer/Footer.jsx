@@ -54,7 +54,7 @@ const Footer = () => (
       <div className="footer__contact-modern">
         <div className="footer__contact-item-modern">
           <img src="https://cdn-icons-png.flaticon.com/512/535/535239.png" alt="Address" />
-          <span>123 Nguyen Trai, Hanoi, Vietnam</span>
+          <span>123 Le Van Hien, DaNang, Vietnam</span>
         </div>
         <div className="footer__contact-item-modern">
           <img src="https://cdn-icons-png.flaticon.com/512/732/732200.png" alt="Email" />
