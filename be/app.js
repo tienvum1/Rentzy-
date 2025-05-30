@@ -4,6 +4,10 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const dotenv = require("dotenv");
 
+const path = require('path');
+
+
+
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const passport = require("passport");
@@ -37,6 +41,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(passport.initialize());
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Mongoose Connection (Centralized here)
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -45,13 +52,30 @@ mongoose.connect(process.env.MONGO_URI, {
 });
 
 
+// Check connection events directly on mongoose.connection
+mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
+mongoose.connection.once('open', function() {
+  console.log("MongoDB connected successfully");
+});
 
-// Check connection
+// Routes
+
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World");
+});
+
+
+// Serve static files (for locally stored images)
+// Configure this only if you are saving images locally as implemented in vehicleController
+app.use('/uploads/vehicles', express.static(path.join(__dirname, 'uploads', 'vehicles')));
+
+// Basic error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
 });
 
 const port = process.env.PORT || 5000;

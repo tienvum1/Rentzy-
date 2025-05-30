@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const carSchema = new mongoose.Schema({
+
   vehicle_id: {
     type: String,
     ref: 'Vehicle',
@@ -24,8 +25,9 @@ const carSchema = new mongoose.Schema({
   }
 }, {
   timestamps: false
+
 });
 
 const Car = mongoose.model('Car', carSchema);
 
-module.exports = Car;
+module.exports = Car; 

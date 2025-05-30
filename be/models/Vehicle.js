@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 const vehicleSchema = new mongoose.Schema({
@@ -5,6 +6,7 @@ const vehicleSchema = new mongoose.Schema({
     type: String,
     default: () => new mongoose.Types.ObjectId().toString(),
     required: true
+
   },
   owner_id: {
     type: String,
@@ -53,8 +55,14 @@ const vehicleSchema = new mongoose.Schema({
   }
 }, {
   timestamps: false
+
+}, {
+  collection: 'vehicles',
+  timestamps: false,
+  _id: false
+
 });
 
 const Vehicle = mongoose.model('Vehicle', vehicleSchema);
 
-module.exports = Vehicle;
+module.exports = Vehicle; 

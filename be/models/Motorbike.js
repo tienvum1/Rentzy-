@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const motorbikeSchema = new mongoose.Schema({
+
   vehicle_id: {
     type: String,
     ref: 'Vehicle',
@@ -16,8 +17,9 @@ const motorbikeSchema = new mongoose.Schema({
   }
 }, {
   timestamps: false
+
 });
 
 const Motorbike = mongoose.model('Motorbike', motorbikeSchema);
 
-module.exports = Motorbike;
+module.exports = Motorbike; 

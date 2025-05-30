@@ -5,10 +5,12 @@ const vehicleImageSchema = new mongoose.Schema({
     type: String,
     default: () => new mongoose.Types.ObjectId().toString(),
     required: true
+
   },
   vehicle_id: {
     type: String,
     ref: 'Vehicle',
+
     required: true
   },
   image_url: {
@@ -21,8 +23,9 @@ const vehicleImageSchema = new mongoose.Schema({
   }
 }, {
   timestamps: false
+
 });
 
 const VehicleImage = mongoose.model('VehicleImage', vehicleImageSchema);
 
-module.exports = VehicleImage;
+module.exports = VehicleImage; 
