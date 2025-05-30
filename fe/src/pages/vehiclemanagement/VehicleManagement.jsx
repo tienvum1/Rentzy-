@@ -30,8 +30,8 @@ const VehicleManagement = () => {
                 data.append(key, formData[key]);
             }
         }
-        // Append vehicle type (needed by backend controller)
-        data.append('type', currentView === 'addCar' ? 'Car' : 'Motorbike');
+        // Append vehicle type (needed by backend controller), ensuring lowercase
+        data.append('type', currentView === 'addCar' ? 'car' : 'motorbike');
 
         // Append image files
         formData.images.forEach((file, index) => {

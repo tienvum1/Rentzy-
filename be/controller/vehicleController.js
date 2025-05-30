@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 const Vehicle = require('../models/Vehicle');
@@ -17,7 +16,6 @@ cloudinary.config({
 
 // Helper function to upload image to Cloudinary
 const uploadImageToCloudinary = async (imageFile) => {
-
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
             { folder: 'vehicles' }, // Optional: specify a folder in Cloudinary
@@ -27,21 +25,23 @@ const uploadImageToCloudinary = async (imageFile) => {
                 }
                 resolve(result.secure_url); // Use secure_url for HTTPS
             }
-
         );
         uploadStream.end(imageFile.buffer);
-
     });
 };
 
 // Add New Vehicle (General Handler)
 exports.addVehicle = async (req, res) => {
+    console.log('Request Body:', req.body);
+    console.log('Request Files:', req.files);
+    console.log('Request User:', req.user);
+
     const { 
         brand, 
         model, 
         license_plate, 
         location, 
-        is_available, // This comes as a string 'true' or 'false' from form-data
+        is_available, 
         price_per_day, 
         deposit_required, 
         terms, 
@@ -49,67 +49,55 @@ exports.addVehicle = async (req, res) => {
         ...specificData // Specific fields for Car or Motorbike
     } = req.body;
     
-    // Assuming user info is in req.user._id from Mongoose auth middleware
-    const owner_id = req.user._id; 
+    // Get owner_id from req.user._id (set by authMiddleware)
+    const owner_id = req.user ? req.user._id : null;
 
-    // Variable to hold the created vehicle document for potential rollback
-    let createdVehicle = null;
-    let createdSpecific = null;
-    let createdImages = [];
-
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    if (!owner_id) {
+        return res.status(401).json({ message: 'User not authenticated.' });
+    }
 
     try {
-
         // 1. Create the general Vehicle entry
         const vehicle = new Vehicle({
             owner_id,
-
             brand,
             model,
             type,
             license_plate,
             location,
-            // Convert string boolean to actual boolean
-            is_available: is_available === 'true',
-            price_per_day: parseFloat(price_per_day), // Convert to Number
-            deposit_required: deposit_required ? parseFloat(deposit_required) : undefined, // Convert and handle optional
+            is_available: is_available === 'true' || is_available === true, // Handle boolean from form data
+            price_per_day,
+            deposit_required,
             terms,
-
             created_at: new Date(),
         });
 
-        await vehicle.save({ session });
+        await vehicle.save();
 
         // 2. Create the specific vehicle type entry (Car or Motorbike)
-        if (type === 'Car') {
+        // Note: The frontend sends type in lowercase, so we should match that here.
+        if (type === 'car') {
             const car = new Car({
                 vehicle_id: vehicle._id, // Use Mongoose _id
                 seats: specificData.seats,
-
                 body_type: specificData.body_type,
                 transmission: specificData.transmission,
                 fuel_type: specificData.fuel_type,
             });
-
-             await car.save({ session });
-        } else if (type === 'Motorbike') {
+             await car.save();
+        } else if (type === 'motorbike') {
              const motorbike = new Motorbike({
                 vehicle_id: vehicle._id, // Use Mongoose _id
                 engine_capacity: specificData.engine_capacity,
                 has_gear: specificData.has_gear === 'true' || specificData.has_gear === true, // Handle boolean
-
             });
-             await motorbike.save({ session });
+             await motorbike.save();
         } else {
-
             throw new Error('Invalid vehicle type specified.');
-
         }
 
-        // 3. Handle image uploads (ORM-independent, but using Mongoose for saving image docs)
-        const imageDocsToCreate = [];
+        // 3. Handle image uploads
+        const uploadedImages = [];
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
                 try {
@@ -127,21 +115,15 @@ exports.addVehicle = async (req, res) => {
 
             // Create image entries in the database
             if (uploadedImages.length > 0) {
-                await VehicleImage.insertMany(uploadedImages, { session });
+                await VehicleImage.insertMany(uploadedImages);
             }
         }
 
-        await session.commitTransaction();
         res.status(201).json({ message: 'Vehicle added successfully!', vehicleId: vehicle._id });
 
-
     } catch (error) {
-        await session.abortTransaction();
         console.error('Error adding vehicle:', error);
-
         res.status(500).json({ message: 'Failed to add vehicle.', error: error.message });
-    } finally {
-        session.endSession();
     }
 };
 

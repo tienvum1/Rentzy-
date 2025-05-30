@@ -16,6 +16,7 @@ require("./auth/auth");
 //routes
 const authRoutes = require("./route/auth");
 const userRoutes = require("./route/userRoutes");
+const vehicleRoutes = require("./route/vehicleRoutes");
 
 dotenv.config();
 const app = express();
@@ -62,6 +63,7 @@ mongoose.connection.once('open', function() {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/vehicles", vehicleRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World");
@@ -78,7 +80,6 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 
-const port = process.env.PORT || 5000;
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
