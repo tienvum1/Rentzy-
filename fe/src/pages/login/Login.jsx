@@ -5,17 +5,34 @@ import Header from '../../components/Header/Header';
 import Footer from '../../components/footer/Footer';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import validator from 'validator';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage('');
+    setIsError(false);
+
+    if (!validator.isEmail(email)) {
+      setMessage('Email không đúng định dạng.');
+      setIsError(true);
+      return;
+    }
+
+    if (password.length < 8) {
+      setMessage('Mật khẩu phải có ít nhất 8 ký tự.');
+      setIsError(true);
+      return;
+    }
+
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
       const apiUrl = `${backendUrl}/api/auth/login`;
@@ -26,29 +43,16 @@ const Login = () => {
       setIsError(false);
 
       setTimeout(() => {
-        navigate('/homepage');
+        if (!isError) {
+          navigate('/homepage');
+        }
       }, 1000);
     } catch (error) {
       console.error('Đăng nhập thất bại:', error.response?.data || error.message);
       setIsError(true);
-      let errorMessage = 'Đã xảy ra lỗi trong quá trình đăng nhập.';
-
-      if (error.response) {
-        if (error.response.data && error.response.data.message) {
-          const backendMessage = error.response.data.data.message;
-          if (backendMessage === 'Email not found') {
-            errorMessage = 'Email không tồn tại.';
-          } else if (backendMessage === 'Incorrect password') {
-            errorMessage = 'Mật khẩu không đúng.';
-          } else if (backendMessage === 'Please verify your email') {
-            errorMessage = 'Tài khoản chưa xác thực. Vui lòng kiểm tra email để xác thực.';
-          } else {
-            errorMessage = `Đăng nhập thất bại: ${backendMessage}`;
-          }
-        } else {
-          errorMessage = `Đăng nhập thất bại: ${error.response.statusText || 'Lỗi không xác định từ server.'}`;
-        }
-      }
+      const errorMessage = error.response?.data?.message
+        ? `Đăng nhập thất bại: ${error.response.data.message}`
+        : 'Đã xảy ra lỗi trong quá trình đăng nhập.';
       setMessage(errorMessage);
     }
   };
@@ -61,6 +65,10 @@ const Login = () => {
       return;
     }
     window.location.href = `${backendUrl}/api/auth/google`;
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -87,15 +95,24 @@ const Login = () => {
             </div>
             <div className="form-group">
               <label htmlFor="password">Mật khẩu</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Nhập mật khẩu"
-              />
+              <div className="password-input-group">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  name="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Nhập mật khẩu"
+                  minLength={8}
+                />
+                <span
+                  className="password-toggle"
+                  onClick={togglePasswordVisibility}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </span>
+              </div>
             </div>
             <button type="submit" className="submit-button">Đăng nhập</button>
           </form>

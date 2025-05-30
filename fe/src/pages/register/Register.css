@@ -38,9 +38,11 @@
 }
 
 .form-group label {
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 500;
   color: #555;
+  margin-bottom: 5px;
+  margin-top: 5px;
 }
 
 .form-group input {
@@ -63,8 +65,34 @@
   color: #999;
 }
 
+/* Password input group styles */
+.password-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-group input {
+  width: 100%; /* Make input fill the container */
+  padding-right: 40px; /* Add padding for the icon */
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  cursor: pointer;
+  color: #888;
+  font-size: 1.2rem; /* Adjust icon size */
+  user-select: none; /* Prevent text selection */
+}
+
+.password-toggle:hover {
+  color: #555;
+}
+
 /* Submit button */
 .submit-button {
+  margin-top: 10px;
   background: linear-gradient(90deg, #ff914d 0%, #ffaa33 100%);
   color: #fff;
   border: none;
