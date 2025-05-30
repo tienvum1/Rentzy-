@@ -4,6 +4,7 @@ import axios from 'axios';
 import Header from '../../components/Header/Header';
 import Footer from '../../components/footer/Footer';
 import { useNavigate } from 'react-router-dom';
+import validator from 'validator';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -12,11 +13,27 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage('');
+    setIsError(false);
+
+    if (!validator.isEmail(email)) {
+      setMessage('Email không đúng định dạng.');
+      setIsError(true);
+      return;
+    }
+
+    if (password.length < 8) {
+      setMessage('Mật khẩu phải có ít nhất 8 ký tự.');
+      setIsError(true);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setMessage('Mật khẩu và xác nhận mật khẩu không khớp.');
@@ -33,7 +50,7 @@ const Register = () => {
 
       setTimeout(() => {
         navigate('/login');
-      }, 1000);
+      }, 2500);
     } catch (error) {
       console.error('Đăng ký thất bại:', error);
       setIsError(true);
@@ -42,6 +59,14 @@ const Register = () => {
         : 'Đã xảy ra lỗi trong quá trình đăng ký.';
       setMessage(errorMessage);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
 
   return (
@@ -80,27 +105,45 @@ const Register = () => {
             </div>
             <div className="form-group">
               <label htmlFor="password">Mật khẩu</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Nhập mật khẩu"
-              />
+              <div className="password-input-group">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  name="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Nhập mật khẩu"
+                  minLength={8}
+                />
+                <span
+                  className="password-toggle"
+                  onClick={togglePasswordVisibility}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </span>
+              </div>
             </div>
             <div className="form-group">
               <label htmlFor="confirm-password">Xác nhận mật khẩu</label>
-              <input
-                type="password"
-                id="confirm-password"
-                name="confirm-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Xác nhận mật khẩu"
-              />
+              <div className="password-input-group">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  id="confirm-password"
+                  name="confirm-password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Xác nhận mật khẩu"
+                  minLength={8}
+                />
+                <span
+                  className="password-toggle"
+                  onClick={toggleConfirmPasswordVisibility}
+                >
+                   {showConfirmPassword ? '🙈' : '👁️'}
+                </span>
+              </div>
             </div>
             <button type="submit" className="submit-button">Đăng ký</button>
           </form>

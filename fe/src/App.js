@@ -8,10 +8,15 @@ import Homepage from "./pages/homepage/Homepage";
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import VerifyEmail from "./pages/verifyEmail/VerifyEmail";
-import SetPassword from "./pages/setPassword/SetPassword";
 import Profile from "./pages/profile/Profile";
 import ForgotPassword from "./pages/login/ForgotPassword";
 import ResetPassword from "./pages/login/ResetPassword";
+
+import OwnerPage from "./pages/owner/ownerpage"; // Import OwnerPage
+
+import ConsignForm from "./pages/consignForm/ConsignForm";
+
+
 
 function App() {
   return (
@@ -25,10 +30,13 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/set-password" element={<SetPassword />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/ownerpage" element={<OwnerPage />} /> {/* Add route for OwnerPage */}
+
+            <Route path="/consignForm" element={<ConsignForm />} />
+
             {/* Add a root route if needed */}
             <Route path="/" element={<Homepage />} />
           </Routes>
