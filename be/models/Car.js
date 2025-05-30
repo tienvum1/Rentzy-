@@ -1,22 +1,37 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../db');
-const Vehicle = require('./Vehicle');
+const mongoose = require('mongoose');
 
-const Car = sequelize.define('Car', {
-  vehicle_id: {
-    type: DataTypes.UUID,
-    primaryKey: true,
-    references: { model: 'vehicles', key: 'vehicle_id' }
+const carSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    required: true,
   },
-  seats: DataTypes.INTEGER,
-  body_type: DataTypes.STRING,
-  transmission: DataTypes.STRING,
-  fuel_type: DataTypes.STRING,
+  vehicle_id: {
+    type: String,
+    ref: 'Vehicle',
+    required: true,
+  },
+  seats: {
+    type: Number,
+    required: false,
+  },
+  body_type: {
+    type: String,
+    required: false,
+  },
+  transmission: {
+    type: String,
+    required: false,
+  },
+  fuel_type: {
+    type: String,
+    required: false,
+  },
 }, {
-  tableName: 'cars',
+  collection: 'cars',
   timestamps: false,
+  _id: false
 });
 
-Car.belongsTo(Vehicle, { foreignKey: 'vehicle_id' });
+const Car = mongoose.model('Car', carSchema);
 
-module.exports = Car;
+module.exports = Car; 

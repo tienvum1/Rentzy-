@@ -1,32 +1,67 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../db');
-const User = require('./User');
+// be/models/Vehicle.js
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const Vehicle = sequelize.define('Vehicle', {
-  vehicle_id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
+const vehicleSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: uuidv4,
   },
   owner_id: {
-    type: DataTypes.UUID,
-    references: { model: 'users', key: 'user_id' }
+    type: String,
+    ref: 'User',
+    required: true,
   },
-  brand: DataTypes.STRING,
-  model: DataTypes.STRING,
-  type: DataTypes.STRING, // 'car' or 'motorbike'
-  license_plate: DataTypes.STRING,
-  location: DataTypes.TEXT,
-  is_available: DataTypes.BOOLEAN,
-  price_per_day: DataTypes.DECIMAL,
-  deposit_required: DataTypes.DECIMAL,
-  terms: DataTypes.TEXT,
-  created_at: DataTypes.DATE,
+  brand: {
+    type: String,
+    required: true,
+  },
+  model: {
+    type: String,
+    required: true,
+  },
+  type: {
+    type: String,
+    required: true,
+    enum: ['car', 'motorbike']
+  },
+  license_plate: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  location: {
+    type: String,
+    required: true,
+  },
+  is_available: {
+    type: Boolean,
+    default: true,
+    required: true,
+  },
+  price_per_day: {
+    type: Number,
+    required: true,
+  },
+  deposit_required: {
+    type: Number,
+    required: false,
+  },
+  terms: {
+    type: String,
+    required: false,
+  },
+  created_at: {
+    type: Date,
+    default: Date.now,
+    required: true,
+  },
 }, {
-  tableName: 'vehicles',
+  collection: 'vehicles',
   timestamps: false,
+  _id: false
 });
 
-Vehicle.belongsTo(User, { foreignKey: 'owner_id', as: 'owner' });
+const Vehicle = mongoose.model('Vehicle', vehicleSchema);
 
-module.exports = Vehicle;
+module.exports = Vehicle; 
