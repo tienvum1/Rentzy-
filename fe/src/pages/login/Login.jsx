@@ -46,6 +46,7 @@ const Login = () => {
       setIsError(false);
 
       const userRole = response.data.user?.role;
+      console.log(userRole);
       let redirectPath = '/homepage';
       if (userRole === 'owner') redirectPath = '/ownerpage';
       else if (userRole === 'admin') redirectPath = '/adminpage';

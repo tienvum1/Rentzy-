@@ -5,7 +5,7 @@ import './Header.css';
 
 const Header = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const avatarRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -31,10 +31,6 @@ const Header = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showDropdown]);
-
-  if (isLoading) {
-    return <header className="header-modern"><div>Loading...</div></header>;
-  }
 
   const handleLogout = () => {
     setShowDropdown(false);
