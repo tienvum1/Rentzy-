@@ -1,29 +1,29 @@
 const mongoose = require('mongoose');
-const { v4: uuidv4 } = require('uuid');
 
 const vehicleImageSchema = new mongoose.Schema({
-  _id: {
+  image_id: {
     type: String,
-    default: uuidv4,
+    default: () => new mongoose.Types.ObjectId().toString(),
+    required: true
+
   },
   vehicle_id: {
     type: String,
     ref: 'Vehicle',
-    required: true,
+
+    required: true
   },
   image_url: {
     type: String,
-    required: true,
+    required: true
   },
   is_primary: {
     type: Boolean,
-    default: false,
-    required: true,
-  },
+    default: false
+  }
 }, {
-  collection: 'vehicle_images',
-  timestamps: false,
-  _id: false
+  timestamps: false
+
 });
 
 const VehicleImage = mongoose.model('VehicleImage', vehicleImageSchema);

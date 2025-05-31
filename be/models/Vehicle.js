@@ -1,65 +1,66 @@
-// be/models/Vehicle.js
+
 const mongoose = require('mongoose');
-const { v4: uuidv4 } = require('uuid');
 
 const vehicleSchema = new mongoose.Schema({
-  _id: {
+  vehicle_id: {
     type: String,
-    default: uuidv4,
+    default: () => new mongoose.Types.ObjectId().toString(),
+    required: true
+
   },
   owner_id: {
     type: String,
     ref: 'User',
-    required: true,
+    required: true
   },
   brand: {
     type: String,
-    required: true,
+    required: true
   },
   model: {
     type: String,
-    required: true,
+    required: true
   },
   type: {
     type: String,
-    required: true,
-    enum: ['car', 'motorbike']
+    enum: ['car', 'motorbike'],
+    required: true
   },
   license_plate: {
     type: String,
-    required: true,
-    unique: true,
+    required: true
   },
   location: {
     type: String,
-    required: true,
+    required: true
   },
   is_available: {
     type: Boolean,
-    default: true,
-    required: true,
+    default: true
   },
   price_per_day: {
     type: Number,
-    required: true,
+    required: true
   },
   deposit_required: {
     type: Number,
-    required: false,
+    required: true
   },
   terms: {
-    type: String,
-    required: false,
+    type: String
   },
   created_at: {
     type: Date,
-    default: Date.now,
-    required: true,
-  },
+    default: Date.now
+  }
+}, {
+  timestamps: false
+
 }, {
   collection: 'vehicles',
   timestamps: false,
   _id: false
+
 });
 
 const Vehicle = mongoose.model('Vehicle', vehicleSchema);

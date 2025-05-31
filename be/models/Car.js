@@ -1,35 +1,31 @@
 const mongoose = require('mongoose');
 
 const carSchema = new mongoose.Schema({
-  _id: {
-    type: String,
-    required: true,
-  },
+
   vehicle_id: {
     type: String,
     ref: 'Vehicle',
-    required: true,
+    required: true
   },
   seats: {
     type: Number,
-    required: false,
+    required: true
   },
   body_type: {
     type: String,
-    required: false,
+    required: true
   },
   transmission: {
     type: String,
-    required: false,
+    required: true
   },
   fuel_type: {
     type: String,
-    required: false,
-  },
+    required: true
+  }
 }, {
-  collection: 'cars',
-  timestamps: false,
-  _id: false
+  timestamps: false
+
 });
 
 const Car = mongoose.model('Car', carSchema);

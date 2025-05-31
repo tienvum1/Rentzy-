@@ -3,8 +3,9 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const dotenv = require("dotenv");
-// oke cái này
+
 const path = require('path');
+
 
 
 const cookieParser = require("cookie-parser");
@@ -51,6 +52,7 @@ mongoose.connect(process.env.MONGO_URI, {
   socketTimeoutMS: 10000,
 });
 
+
 // Check connection events directly on mongoose.connection
 mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
 mongoose.connection.once('open', function() {
@@ -58,6 +60,7 @@ mongoose.connection.once('open', function() {
 });
 
 // Routes
+
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/vehicles", vehicleRoutes);
@@ -65,6 +68,7 @@ app.use("/api/vehicles", vehicleRoutes);
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
+
 
 // Serve static files (for locally stored images)
 // Configure this only if you are saving images locally as implemented in vehicleController
@@ -76,7 +80,6 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 
-const port = process.env.PORT || 5000;
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });

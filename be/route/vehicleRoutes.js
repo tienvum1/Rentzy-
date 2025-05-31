@@ -9,11 +9,11 @@ const multer = require('multer');
 const storage = multer.memoryStorage(); // Store file in memory for processing
 const upload = multer({ storage: storage });
 
-// Route to add a new vehicle (requires authentication and file upload handling)
+// Route to add a new vehicle
 router.post(
   '/add',
-  protect, // Protect the route, assuming it adds user info to req.user
-  upload.array('images', 10), // 'images' is the field name for files, 10 is max count
+  protect,
+  upload.array('images', 10),
   vehicleController.addVehicle
 );
 
