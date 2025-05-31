@@ -19,4 +19,16 @@ router.post(
 
 // Add other vehicle related routes here (get, update, delete, etc.)
 
+// Route to get all vehicles
+router.get('/', vehicleController.getVehicles);
+
+// Add route to get a single vehicle by ID
+router.get('/:id', vehicleController.getVehicleById);
+
+// Add route to delete a vehicle
+router.delete('/:id', vehicleController.deleteVehicle);
+
+// Add route to update a vehicle
+router.put('/:id', upload.none(), vehicleController.updateVehicle);
+
 module.exports = router; 
