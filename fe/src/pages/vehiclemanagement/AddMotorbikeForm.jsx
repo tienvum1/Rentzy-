@@ -8,8 +8,8 @@ const AddMotorbikeForm = ({ onCancel, onSubmit }) => {
         license_plate: '',
         location: '',
         is_available: true, // Default to true
-        price_per_day: '',
-        deposit_required: '',
+        price_per_day: 0, // Store as number
+        deposit_required: 0, // Store as number
         terms: '',
         engine_capacity: '',
         has_gear: true, // Default to true
@@ -17,6 +17,28 @@ const AddMotorbikeForm = ({ onCancel, onSubmit }) => {
     });
 
     const [imagePreviews, setImagePreviews] = useState([]); // State to store image previews
+
+    // State for formatted number inputs
+    const [formattedPrice, setFormattedPrice] = useState('');
+    const [formattedDeposit, setFormattedDeposit] = useState('');
+
+    // Helper function to format number with commas
+    const formatNumber = (num) => {
+        if (num === null || num === undefined) return '';
+        // Ensure num is a number before formatting
+        const number = typeof num === 'string' ? parseFloat(num.replace(/,/g, '')) : num;
+        if (isNaN(number)) return '';
+
+        return number.toLocaleString('en-US'); // Use locale to handle comma separation
+    };
+
+    // Helper function to parse formatted number string to raw number
+    const parseNumber = (str) => {
+        if (!str) return 0;
+        const cleanedString = str.replace(/,/g, ''); // Remove commas
+        const number = parseFloat(cleanedString);
+        return isNaN(number) ? 0 : number;
+    };
 
     const handleChange = (e) => {
         const { name, value, type, checked, files } = e.target;
@@ -71,11 +93,31 @@ const AddMotorbikeForm = ({ onCancel, onSubmit }) => {
                 </div>
                 <div className="form-group">
                     <label>Price per Day:</label>
-                    <input type="number" name="price_per_day" value={formData.price_per_day} onChange={handleChange} required step="0.01"/>
+                     <input 
+                        type="text" // Use type text to allow commas
+                        name="price_per_day" 
+                        value={formattedPrice} 
+                        onChange={(e) => {
+                             const rawValue = parseNumber(e.target.value);
+                             setFormData({ ...formData, price_per_day: rawValue });
+                             setFormattedPrice(formatNumber(rawValue));
+                        }}
+                        required 
+                    />
                 </div>
                  <div className="form-group">
                     <label>Deposit Required:</label>
-                    <input type="number" name="deposit_required" value={formData.deposit_required} onChange={handleChange} required step="0.01"/>
+                    <input 
+                        type="text" // Use type text to allow commas
+                        name="deposit_required" 
+                        value={formattedDeposit} 
+                        onChange={(e) => {
+                             const rawValue = parseNumber(e.target.value);
+                             setFormData({ ...formData, deposit_required: rawValue });
+                             setFormattedDeposit(formatNumber(rawValue));
+                        }}
+                        required 
+                    />
                 </div>
                  <div className="form-group">
                     <label>Terms:</label>

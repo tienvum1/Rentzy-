@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../middleware/upload');
 const { protect } = require('../middleware/authMiddleware');
-const ownerController = require('../controller/ownerController');
+const adminController = require('../controller/adminController');
 
 // Simple middleware to check if user is admin
 const checkAdmin = (req, res, next) => {
@@ -14,31 +13,21 @@ const checkAdmin = (req, res, next) => {
     }
 };
 
-router.put(
-  '/registerOwner',
-  protect,
-  upload.fields([
-    { name: 'cccd_front_image', maxCount: 1 },
-    { name: 'cccd_back_image', maxCount: 1 },
-  ]),
-  ownerController.becomeOwner
-);
-
 // Admin Routes for Owner Request Management
 // GET all pending owner requests
 router.get(
-    '/admin/pendingRequests',
+    '/owner/pendingRequests', // Changed route path for clarity
     protect, // Ensure user is authenticated
     checkAdmin, // Ensure user is admin
-    ownerController.getPendingOwnerRequests
+    adminController.getPendingOwnerRequests
 );
 
 // PUT review an owner request (approve/reject)
 router.put(
-    '/admin/reviewRequest/:userId',
+    '/owner/reviewRequest/:userId', // Changed route path for clarity
     protect, // Ensure user is authenticated
     checkAdmin, // Ensure user is admin
-    ownerController.reviewOwnerRequest
+    adminController.reviewOwnerRequest
 );
 
 module.exports = router;

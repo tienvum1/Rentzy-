@@ -65,7 +65,7 @@ const ConsignForm = () => {
     data.append('cccd_back_image', formData.cccd_back_image);
 
     try {
-      const response = await axios.put(`${backendUrl}/api/user/become-owner`, data, {
+      const response = await axios.put(`${backendUrl}/api/owner/registerOwner`, data, {
         withCredentials: true,
         headers: {
           'Content-Type': 'multipart/form-data',

@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const dotenv = require("dotenv");
+require('dotenv').config(); // phải là dòng đầu tiên!
 
 const path = require('path');
 
@@ -17,8 +17,9 @@ require("./auth/auth");
 const authRoutes = require("./route/auth");
 const userRoutes = require("./route/userRoutes");
 const vehicleRoutes = require("./route/vehicleRoutes");
+const ownerRoutes = require("./route/ownerRoutes");
+const adminRoutes = require("./route/adminRoutes");
 
-dotenv.config();
 const app = express();
 
 app.use(cookieParser());
@@ -64,6 +65,9 @@ mongoose.connection.once('open', function() {
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/vehicles", vehicleRoutes);
+app.use("/api/owner", ownerRoutes);
+app.use("/api/admin", adminRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("Hello World");

@@ -1,7 +1,7 @@
 // middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
 
-exports.protect = (req, res, next) => {
+ const  protect = (req, res, next) => {
   let token;
   if (req.cookies && req.cookies.token) {
     token = req.cookies.token;
@@ -19,4 +19,17 @@ exports.protect = (req, res, next) => {
     console.error("Token verification failed:", error);
     res.status(401).json({ message: "Not authorized, token failed" });
   }
+};
+
+const adminOnly = (req, res, next) => {
+  if (req.user && req.user.role && Array.isArray(req.user.role) && req.user.role.includes('admin')) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Access denied. Admin role required.' });
+  }
+};
+
+module.exports = {
+  protect,
+  adminOnly,
 };

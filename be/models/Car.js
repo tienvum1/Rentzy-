@@ -1,33 +1,46 @@
 const mongoose = require('mongoose');
 
+/**
+ * Schema Car: dùng cho các xe là type = 'car'
+ * Lưu thông tin chi tiết về ô tô
+ */
+
 const carSchema = new mongoose.Schema({
 
-  vehicle_id: {
-    type: String,
+  vehicle: {
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Vehicle',
-    required: true
+    required: true,
+    unique: true
   },
-  seats: {
+
+  // Số chỗ ngồi
+  seatCount: {
     type: Number,
-    required: true
+    required: true,
+    min: 2
   },
-  body_type: {
+
+  // Dạng thân xe (sedan, SUV, hatchback, pickup...)
+  bodyType: {
     type: String,
     required: true
   },
+
+  // Hộp số
   transmission: {
     type: String,
+    enum: ['manual', 'automatic'],
     required: true
   },
-  fuel_type: {
+
+  // Nhiên liệu
+  fuelType: {
     type: String,
+    enum: ['petrol', 'diesel', 'electric', 'hybrid'],
     required: true
   }
-}, {
-  timestamps: false
 
-});
+}, { timestamps: true });
 
-const Car = mongoose.model('Car', carSchema);
-
-module.exports = Car; 
+module.exports = mongoose.model('Car', carSchema);
