@@ -19,6 +19,7 @@ const userRoutes = require("./route/userRoutes");
 const vehicleRoutes = require("./route/vehicleRoutes");
 const ownerRoutes = require("./route/ownerRoutes");
 const adminRoutes = require("./route/adminRoutes");
+const carRoutes = require("./route/carRoutes");
 
 const app = express();
 
@@ -67,6 +68,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/owner", ownerRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/cars", carRoutes);
 
 
 app.get("/", (req, res) => {

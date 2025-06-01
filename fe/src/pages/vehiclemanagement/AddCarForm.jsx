@@ -11,7 +11,7 @@ const AddCarForm = ({ onSuccess }) => {
     brand: '',
     model: '',
     license_plate: '',
-    location: { address: '', coordinates: [] },
+    location: '',
     price_per_day: '',
     deposit_required: '',
     seats: '',

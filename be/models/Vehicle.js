@@ -43,7 +43,7 @@ const vehicleSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // Địa chỉ và toạ độ (dùng cho bản đồ)
+    // Địa chỉ 
     location: {
       type: String,
       required: true,
