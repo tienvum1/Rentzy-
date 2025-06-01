@@ -1,8 +1,12 @@
 import React from 'react';
 import { FaUser, FaHeart, FaCar, FaSuitcaseRolling, FaClipboardCheck, FaGift, FaAddressBook, FaLock, FaTrash } from 'react-icons/fa';
 import './ProfileSidebar.css';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-const ProfileSidebar = ({ activeSection, onSectionChange }) => {
+const ProfileSidebar = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+
     const menuItems = [
         { id: 'account', label: 'Tài khoản của tôi', icon: <FaUser /> },
         { id: 'favorites', label: 'Xe yêu thích', icon: <FaHeart /> },
@@ -22,8 +26,8 @@ const ProfileSidebar = ({ activeSection, onSectionChange }) => {
                 {menuItems.map(item => (
                     <div
                         key={item.id}
-                        className={`sidebar-menu-item ${activeSection === item.id ? 'active' : ''}`}
-                        onClick={() => onSectionChange(item.id)}
+                        className={`sidebar-menu-item ${location.pathname.includes(item.id) ? 'active' : ''}`}
+                        onClick={() => navigate(`/profile/${item.id}`)}
                     >
                         <span className="menu-icon">{item.icon}</span>
                         <span className="menu-label">{item.label}</span>

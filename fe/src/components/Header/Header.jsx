@@ -60,12 +60,14 @@ const Header = () => {
         <Link to="/contact" className="header__link">Contact</Link>
       </nav>
       <div className="header__actions">
-        <button
-          className="header__consign-btn"
-          onClick={() => navigate('/consignForm')}
-        >
-          Ký gửi xe
-        </button>
+        {isAuthenticated && user && user.role !== 'owner' && (
+          <button
+            className="header__consign-btn"
+            onClick={() => navigate('/consignForm')}
+          >
+            Ký gửi xe
+          </button>
+        )}
         {isAuthenticated ? (
           <div className="header__user-actions">
             <div

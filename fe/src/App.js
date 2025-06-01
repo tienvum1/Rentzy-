@@ -11,13 +11,15 @@ import VerifyEmail from "./pages/verifyEmail/VerifyEmail";
 import ProfilePage from "./pages/profile/ProfilePage"; // IMPORT: New ProfilePage component
 import ForgotPassword from "./pages/login/ForgotPassword";
 import ResetPassword from "./pages/login/ResetPassword";
-
+import ChangePassword from "./pages/changePassword/ChangePassword";
 
 import ConsignForm from "./pages/consignForm/ConsignForm";
 
 // owner
 import OwnerPage from "./pages/owner/OwnerPage";
 import VehicleManagement from "./pages/vehiclemanagement/VehicleManagement";
+import AddCarForm  from "./pages/vehiclemanagement/AddCarForm";
+
 
 
 // admin 
@@ -39,7 +41,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-
+            <Route path="/profile/change-password" element={<ChangePassword />}/>
             {/* Add route for OwnerPage */}
             <Route path="/consignForm" element={<ConsignForm />} />
             {/* Add a root route if needed */}
@@ -51,9 +53,10 @@ function App() {
 
 
 
-             {/* owner route */}
+             {/* owner  managemnt route */}
             <Route path="/ownerpage/overview" element={<OwnerPage />} />
             <Route path="/ownerpage/vehicle-management" element={<VehicleManagement />} />
+            <Route path="/add-car" element={<AddCarForm />} />
           </Routes>
         </div>
       </AuthProvider>

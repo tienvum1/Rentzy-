@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './AddCarForm.css';
+import axios from 'axios'; // Import axios
+import SidebarOwner from '../../components/SidebarOwner/SidebarOwner';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
-const AddCarForm = ({ onCancel, onSubmit }) => {
+const AddCarForm = ({ onSuccess }) => {
+  const navigate = useNavigate(); // Use useNavigate hook
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999'; // Define backendUrl
   const [formData, setFormData] = useState({
     brand: '',
     model: '',
@@ -20,6 +25,9 @@ const AddCarForm = ({ onCancel, onSubmit }) => {
     features: [],
     rentalPolicy: '',
   });
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
 
   const [mainImagePreview, setMainImagePreview] = useState(null);
   const [additionalImagesPreviews, setAdditionalImagesPreviews] = useState([]);
@@ -190,16 +198,22 @@ const AddCarForm = ({ onCancel, onSubmit }) => {
   };
 
   // Submit form
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
+    setLoading(true); // Start loading
+    setMessage(null); // Clear previous messages
+    setErrors({}); // Clear previous errors
+
     const dataToSubmit = new FormData();
 
+    // Append fields to FormData
     dataToSubmit.append('brand', formData.brand.trim());
     dataToSubmit.append('model', formData.model.trim());
     dataToSubmit.append('license_plate', formData.license_plate.trim());
+    // Assuming location needs to be stringified based on backend controller
     dataToSubmit.append('location', JSON.stringify(formData.location));
     dataToSubmit.append('price_per_day', formData.price_per_day);
     dataToSubmit.append('deposit_required', formData.deposit_required);
@@ -208,45 +222,103 @@ const AddCarForm = ({ onCancel, onSubmit }) => {
     dataToSubmit.append('transmission', formData.transmission);
     dataToSubmit.append('fuel_type', formData.fuel_type);
     dataToSubmit.append('type', formData.type);
-    dataToSubmit.append('features', formData.features);
-    dataToSubmit.append('rentalPolicy', formData.rentalPolicy);
+
+    // Append optional fields if they exist
     if (formData.fuelConsumption) {
       dataToSubmit.append('fuelConsumption', formData.fuelConsumption);
     }
 
+    // Append main image
     if (formData.main_image) {
-      dataToSubmit.append('main_image', formData.main_image);
+      dataToSubmit.append('main_image', formData.main_image); // Ensure field name matches backend
+    } else {
+         // Handle case where main image is missing (though validation should catch this)
+         setErrors(prev => ({...prev, main_image: 'Ảnh chính là bắt buộc'}));
+         setLoading(false);
+         return;
     }
 
-    // Append selected features
-    formData.features.forEach(feature => {
-      dataToSubmit.append('features', feature);
-    });
+    // Append selected features individually
+    if (Array.isArray(formData.features)) {
+        formData.features.forEach(feature => {
+          dataToSubmit.append('features', feature); // Ensure field name matches backend
+        });
+    }
 
     // Append rental policy
     if (formData.rentalPolicy.trim()) {
-      dataToSubmit.append('rentalPolicy', formData.rentalPolicy.trim());
+      dataToSubmit.append('rentalPolicy', formData.rentalPolicy.trim()); // Ensure field name matches backend
     } else {
-      dataToSubmit.append('rentalPolicy', '');
+      dataToSubmit.append('rentalPolicy', ''); // Ensure field name matches backend
     }
 
-    // Kiểm tra trước khi forEach tránh lỗi
-    if (
-      formData.additional_images &&
-      Array.isArray(formData.additional_images) &&
-      formData.additional_images.length > 0
-    ) {
+    // Append additional images individually
+    if (Array.isArray(formData.additional_images) && formData.additional_images.length > 0) {
       formData.additional_images.forEach((file) => {
-        dataToSubmit.append('additional_images', file);
+        dataToSubmit.append('additional_images', file); // Ensure field name matches backend
       });
     }
 
-    onSubmit(dataToSubmit);
+    try {
+      // Use the backendUrl variable
+      const apiUrl = `${backendUrl}/api/vehicles/add`; // Assuming this is the add vehicle endpoint
+      const response = await axios.post(apiUrl, dataToSubmit, {
+        withCredentials: true,
+      });
+
+      if (response.status === 201) {
+        console.log('Xe đã được thêm thành công', response.data);
+        setMessage({ type: 'success', text: response.data.message || 'Xe đã được thêm thành công!' });
+        // Call onSuccess to notify parent and trigger list refresh
+        if (onSuccess) onSuccess();
+        // Optionally, clear the form or close it after a delay
+         setTimeout(() => {
+             navigate('/vehiclemanagement'); // Navigate back to list
+         }, 2000); // Close form after 2 seconds
+
+      } else {
+          // Handle other successful but unexpected statuses if necessary
+           console.warn('Unexpected response status:', response.status, response.data);
+           setMessage({ type: 'warning', text: response.data.message || 'Thêm xe thành công nhưng có cảnh báo.' });
+           if (onSuccess) onSuccess();
+            setTimeout(() => {
+             navigate('/vehiclemanagement'); // Navigate back to list
+         }, 2000); // Close form after 2 seconds
+      }
+
+    } catch (error) {
+      console.error('Lỗi khi thêm xe:', error.response?.data || error.message);
+       setMessage({ type: 'error', text: error.response?.data?.message || 'Có lỗi xảy ra khi thêm xe.' });
+       // Do not call onCancel or onSuccess on error immediately, let user see the error message
+        setLoading(false); // Stop loading on error
+    } finally {
+      // Loading state will be set to false in catch block on error.
+      // For success, it stays true until the timeout clears the message and calls onCancel
+    }
   };
 
+  // Effect to hide messages after a delay
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null);
+         // If it was a success message, hide it and then potentially close the form
+         if (message.type === 'success' || message.type === 'warning') {
+             // Form closing is now handled in the try block after a delay
+         }
+      }, 3000); // Hide after 3 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [message]); // Rerun effect when message changes
+
   return (
+    <>
+    <SidebarOwner />
     <div className="add-vehicle-form">
       <h2>Thêm Xe Mới</h2>
+       {message && <p className={`form-message ${message.type}`}>{message.text}</p>}
+       {loading && <p>Đang xử lý...</p>}
       <form onSubmit={handleSubmit} noValidate>
         <div className="form-group">
           <label>Thương hiệu:</label>
@@ -489,15 +561,16 @@ const AddCarForm = ({ onCancel, onSubmit }) => {
         </div>
 
         <div className="form-actions">
-          <button type="submit" className="btn-submit">
-            Đăng xe cho thuê
+          <button type="submit" className="btn-submit" disabled={loading}>
+            {loading ? 'Đang thêm...' : 'Đăng xe cho thuê'}
           </button>
-          <button type="button" className="btn-cancel" onClick={onCancel}>
+          <button type="button" className="btn-cancel" onClick={() => navigate('/ownerpage/vehicle-management')}>
             Hủy
           </button>
         </div>
       </form>
     </div>
+    </>
   );
 };
 

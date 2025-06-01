@@ -6,118 +6,17 @@ import axios from 'axios';
 import EditCarForm from './EditCarForm';
 import EditMotorbikeForm from './EditMotorbikeForm';
 import SidebarOwner from '../../components/SidebarOwner/SidebarOwner';
+import { useNavigate } from 'react-router-dom';
 
 const VehicleManagement = () => {
-    const [currentView, setCurrentView] = useState('list'); // State to manage the current view
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false); // Add loading state
     const [message, setMessage] = useState(null); // Add message state (success/error)
-    const [vehicles, setVehicles] = useState([]); // State to store the list of vehicles
-    const [fetchError, setFetchError] = useState(null); // State to store fetch errors
-    const [editingVehicle, setEditingVehicle] = useState(null); // State to store the vehicle being edited
-    const [vehicleTypeFilter, setVehicleTypeFilter] = useState('all'); // State to track vehicle type filter
-    const [viewMode, setViewMode] = useState('list'); // State to manage the current view mode
     const [ownerVehicles, setOwnerVehicles] = useState([]); // State to store the list of owner vehicles
     const [error, setError] = useState(null); // State to store fetch errors for owner vehicles
     const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999'; // Cung cấp giá trị default
 
-    // Function to fetch vehicles from the backend
-    const fetchVehicles = async () => {
-        setLoading(true);
-        setFetchError(null);
-        try {
-            const apiUrl = `${backendUrl}/api/vehicles/`;
-            const response = await axios.get(apiUrl, { withCredentials: true });
-            setVehicles(response.data.vehicles); // Assuming the backend returns { count: ..., vehicles: [...] }
-            console.log('Fetched vehicles data:', response.data.vehicles);
-        } catch (error) {
-            console.error('Error fetching vehicles:', error.response?.data || error.message);
-            setFetchError('Failed to fetch vehicles. Please try again later.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Fetch vehicles when the component mounts and when currentView is 'list'
-    useEffect(() => {
-        if (currentView === 'list') {
-            fetchVehicles();
-        }
-    }, [currentView]); // Refetch when switching to list view
-    
-    const handleAddVehicleClick = () => {
-        setCurrentView('selectType');
-        setMessage(null); // Clear previous messages
-    };
-
-    const handleSelectType = (type) => {
-        setCurrentView(type === 'Car' ? 'addCar' : 'addMotorbike');
-        setMessage(null); // Clear previous messages
-    };
-
-    const handleFormSubmit = async (formData) => {
-        setLoading(true); // Start loading
-        setMessage(null); // Clear previous messages
-        setFetchError(null); // Clear fetch errors
-
-        const data = new FormData();
-        // Append vehicle common fields
-        for (const key in formData) {
-            if (key !== 'images') {
-                data.append(key, formData[key]);
-            }
-        }
-        // Append vehicle type (needed by backend controller), ensuring lowercase
-        data.append('type', currentView === 'addCar' ? 'car' : 'motorbike');
-
-        // Append image files
-        formData.images.forEach((file, index) => {
-            data.append(`images`, file); // Append each file with the field name 'images'
-        });
-
-        try {
-            const apiUrl = `${backendUrl}/api/vehicles/add`;
-
-            const response = await axios.post(apiUrl, data, {
-                headers: {
-                  'Content-Type': 'multipart/form-data',
-                },
-                withCredentials: true, // Quan trọng để gửi cookie chứa token xác thực
-              });
-            console.log('Fetched owner vehicles:', response.data.vehicles);
-            setOwnerVehicles(response.data.vehicles);
-        } catch (err) {
-            console.error('Error fetching owner vehicles:', err);
-            setError('Không thể tải danh sách xe.');
-             if (err.response && err.response.data && err.response.data.message) {
-                setError(`Không thể tải danh sách xe: ${err.response.data.message}`);
-             }
-        }
-        setLoading(false);
-    };
-
-    // Sử dụng useEffect để fetch data khi component mount hoặc viewMode trở lại 'list'
-    useEffect(() => {
-        if (viewMode === 'list') {
-            fetchOwnerVehicles();
-        }
-    }, [viewMode]); // Dependency array: fetch lại khi viewMode thay đổi thành 'list'
-
-    // Hàm xử lý khi nhấn nút "Thêm xe hơi"
-    const handleAddCarClick = () => {
-        setViewMode('add-car');
-    };
-
-    // Hàm xử lý khi nhấn nút "Thêm xe máy"
-    const handleAddMotorbikeClick = () => {
-        setViewMode('add-motorbike');
-    };
-
-    // Hàm xử lý khi nhấn nút "Hủy" trong form
-    const handleCancelForm = () => {
-        setViewMode('list'); // Trở về chế độ hiển thị danh sách
-    };
-
-    // Hàm để fetch danh sách xe từ backend (lấy xe của chủ sở hữu)
+    // Function to fetch danh sách xe từ backend (lấy xe của chủ sở hữu)
     const fetchOwnerVehicles = async () => {
         setLoading(true);
         setError(null); // Reset lỗi trước khi fetch mới
@@ -134,33 +33,22 @@ const VehicleManagement = () => {
              if (err.response && err.response.data && err.response.data.message) {
                 setError(`Không thể tải danh sách xe của bạn: ${err.response.data.message}`);
              }
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
-    // Function to handle vehicle type filter change
-    const handleFilterChange = (type) => {
-        setVehicleTypeFilter(type);
-    };
+    // Fetch owner vehicles when the component mounts
+    useEffect(() => {
+        fetchOwnerVehicles();
+    }, []); // Empty dependency array means this runs once on mount
 
     // Placeholder function for handling edit action
     const handleEdit = async (vehicleId) => {
         console.log('Edit vehicle with ID:', vehicleId);
-        setLoading(true); // Start loading
-        setFetchError(null); // Clear previous fetch errors
-        setMessage(null); // Clear previous messages
-        try {
-            const apiUrl = `${backendUrl}/api/vehicles/${vehicleId}`;
-            const response = await axios.get(apiUrl, { withCredentials: true });
-            setEditingVehicle(response.data.vehicle); // Assuming backend returns { vehicle: {...} }
-            setCurrentView('editVehicle'); // Switch to edit view
-        } catch (error) {
-            console.error('Error fetching vehicle for edit:', error.response?.data || error.message);
-            setFetchError('Failed to load vehicle for editing.');
-             // Stay on the list view or show an error page
-        } finally {
-            setLoading(false); // Stop loading
-        }
+        // Use navigate to go to the edit page
+        navigate(`/edit-vehicle/${vehicleId}`); // Example path for edit page
+         // setMessage({ type: 'info', text: `Navigate to edit page for vehicle ID: ${vehicleId}` }); // Remove placeholder message
     };
 
     // Placeholder function for handling delete action
@@ -172,84 +60,15 @@ const VehicleManagement = () => {
                 const response = await axios.delete(apiUrl, { withCredentials: true });
                 setMessage({ type: 'success', text: response.data.message || 'Vehicle deleted successfully!' });
                 // After successful deletion, refresh the vehicle list
-                fetchVehicles(); 
+                fetchOwnerVehicles(); // Refresh owner's vehicle list
+                setLoading(false); // Stop loading indicator
             } catch (error) {
                 console.error('Error deleting vehicle:', error.response?.data || error.message);
                 setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to delete vehicle.' });
-                 setLoading(false); // Stop loading indicator on error
+                setLoading(false); // Stop loading indicator on error
             }
-        }
-    };
-
-    // Function to handle update form submission
-    const handleUpdateSubmit = async (vehicleId, formData) => {
-        console.log('Updating vehicle with ID:', vehicleId, 'with data:', formData);
-        setLoading(true); // Start loading
-        setFetchError(null); // Clear previous fetch errors
-        setMessage(null); // Clear previous messages
-
-        // Prepare form data, similar to add vehicle, but potentially handle images differently
-        const data = new FormData();
-        // Append common vehicle fields
-        data.append('brand', formData.brand);
-        data.append('model', formData.model);
-        data.append('license_plate', formData.license_plate);
-        data.append('location', formData.location);
-        data.append('is_available', formData.is_available);
-        data.append('price_per_day', formData.price_per_day);
-        data.append('deposit_required', formData.deposit_required);
-        data.append('terms', formData.terms);
-        
-        // Append specific details based on vehicle type
-        if (editingVehicle.type === 'car') {
-            data.append('seats', formData.seats);
-            data.append('body_type', formData.body_type);
-            data.append('transmission', formData.transmission);
-            data.append('fuel_type', formData.fuel_type);
-        } else if (editingVehicle.type === 'motorbike') {
-            data.append('engine_capacity', formData.engine_capacity);
-            data.append('has_gear', formData.has_gear);
-        }
-
-        // Ensure vehicle type is sent for the backend controller to update specific details
-        // We can get the type from the editingVehicle state
-        data.append('type', editingVehicle.type === 'car' ? 'car' : 'motorbike');
-
-        try {
-            const apiUrl = `${backendUrl}/api/vehicles/${vehicleId}`;
-            // Use PUT request for updates
-            const response = await axios.put(apiUrl, {
-                 // Send formData as JSON body
-                 ...formData,
-                 type: editingVehicle.type // Ensure type is included
-            }, {
-                 headers: {
-                    'Content-Type': 'application/json', // Set Content-Type to application/json
-                 },
-                 withCredentials: true, // Include cookies (for auth middleware)
-            });
-
-            setMessage({ type: 'success', text: response.data.message || 'Vehicle updated successfully!' });
-            setEditingVehicle(null); // Clear editing vehicle state
-            // Use setTimeout to hide the message and go back to list view after 2 seconds
-            setTimeout(() => {
-                setMessage(null); // Hide the message
-                setCurrentView('list'); // Go back to list view
-                fetchVehicles(); // Refresh the list
-            }, 2000); // 2000 milliseconds = 2 seconds
-
-        } catch (error) {
-            console.error('Error updating vehicle:', error.response?.data || error.message);
-            setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update vehicle.' });
-            // On error, also go back to the list view after a delay
-            setTimeout(() => {
-                setMessage(null); // Hide the message
-                setEditingVehicle(null); // Clear editing vehicle state
-                setCurrentView('list'); // Go back to list view
-                // No need to fetchVehicles here as the update failed
-            }, 2000); // 2000 milliseconds = 2 seconds
-        } finally {
-            setLoading(false); // Stop loading in both success and error cases
+        } else {
+            // User cancelled deletion
         }
     };
 
@@ -258,67 +77,23 @@ const VehicleManagement = () => {
         if (message) {
             const timer = setTimeout(() => {
                 setMessage(null);
-            }, 2000); // Hide after 2 seconds (2000 milliseconds)
+            }, 3000); // Hide after 3 seconds (3000 milliseconds)
 
             // Clean up the timer if the component unmounts or message changes
             return () => clearTimeout(timer);
         }
     }, [message]); // Rerun effect when message changes
 
-    const renderView = () => {
-        switch (currentView) {
-            case 'list':
-                return (
-                    <div>
-                        <h2>Vehicle Management</h2>
-                        {message && <p className={`message ${message.type}`}>{message.text}</p>}
-                        <button onClick={handleAddVehicleClick}>Thêm phương tiện</button>
-                        {/* Future: Display list of vehicles here */}
-                    </div>
-                );
-            case 'selectType':
-                return (
-                    <div>
-                        <h2>Chọn loại phương tiện</h2>
-                        {message && <p className={`message ${message.type}`}>{message.text}</p>}
-                        <button onClick={() => handleSelectType('Car')}>Car</button>
-                        <button onClick={() => handleSelectType('Motorbike')}>Motorbike</button>
-                    </div>
-                );
-            case 'addCar':
-                return (
-                    <>
-                        {message && <p className={`message ${message.type}`}>{message.text}</p>}
-                        {loading && <p>Adding vehicle...</p>}
-                        {!loading && <AddCarForm 
-                            onCancel={handleCancelForm} 
-                            onSubmit={handleFormSubmit} 
-                        />}
-                    </>
-                );
-            case 'addMotorbike':
-                return (
-                    <>
-                        {message && <p className={`message ${message.type}`}>{message.text}</p>}
-                        {loading && <p>Adding vehicle...</p>}
-                        {!loading && <AddMotorbikeForm 
-                            onCancel={handleCancelForm} 
-                            onSubmit={handleFormSubmit} 
-                        />}
-                    </>
-                );
-            default:
-                return (
-                    <div className="vehicle-list-view">
-                        <h2>Your Vehicles</h2>
-                         <div className="add-buttons">
-                            <button className="btn-add-car" onClick={handleAddCarClick}>+ Add New Car</button>
-                            <button className="btn-add-motorbike" onClick={handleAddMotorbikeClick}>+ Add New Motorbike</button>
-                        </div>
-                         <p>Đang tải danh sách xe...</p>
-                    </div>
-                );
-        }
+    // Placeholder for navigation to add car page
+    const handleNavigateToAddCar = () => {
+        navigate('/add-car'); // Use navigate
+        // setMessage({ type: 'info', text: 'Navigate to Add Car page' }); // Remove placeholder message
+    };
+
+    // Placeholder for navigation to add motorbike page
+    const handleNavigateToAddMotorbike = () => {
+        navigate('/add-motorbike'); // Use navigate
+        // setMessage({ type: 'info', text: 'Navigate to Add Motorbike page' }); // Remove placeholder message
     };
 
     return (
@@ -327,7 +102,72 @@ const VehicleManagement = () => {
             {/* SidebarOwner không ở đây. Nó nằm trong OwnerPage và hiển thị cố định. */}
             {/* Nội dung của VehicleManagement được hiển thị bên cạnh sidebar. */}
             <div className="vehicle-management-content">
-                {renderView()}
+                <h2>Your Vehicles</h2>
+                {message && <p className={`message ${message.type}`}>{message.text}</p>}
+                {error && <p className="error">{error}</p>}
+                <div className="add-buttons">
+                    <button className="btn-add-car" onClick={handleNavigateToAddCar}>+ Add New Car</button>
+                    <button className="btn-add-motorbike" onClick={handleNavigateToAddMotorbike}>+ Add New Motorbike</button>
+                </div>
+                {loading && <p>Đang tải danh sách xe...</p>}
+                {!loading && ownerVehicles.length === 0 && !error && (
+                    <p>Bạn chưa có xe nào được đăng.</p>
+                )}
+                {!loading && ownerVehicles.length > 0 && (
+                    <table className="vehicle-table">
+                        <thead>
+                            <tr>
+                                <th>Ảnh chính</th>
+                                <th>Thông tin xe</th>
+                                <th>Biển số</th>
+                                <th>Địa điểm</th>
+                                <th>Giá/Ngày</th>
+                                <th>Trạng thái</th>
+                                <th>Duyệt bởi Admin</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {ownerVehicles.map(vehicle => (
+                                <tr key={vehicle._id}>
+                                    <td>
+                                        {vehicle.primaryImage ? (
+                                            <img src={vehicle.primaryImage} alt={`${vehicle.brand} ${vehicle.model} primary`} style={{ width: '80px', height: 'auto', borderRadius: '4px' }} />
+                                        ) : (
+                                            <span>No Image</span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        <strong>{vehicle.brand} {vehicle.model}</strong> ({vehicle.type})
+                                        {vehicle.type === 'car' && vehicle.specificDetails && (
+                                            <>
+                                                <br />Số chỗ: {vehicle.specificDetails.seatCount}
+                                                <br />Thân xe: {vehicle.specificDetails.bodyType}
+                                                <br />Hộp số: {vehicle.specificDetails.transmission}
+                                                <br />Nhiên liệu: {vehicle.specificDetails.fuelType}
+                                            </>
+                                        )}
+                                        {vehicle.type === 'motorbike' && vehicle.specificDetails && (
+                                            <>
+                                                <br />Dung tích: {vehicle.specificDetails.engineCapacity} cc
+                                                <br />Có số: {vehicle.specificDetails.hasGear ? 'Có' : 'Không'}
+                                            </>
+                                        )}
+                                    </td>
+                                    <td>{vehicle.licensePlate}</td>
+                                    <td>{vehicle.location}</td>
+                                    <td>{vehicle.pricePerDay} VND</td>
+                                    <td>{vehicle.status}</td>
+                                    <td>{vehicle.approvalStatus}</td>
+                                    <td>
+                                        <button className="edit-button" onClick={() => handleEdit(vehicle._id)}>Edit</button>
+                                        <button className="delete-button" onClick={() => handleDelete(vehicle._id)}>Delete</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
             </div>
         </div>
     );
