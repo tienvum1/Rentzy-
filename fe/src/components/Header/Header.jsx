@@ -43,6 +43,18 @@ const Header = () => {
     navigate('/profile');
   };
 
+  // Temporary: Fetch user profile again if authenticated state changes (for debugging)
+  // The ideal place for this logic might be within the AuthContext itself.
+  useEffect(() => {
+    if (isAuthenticated && user && !user.avatar_url) { // Only fetch if authenticated and avatar is missing (adjust condition as needed)
+        // Assuming AuthContext provides a way to refresh user data
+        // If you have a function like fetchUserProfile in your AuthContext, call it here.
+        // Example (replace with your actual context method if different):
+        // fetchUserProfile(); 
+        console.log("User authenticated but avatar missing. Consider refreshing profile.");
+    }
+  }, [isAuthenticated, user]); // Dependency array
+
   return (
     <header className="header-modern">
       <div className="header__logo-row-modern" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
@@ -79,13 +91,13 @@ const Header = () => {
               onClick={() => setShowDropdown((prev) => !prev)}
               style={{ cursor: 'pointer' }}
             >
-              <img
-                src={user.avatar_url || 'https://via.placeholder.com/40/cccccc/ffffff?text=User'}
-                alt={user.name || 'User Avatar'}
-                className="avatar-img"
-                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
-              />
-              <span className="user-name">{user.name}</span>
+             <img
+  src={user.avatar_url || 'https://via.placeholder.com/40/cccccc/ffffff?text=User'}
+  alt={user.name || 'User Avatar'}
+  className="avatar-img"
+  style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+/>
+            
             </div>
             {showDropdown && (
               <div className="header__dropdown" ref={dropdownRef}>

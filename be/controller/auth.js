@@ -224,7 +224,8 @@ exports.googleCallback = async (req, res) => {
 
       user.is_verified = true;
 
-      // 🟡 Không cập nhật avatar khi user đã tồn tại
+      // Explicitly NOT updating avatar for existing users upon login
+      // This aligns with the requirement: "Chỉ set avatar_url từ Google khi đăng ký lần đầu"
       await user.save();
     } else {
       // 2. Tìm theo email nếu chưa có googleId
@@ -246,7 +247,8 @@ exports.googleCallback = async (req, res) => {
           user.name = googleProfile.displayName;
         }
 
-        // 🟡 Không cập nhật avatar nếu user đã tồn tại
+        // Explicitly NOT updating avatar for existing users upon login
+        // This aligns with the requirement: "không set lại khi đăng nhập các lần sau."
         user.is_verified = true;
         await user.save();
       } else {

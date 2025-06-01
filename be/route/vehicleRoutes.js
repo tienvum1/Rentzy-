@@ -42,4 +42,7 @@ router.put('/:id', upload.none(), vehicleController.updateVehicle);
 // Add route for Admin to review vehicle approval
 router.put('/admin/vehicles/review/:vehicleId', protect, adminOnly, vehicleController.reviewVehicleApproval);
 
+// New route to get all approved vehicles
+router.get('/approved', vehicleController.getApprovedVehicles);
+
 module.exports = router; 

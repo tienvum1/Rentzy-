@@ -57,9 +57,9 @@ exports.becomeOwner = async (req, res) => {
     user.cccd_number = cccd_number;
     user.cccd_front_url = frontUpload.secure_url;
     user.cccd_back_url = backUpload.secure_url;
-    user.owner_request_owner_status = "pending";
+    user.owner_request_status = "pending";
     user.owner_request_submitted_at = new Date();
-
+     
     console.log("Attempting to save user:", user); // Log user object before save
 
     try {

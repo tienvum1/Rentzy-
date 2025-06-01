@@ -86,13 +86,13 @@ const VehicleManagement = () => {
 
     // Placeholder for navigation to add car page
     const handleNavigateToAddCar = () => {
-        navigate('/add-car'); // Use navigate
+        navigate('/ownerpage/add-car'); // Use navigate
         // setMessage({ type: 'info', text: 'Navigate to Add Car page' }); // Remove placeholder message
     };
 
     // Placeholder for navigation to add motorbike page
     const handleNavigateToAddMotorbike = () => {
-        navigate('/add-motorbike'); // Use navigate
+        navigate('/ownerpage/add-motorbike'); // Use navigate
         // setMessage({ type: 'info', text: 'Navigate to Add Motorbike page' }); // Remove placeholder message
     };
 

@@ -331,6 +331,20 @@ exports.getPendingVehicleApprovalsForAdmin = async (req, res) => {
     }
 };
 
+// New function to get all approved vehicles
+exports.getApprovedVehicles = async (req, res) => {
+    try {
+        // Find vehicles with approvalStatus set to 'approved'
+        const approvedVehicles = await Vehicle.find({ approvalStatus: 'approved' }).populate('owner', 'name email'); // Populate owner details if needed
+
+        res.status(200).json({ count: approvedVehicles.length, vehicles: approvedVehicles });
+
+    } catch (error) {
+        console.error('Error getting approved vehicles:', error);
+        res.status(500).json({ message: 'Failed to fetch approved vehicles.', error: error.message });
+    }
+};
+
 // Add function to delete a vehicle and associated data
 exports.deleteVehicle = async (req, res) => {
     try {
@@ -710,3 +724,6 @@ exports.reviewVehicleApproval = async (req, res) => {
     }
 };
 
+
+
+// lấy tất cả vehicles approved
