@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema({
   loginMethods: { type: [String], default: ['password'] },
 
   // Fields for Owner Registration and Admin Review
-  owner_request_status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  owner_request_status: { type: String, enum: ['pending', 'approved', 'rejected'] },
   owner_request_submitted_at: { type: Date },
   owner_request_reviewed_at: { type: Date },
   owner_request_rejection_reason: { type: String },

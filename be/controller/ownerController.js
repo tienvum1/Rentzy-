@@ -24,6 +24,14 @@ exports.becomeOwner = async (req, res) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Add check for existing owner request status
+    if (user.owner_request_owner_status === 'pending') {
+        return res.status(409).json({ message: 'Bạn đã gửi yêu cầu đăng ký chủ xe và đang chờ duyệt.' });
+    }
+    if (user.owner_request_owner_status === 'approved') {
+        return res.status(409).json({ message: 'Bạn đã là chủ xe.' });
+    }
+
     // Log Cloudinary config right before upload
     console.log("Cloudinary config RIGHT before upload:", cloudinary.config());
 
@@ -49,7 +57,7 @@ exports.becomeOwner = async (req, res) => {
     user.cccd_number = cccd_number;
     user.cccd_front_url = frontUpload.secure_url;
     user.cccd_back_url = backUpload.secure_url;
-    user.owner_request_status = "pending";
+    user.owner_request_owner_status = "pending";
     user.owner_request_submitted_at = new Date();
 
     console.log("Attempting to save user:", user); // Log user object before save

@@ -23,9 +23,7 @@ exports.getProfile = async (req, res) => {
 
   try {
     // Find the user by ID, but select only necessary fields
-    const user = await User.findById(userId).select(
-      "name email role avatar_url is_verified phone cccd_number driver_license driver_license_front_url driver_license_back_url created_at"
-    ); // Select specific fields
+    const user = await User.findById(userId); // Select specific fields, including owner_request_owner_status
 
     if (!user) {
       console.error(`getProfile handler: User not found with ID: ${userId}`);
@@ -47,6 +45,7 @@ exports.getProfile = async (req, res) => {
         driver_license_front_url: user.driver_license_front_url,
         driver_license_back_url: user.driver_license_back_url,
         created_at: user.created_at,
+        owner_request_status : user.owner_request_status
       },
     });
   } catch (error) {

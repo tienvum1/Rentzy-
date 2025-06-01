@@ -662,3 +662,51 @@ exports.getVehicleById = async (req, res) => {
     }
 };
 
+// @desc    Admin reviews a vehicle approval request
+// @route   PUT /api/admin/vehicles/review/:vehicleId
+// @access  Private/Admin
+exports.reviewVehicleApproval = async (req, res) => {
+    console.log('Review Vehicle Approval Request:', req.params.vehicleId, req.body);
+
+    const { vehicleId } = req.params;
+    const { status, rejectionReason } = req.body; // status should be 'approved' or 'rejected'
+
+    // Basic validation for status
+    if (!['approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ message: 'Invalid status provided.' });
+    }
+
+    try {
+        const vehicle = await Vehicle.findById(vehicleId);
+
+        if (!vehicle) {
+            return res.status(404).json({ message: 'Vehicle not found.' });
+        }
+
+        // Optional: Prevent reviewing vehicles that are not pending (depends on desired workflow)
+        // if (vehicle.approvalStatus !== 'pending') {
+        //     return res.status(400).json({ message: 'Vehicle is not pending approval.' });
+        // }
+
+        // Update the approval status
+        vehicle.approvalStatus = status;
+
+        // Store rejection reason if status is rejected
+        if (status === 'rejected') {
+            vehicle.rejectionReason = rejectionReason || null; // Store reason, allow null if none provided
+        } else {
+             vehicle.rejectionReason = null; // Clear rejection reason if approved
+        }
+
+        await vehicle.save();
+
+        // TODO: Optionally notify the owner about the approval/rejection
+
+        res.status(200).json({ message: `Vehicle ${vehicleId} has been ${status}.` });
+
+    } catch (error) {
+        console.error('Error reviewing vehicle approval:', error);
+        res.status(500).json({ message: 'Failed to review vehicle approval.', error: error.message });
+    }
+};
+

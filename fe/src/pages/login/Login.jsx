@@ -49,7 +49,7 @@ const Login = () => {
       console.log(userRole);
       let redirectPath = '/homepage';
       if (userRole == 'owner') redirectPath = '/ownerpage';
-      else if (userRole ==='admin') redirectPath = '/adminHomepage';
+      else if (userRole =='admin') redirectPath = '/adminDashboard';
 
       // Delay một chút để hiển thị thông báo
       setTimeout(() => navigate(redirectPath), 1000);

@@ -60,7 +60,10 @@ const Header = () => {
         <Link to="/contact" className="header__link">Contact</Link>
       </nav>
       <div className="header__actions">
-        {isAuthenticated && user && user.role !== 'owner' && (
+        {isAuthenticated && user && (
+            // Check if user is NOT an approved owner to show the consign button
+            !user.role.includes('owner') || (user.role.includes('owner') && user.owner_request_owner_status !== 'approved')
+        ) && (
           <button
             className="header__consign-btn"
             onClick={() => navigate('/consignForm')}

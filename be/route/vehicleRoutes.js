@@ -39,4 +39,7 @@ router.delete('/:id', vehicleController.deleteVehicle);
 // Add route to update a vehicle
 router.put('/:id', upload.none(), vehicleController.updateVehicle);
 
+// Add route for Admin to review vehicle approval
+router.put('/admin/vehicles/review/:vehicleId', protect, adminOnly, vehicleController.reviewVehicleApproval);
+
 module.exports = router; 

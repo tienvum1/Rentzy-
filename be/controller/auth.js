@@ -9,7 +9,7 @@ dotenv.config();
 // Helper function to generate JWT token and set cookie
 const generateTokenAndSetCookie = (user, res) => {
   const token = jwt.sign(
-    { user_id: user._id, role: user.role },
+    { user_id: user._id, role: user.role ,owner_request_status :  user.owner_request_status},
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
