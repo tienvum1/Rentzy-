@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import './AddCarForm.css';
 
 const AddCarForm = ({ onCancel, onSubmit }) => {
-<<<<<<< HEAD
   const [formData, setFormData] = useState({
     brand: '',
     model: '',
@@ -25,53 +24,7 @@ const AddCarForm = ({ onCancel, onSubmit }) => {
   const [mainImagePreview, setMainImagePreview] = useState(null);
   const [additionalImagesPreviews, setAdditionalImagesPreviews] = useState([]);
   const [errors, setErrors] = useState({});
-=======
-    const [formData, setFormData] = useState({
-        brand: '',
-        model: '',
-        license_plate: '',
-        location: '',
-        is_available: true, // Default to true
-        price_per_day: 0, // Store as number
-        deposit_required: 0, // Store as number
-        terms: '',
-        seats: '',
-        body_type: '',
-        transmission: '',
-        fuel_type: '',
-        images: [], // To store selected image files
-    });
-    
-     const [imagePreviews, setImagePreviews] = useState([]); // State to store image previews
 
-    // State for formatted number inputs
-    const [formattedPrice, setFormattedPrice] = useState('');
-    const [formattedDeposit, setFormattedDeposit] = useState('');
-
-    // Helper function to format number with commas
-    const formatNumber = (num) => {
-        if (num === null || num === undefined) return '';
-        // Ensure num is a number before formatting
-        const number = typeof num === 'string' ? parseFloat(num.replace(/,/g, '')) : num;
-        if (isNaN(number)) return '';
-
-        return number.toLocaleString('en-US'); // Use locale to handle comma separation
-    };
-
-    // Helper function to parse formatted number string to raw number
-    const parseNumber = (str) => {
-        if (!str) return 0;
-        const cleanedString = str.replace(/,/g, ''); // Remove commas
-        const number = parseFloat(cleanedString);
-        return isNaN(number) ? 0 : number;
-    };
-
-    const handleChange = (e) => {
-        const { name, value, type, checked, files } = e.target;
-        if (name === 'images') {
-            const selectedFiles = Array.from(files);
-            setFormData({ ...formData, images: selectedFiles });
->>>>>>> 61a2614aae4347fc466ff87e4478813dfec83ba4
 
   const additionalImagesInputRef = useRef(null);
 
@@ -164,70 +117,11 @@ const AddCarForm = ({ onCancel, onSubmit }) => {
     });
   };
 
-<<<<<<< HEAD
   // Tạo preview cho các ảnh thêm
   useEffect(() => {
     // Giải phóng URL của ảnh cũ để tránh rò rỉ bộ nhớ
     additionalImagesPreviews.forEach((url) => URL.revokeObjectURL(url));
-=======
-    return (
-        <div className="add-vehicle-form">
-            <h2>Add New Car</h2>
-            <form onSubmit={handleSubmit}>
-                {/* Vehicle Common Fields */}
-                <div className="form-group">
-                    <label>Brand:</label>
-                    <input type="text" name="brand" value={formData.brand} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                    <label>Model:</label>
-                    <input type="text" name="model" value={formData.model} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                    <label>License Plate:</label>
-                    <input type="text" name="license_plate" value={formData.license_plate} onChange={handleChange} required />
-                </div>
-                 <div className="form-group">
-                    <label>Location:</label>
-                    <input type="text" name="location" value={formData.location} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                    <label>Price per Day:</label>
-                    <input 
-                        type="text" // Use type text to allow commas
-                        name="price_per_day" 
-                        value={formattedPrice} 
-                        onChange={(e) => {
-                             const rawValue = parseNumber(e.target.value);
-                             setFormData({ ...formData, price_per_day: rawValue });
-                             setFormattedPrice(formatNumber(rawValue));
-                        }}
-                        required 
-                    />
-                </div>
-                 <div className="form-group">
-                    <label>Deposit Required:</label>
-                     <input 
-                        type="text" // Use type text to allow commas
-                        name="deposit_required" 
-                        value={formattedDeposit} 
-                        onChange={(e) => {
-                             const rawValue = parseNumber(e.target.value);
-                             setFormData({ ...formData, deposit_required: rawValue });
-                             setFormattedDeposit(formatNumber(rawValue));
-                        }}
-                        required 
-                    />
-                </div>
-                 <div className="form-group">
-                    <label>Terms:</label>
-                    <textarea name="terms" value={formData.terms} onChange={handleChange}></textarea>
-                </div>
-                 <div className="form-group">
-                    <label>Available:</label>
-                    <input type="checkbox" name="is_available" checked={formData.is_available} onChange={handleChange} />
-                </div>
->>>>>>> 61a2614aae4347fc466ff87e4478813dfec83ba4
+
 
     const newPreviews = formData.additional_images.map((file) =>
       URL.createObjectURL(file)
