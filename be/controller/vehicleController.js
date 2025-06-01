@@ -154,7 +154,6 @@ exports.addVehicle = async (req, res) => {
     }
 };
 
-<<<<<<< HEAD
 // Add new function to get vehicles owned by the authenticated user
 exports.getOwnerVehicles = async (req, res) => {
     console.log('Request User for getOwnerVehicles:', req.user);
@@ -231,586 +230,6 @@ exports.getOwnerVehicles = async (req, res) => {
         ]);
 
         res.status(200).json({ count: ownerVehicles.length, vehicles: ownerVehicles });
-=======
-// Add function to delete a vehicle and associated data
-exports.deleteVehicle = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        // Find the vehicle to get its type before deletion
-        const vehicleToDelete = await Vehicle.findById(id);
-
-        if (!vehicleToDelete) {
-            return res.status(404).json({ message: 'Vehicle not found.' });
-        }
-
-        // Delete the main vehicle entry
-        await Vehicle.findByIdAndDelete(id);
-
-        // Delete associated specific details (Car or Motorbike)
-        if (vehicleToDelete.type === 'car') {
-            await Car.deleteOne({ vehicle_id: id });
-        } else if (vehicleToDelete.type === 'motorbike') {
-            await Motorbike.deleteOne({ vehicle_id: id });
-        }
-
-        // Delete associated images
-        await VehicleImage.deleteMany({ vehicle_id: id });
-
-        res.status(200).json({ message: 'Vehicle deleted successfully!' });
-
-    } catch (error) {
-        console.error('Error deleting vehicle:', error);
-        res.status(500).json({ message: 'Failed to delete vehicle.', error: error.message });
-    }
-};
-
-// Add function to update a vehicle and associated data
-exports.updateVehicle = async (req, res) => {
-    console.log('Update Request Body:', req.body);
-     const { id } = req.params;
-    const { 
-        brand,
-        model,
-        license_plate,
-        location,
-        is_available,
-        price_per_day,
-        deposit_required,
-        terms,
-        type, // Make sure type is sent in the body for specific updates
-        ...specificData
-    } = req.body;
-
-    try {
-        // Update the general Vehicle entry
-        const updatedVehicle = await Vehicle.findByIdAndUpdate(id, {
-            brand,
-            model,
-            license_plate,
-            location,
-            is_available,
-            price_per_day,
-            deposit_required,
-            terms,
-            // Do not update type here as it defines the specific model
-        }, { new: true }); // { new: true } returns the updated document
-
-        if (!updatedVehicle) {
-            return res.status(404).json({ message: 'Vehicle not found.' });
-        }
-
-        // Update associated specific details (Car or Motorbike)
-        if (updatedVehicle.type === 'car') {
-            // Find the existing Car document by vehicle_id and update it
-             const updatedCarDetails = await Car.findOneAndUpdate({ vehicle_id: id }, {
-                seats: specificData.seats,
-                body_type: specificData.body_type,
-                transmission: specificData.transmission,
-                fuel_type: specificData.fuel_type,
-             }, { new: true });
-
-        } else if (updatedVehicle.type === 'motorbike') {
-            // Find the existing Motorbike document by vehicle_id and update it
-            const updatedMotorbikeDetails = await Motorbike.findOneAndUpdate({ vehicle_id: id }, {
-                engine_capacity: specificData.engine_capacity,
-                has_gear: specificData.has_gear
-            }, { new: true });
-        }
-
-        // Note: Handling image updates here would require more logic (e.g., deleting old, uploading new)
-        // For simplicity, we are not handling image updates in this basic implementation.
-
-        res.status(200).json({ message: 'Vehicle updated successfully!', vehicle: updatedVehicle });
-
-    } catch (error) {
-        console.error('Error updating vehicle:', error);
-        res.status(500).json({ message: 'Failed to update vehicle.', error: error.message });
-    }
-};
-
-// You would need to rewrite other controller functions (e.g., get vehicles, get single vehicle, update, delete)
-// to use Mongoose methods (find, findById, findOneAndUpdate, deleteOne, populate, aggregate, etc.)
-// based on your specific needs for each route.
-// Example for getting vehicles (basic):
-
-exports.getVehicles = async (req, res) => {
-    try {
-        const vehicles = await Vehicle.aggregate([
-            {
-                $lookup: {
-                    from: 'cars', // The collection name for Car model
-                    let: { vehicleId: '$_id' }, // Define a variable for the local field
-                    pipeline: [
-                        { $match: { $expr: { $or: [ { $eq: ['$vehicle_id', '$$vehicleId'] }, { $eq: [{ $toString: '$vehicle_id' }, { $toString: '$$vehicleId' }] } ] } } }
-                    ],
-                    as: 'carDetails'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'motorbikes', // The collection name for Motorbike model
-                    let: { vehicleId: '$_id' }, // Define a variable for the local field
-                    pipeline: [
-                        { $match: { $expr: { $or: [ { $eq: ['$vehicle_id', '$$vehicleId'] }, { $eq: [{ $toString: '$vehicle_id' }, { $toString: '$$vehicleId' }] } ] } } }
-                    ],
-                    as: 'motorbikeDetails'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'vehicleimages', // The collection name for VehicleImage model
-                    localField: '_id',
-                    foreignField: 'vehicle_id',
-                    as: 'images'
-                }
-            },
-             {
-                $lookup: {
-                    from: 'users', // The collection name for User model
-                    localField: 'owner_id',
-                    foreignField: '_id',
-                    as: 'owner'
-                }
-            },
-            {
-                $addFields: {
-                    // Flatten the arrays from lookups
-                    carDetails: { $arrayElemAt: ['$carDetails', 0] },
-                    motorbikeDetails: { $arrayElemAt: ['$motorbikeDetails', 0] },
-                    owner: { $arrayElemAt: ['$owner', 0] }
-                }
-            },
-            {
-                $project: {
-                    // Exclude fields you don't need or restructure
-                    // _id: 0, // Exclude the main vehicle _id if not needed
-                    // owner_id: 0, // Exclude owner_id if owner object is sufficient
-                    // You can explicitly include all fields you want like this:
-                    _id: 1,
-                    owner_id: 1,
-                    brand: 1,
-                    model: 1,
-                    type: 1,
-                    license_plate: 1,
-                    location: 1,
-                    is_available: 1,
-                    price_per_day: 1,
-                    deposit_required: 1,
-                    terms: 1,
-                    created_at: 1,
-                    images: 1,
-                    owner: { 
-                         _id: 1, // Include specific owner fields you need
-                         name: 1,
-                         email: 1,
-                         avatar_url: 1
-                    }, // Select fields from the owner object
-                    // Include all fields from carDetails and motorbikeDetails
-                    'carDetails.seats': 1,
-                    'carDetails.body_type': 1,
-                    'carDetails.transmission': 1,
-                    'carDetails.fuel_type': 1,
-                    'motorbikeDetails.engine_capacity': 1,
-                    'motorbikeDetails.has_gear': 1,
-                }
-            }
-        ]);
-
-        res.status(200).json({ count: vehicles.length, vehicles });
-    } catch (error) {
-        console.error('Error getting vehicles:', error);
-        res.status(500).json({ message: 'Failed to fetch vehicles.', error: error.message });
-    }
-};
-
-// Add function to get a single vehicle by ID
-exports.getVehicleById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        // Find vehicle by _id and populate related data
-        const vehicle = await Vehicle.aggregate([
-             { $match: { _id: new mongoose.Types.ObjectId(id) } }, // Match by Vehicle _id
-            {
-                $lookup: {
-                    from: 'cars', // The collection name for Car model
-                    let: { vehicleId: '_id' }, // Define a variable for the local field
-                    pipeline: [
-                        { $match: { $expr: { $or: [ { $eq: ['$vehicle_id', '$$vehicleId'] }, { $eq: [{ $toString: '$vehicle_id' }, { $toString: '$$vehicleId' }] } ] } } }
-                    ],
-                    as: 'carDetails'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'motorbikes', // The collection name for Motorbike model
-                    let: { vehicleId: '_id' }, // Define a variable for the local field
-                    pipeline: [
-                        { $match: { $expr: { $or: [ { $eq: ['$vehicle_id', '$$vehicleId'] }, { $eq: [{ $toString: '$vehicle_id' }, { $toString: '$$vehicleId' }] } ] } } }
-                    ],
-                    as: 'motorbikeDetails'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'vehicleimages', // The collection name for VehicleImage model
-                    localField: '_id',
-                    foreignField: 'vehicle_id',
-                    as: 'images'
-                }
-            },
-             {
-                $lookup: {
-                    from: 'users', // The collection name for User model
-                    localField: 'owner_id',
-                    foreignField: '_id',
-                    as: 'owner'
-                }
-            },
-            {
-                $addFields: {
-                    // Flatten the arrays from lookups
-                    carDetails: { $arrayElemAt: ['$carDetails', 0] },
-                    motorbikeDetails: { $arrayElemAt: ['$motorbikeDetails', 0] },
-                    owner: { $arrayElemAt: ['$owner', 0] }
-                }
-            },
-            {
-                $project: {
-                    // Include all necessary fields, similar to getVehicles but for a single item
-                     _id: 1,
-                    owner_id: 1,
-                    brand: 1,
-                    model: 1,
-                    type: 1,
-                    license_plate: 1,
-                    location: 1,
-                    is_available: 1,
-                    price_per_day: 1,
-                    deposit_required: 1,
-                    terms: 1,
-                    created_at: 1,
-                    images: 1,
-                    owner: { 
-                         _id: 1, // Include specific owner fields you need
-                         name: 1,
-                         email: 1,
-                         avatar_url: 1
-                    } // Select fields from the owner object
-                }
-            }
-        ]);
-
-        // Since aggregate returns an array, get the first element
-        const vehicleData = vehicle.length > 0 ? vehicle[0] : null;
-
-        if (!vehicleData) {
-            return res.status(404).json({ message: 'Vehicle not found.' });
-        }
-
-        res.status(200).json({ vehicle: vehicleData });
-
-    } catch (error) {
-        console.error('Error getting vehicle by ID:', error);
-        res.status(500).json({ message: 'Failed to fetch vehicle details.', error: error.message });
-    }
-};
-
-// Add function to delete a vehicle and associated data
-exports.deleteVehicle = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        // Find the vehicle to get its type before deletion
-        const vehicleToDelete = await Vehicle.findById(id);
-
-        if (!vehicleToDelete) {
-            return res.status(404).json({ message: 'Vehicle not found.' });
-        }
-
-        // Delete the main vehicle entry
-        await Vehicle.findByIdAndDelete(id);
-
-        // Delete associated specific details (Car or Motorbike)
-        if (vehicleToDelete.type === 'car') {
-            await Car.deleteOne({ vehicle_id: id });
-        } else if (vehicleToDelete.type === 'motorbike') {
-            await Motorbike.deleteOne({ vehicle_id: id });
-        }
-
-        // Delete associated images
-        await VehicleImage.deleteMany({ vehicle_id: id });
-
-        res.status(200).json({ message: 'Vehicle deleted successfully!' });
-
-    } catch (error) {
-        console.error('Error deleting vehicle:', error);
-        res.status(500).json({ message: 'Failed to delete vehicle.', error: error.message });
-    }
-};
-
-// Add function to update a vehicle and associated data
-exports.updateVehicle = async (req, res) => {
-    console.log('Update Request Body:', req.body);
-     const { id } = req.params;
-    const { 
-        brand,
-        model,
-        license_plate,
-        location,
-        is_available,
-        price_per_day,
-        deposit_required,
-        terms,
-        type, // Make sure type is sent in the body for specific updates
-        ...specificData
-    } = req.body;
-
-    try {
-        // Update the general Vehicle entry
-        const updatedVehicle = await Vehicle.findByIdAndUpdate(id, {
-            brand,
-            model,
-            license_plate,
-            location,
-            is_available,
-            price_per_day,
-            deposit_required,
-            terms,
-            // Do not update type here as it defines the specific model
-        }, { new: true }); // { new: true } returns the updated document
-
-        if (!updatedVehicle) {
-            return res.status(404).json({ message: 'Vehicle not found.' });
-        }
-
-        // Update associated specific details (Car or Motorbike)
-        if (updatedVehicle.type === 'car') {
-            // Find the existing Car document by vehicle_id and update it
-             const updatedCarDetails = await Car.findOneAndUpdate({ vehicle_id: id }, {
-                seats: specificData.seats,
-                body_type: specificData.body_type,
-                transmission: specificData.transmission,
-                fuel_type: specificData.fuel_type,
-             }, { new: true });
-
-        } else if (updatedVehicle.type === 'motorbike') {
-            // Find the existing Motorbike document by vehicle_id and update it
-            const updatedMotorbikeDetails = await Motorbike.findOneAndUpdate({ vehicle_id: id }, {
-                engine_capacity: specificData.engine_capacity,
-                has_gear: specificData.has_gear
-            }, { new: true });
-        }
-
-        // Note: Handling image updates here would require more logic (e.g., deleting old, uploading new)
-        // For simplicity, we are not handling image updates in this basic implementation.
-
-        res.status(200).json({ message: 'Vehicle updated successfully!', vehicle: updatedVehicle });
-
-    } catch (error) {
-        console.error('Error updating vehicle:', error);
-        res.status(500).json({ message: 'Failed to update vehicle.', error: error.message });
-    }
-};
-
-// You would need to rewrite other controller functions (e.g., get vehicles, get single vehicle, update, delete)
-// to use Mongoose methods (find, findById, findOneAndUpdate, deleteOne, populate, aggregate, etc.)
-// based on your specific needs for each route.
-// Example for getting vehicles (basic):
-
-exports.getVehicles = async (req, res) => {
-    try {
-        const vehicles = await Vehicle.aggregate([
-            {
-                $lookup: {
-                    from: 'cars', // The collection name for Car model
-                    let: { vehicleId: '$_id' }, // Define a variable for the local field
-                    pipeline: [
-                        { $match: { $expr: { $or: [ { $eq: ['$vehicle_id', '$$vehicleId'] }, { $eq: [{ $toString: '$vehicle_id' }, { $toString: '$$vehicleId' }] } ] } } }
-                    ],
-                    as: 'carDetails'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'motorbikes', // The collection name for Motorbike model
-                    let: { vehicleId: '$_id' }, // Define a variable for the local field
-                    pipeline: [
-                        { $match: { $expr: { $or: [ { $eq: ['$vehicle_id', '$$vehicleId'] }, { $eq: [{ $toString: '$vehicle_id' }, { $toString: '$$vehicleId' }] } ] } } }
-                    ],
-                    as: 'motorbikeDetails'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'vehicleimages', // The collection name for VehicleImage model
-                    localField: '_id',
-                    foreignField: 'vehicle_id',
-                    as: 'images'
-                }
-            },
-             {
-                $lookup: {
-                    from: 'users', // The collection name for User model
-                    localField: 'owner_id',
-                    foreignField: '_id',
-                    as: 'owner'
-                }
-            },
-            {
-                $addFields: {
-                    // Flatten the arrays from lookups
-                    carDetails: { $arrayElemAt: ['$carDetails', 0] },
-                    motorbikeDetails: { $arrayElemAt: ['$motorbikeDetails', 0] },
-                    owner: { $arrayElemAt: ['$owner', 0] }
-                }
-            },
-            {
-                $project: {
-                    // Exclude fields you don't need or restructure
-                    // _id: 0, // Exclude the main vehicle _id if not needed
-                    // owner_id: 0, // Exclude owner_id if owner object is sufficient
-                    // You can explicitly include all fields you want like this:
-                    _id: 1,
-                    owner_id: 1,
-                    brand: 1,
-                    model: 1,
-                    type: 1,
-                    license_plate: 1,
-                    location: 1,
-                    is_available: 1,
-                    price_per_day: 1,
-                    deposit_required: 1,
-                    terms: 1,
-                    created_at: 1,
-                    images: 1,
-                    owner: { 
-                         _id: 1, // Include specific owner fields you need
-                         name: 1,
-                         email: 1,
-                         avatar_url: 1
-                    }, // Select fields from the owner object
-                    // Include all fields from carDetails and motorbikeDetails
-                    'carDetails.seats': 1,
-                    'carDetails.body_type': 1,
-                    'carDetails.transmission': 1,
-                    'carDetails.fuel_type': 1,
-                    'motorbikeDetails.engine_capacity': 1,
-                    'motorbikeDetails.has_gear': 1,
-                }
-            }
-        ]);
-
-        res.status(200).json({ count: vehicles.length, vehicles });
-    } catch (error) {
-        console.error('Error getting vehicles:', error);
-        res.status(500).json({ message: 'Failed to fetch vehicles.', error: error.message });
-    }
-};
-
-// Add function to get a single vehicle by ID
-exports.getVehicleById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        // Find vehicle by _id and populate related data
-        const vehicle = await Vehicle.aggregate([
-             { $match: { _id: new mongoose.Types.ObjectId(id) } }, // Match by Vehicle _id
-            {
-                $lookup: {
-                    from: 'cars', // The collection name for Car model
-                    let: { vehicleId: '_id' }, // Define a variable for the local field
-                    pipeline: [
-                        { $match: { $expr: { $or: [ { $eq: ['$vehicle_id', '$$vehicleId'] }, { $eq: [{ $toString: '$vehicle_id' }, { $toString: '$$vehicleId' }] } ] } } }
-                    ],
-                    as: 'carDetails'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'motorbikes', // The collection name for Motorbike model
-                    let: { vehicleId: '_id' }, // Define a variable for the local field
-                    pipeline: [
-                        { $match: { $expr: { $or: [ { $eq: ['$vehicle_id', '$$vehicleId'] }, { $eq: [{ $toString: '$vehicle_id' }, { $toString: '$$vehicleId' }] } ] } } }
-                    ],
-                    as: 'motorbikeDetails'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'vehicleimages', // The collection name for VehicleImage model
-                    localField: '_id',
-                    foreignField: 'vehicle_id',
-                    as: 'images'
-                }
-            },
-             {
-                $lookup: {
-                    from: 'users', // The collection name for User model
-                    localField: 'owner_id',
-                    foreignField: '_id',
-                    as: 'owner'
-                }
-            },
-            {
-                $addFields: {
-                    // Flatten the arrays from lookups
-                    carDetails: { $arrayElemAt: ['$carDetails', 0] },
-                    motorbikeDetails: { $arrayElemAt: ['$motorbikeDetails', 0] },
-                    owner: { $arrayElemAt: ['$owner', 0] }
-                }
-            },
-            {
-                $project: {
-                    // Include all necessary fields, similar to getVehicles but for a single item
-                     _id: 1,
-                    owner_id: 1,
-                    brand: 1,
-                    model: 1,
-                    type: 1,
-                    license_plate: 1,
-                    location: 1,
-                    is_available: 1,
-                    price_per_day: 1,
-                    deposit_required: 1,
-                    terms: 1,
-                    created_at: 1,
-                    images: 1,
-                    owner: { 
-                         _id: 1, // Include specific owner fields you need
-                         name: 1,
-                         email: 1,
-                         avatar_url: 1
-                    } // Select fields from the owner object
-                }
-            }
-        ]);
-
-        // Since aggregate returns an array, get the first element
-        const vehicleData = vehicle.length > 0 ? vehicle[0] : null;
-
-        if (!vehicleData) {
-            return res.status(404).json({ message: 'Vehicle not found.' });
-        }
-
-        res.status(200).json({ vehicle: vehicleData });
-
-    } catch (error) {
-        console.error('Error getting vehicle by ID:', error);
-        res.status(500).json({ message: 'Failed to fetch vehicle details.', error: error.message });
-    }
-};
-
-// You would need to rewrite other controller functions (e.g., get vehicles, get single vehicle, update, delete) 
-// to use Mongoose methods (find, findById, findOneAndUpdate, deleteOne, populate, aggregate, etc.)
-// based on your specific needs for each route.
-// Example for getting vehicles (basic):
-/*
-exports.getVehicles = async (req, res) => {
-    try {
-        // Basic find, populate owner, potentially filter/sort based on query params
-        const vehicles = await Vehicle.find({}).populate('owner_id', 'name email avatar_url'); // Populate owner details
-        // You might need to join with Car/Motorbike/VehicleImage using aggregation or separate queries
->>>>>>> 61a2614aae4347fc466ff87e4478813dfec83ba4
 
     } catch (error) {
         console.error('Error getting owner vehicles:', error);
@@ -912,5 +331,334 @@ exports.getPendingVehicleApprovalsForAdmin = async (req, res) => {
     }
 };
 
-// Example functions (getVehicles, getVehicleById) are commented out but provided
-// ... rest of the file ...
+// Add function to delete a vehicle and associated data
+exports.deleteVehicle = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find the vehicle to get its type before deletion
+        const vehicleToDelete = await Vehicle.findById(id);
+
+        if (!vehicleToDelete) {
+            return res.status(404).json({ message: 'Vehicle not found.' });
+        }
+
+        // Delete the main vehicle entry
+        await Vehicle.findByIdAndDelete(id);
+
+        // Delete associated specific details (Car or Motorbike)
+        if (vehicleToDelete.type === 'car') {
+            await Car.deleteOne({ vehicle: id }); // Corrected foreignField to 'vehicle'
+        } else if (vehicleToDelete.type === 'motorbike') {
+            await Motorbike.deleteOne({ vehicle: id }); // Corrected foreignField to 'vehicle'
+        }
+
+        // Note: Images are now stored directly on the Vehicle model (primaryImage, gallery),
+        // so explicit deletion of VehicleImage model entries might not be needed if that model is deprecated.
+        // If VehicleImage is still used for other purposes or relationships, keep the line below.
+        // await VehicleImage.deleteMany({ vehicle_id: id });
+
+        res.status(200).json({ message: 'Vehicle deleted successfully!' });
+
+    } catch (error) {
+        console.error('Error deleting vehicle:', error);
+        res.status(500).json({ message: 'Failed to delete vehicle.', error: error.message });
+    }
+};
+
+// Add function to update a vehicle and associated data
+exports.updateVehicle = async (req, res) => {
+    console.log('Update Request Body:', req.body);
+    const { id } = req.params;
+    const {
+        brand,
+        model,
+        licensePlate, // Corrected field name to match schema
+        location,
+        isAvailable, // Corrected field name to match schema
+        pricePerDay, // Corrected field name to match schema
+        deposit, // Corrected field name to match schema
+        fuelConsumption, // Corrected field name to match schema
+        features, // Corrected field name to match schema
+        rentalPolicy, // Corrected field name to match schema
+        type, // Make sure type is sent in the body for specific updates
+        // Image updates (primaryImage, gallery) would need separate handling
+        ...specificData // Data for Car or Motorbike
+    } = req.body;
+
+    try {
+        // Find the vehicle to check its type before updating specific details
+        const vehicleToUpdate = await Vehicle.findById(id);
+
+        if (!vehicleToUpdate) {
+            return res.status(404).json({ message: 'Vehicle not found.' });
+        }
+
+        // Prepare updates for the general Vehicle entry
+        const vehicleUpdates = {
+            brand,
+            model,
+            licensePlate,
+            location,
+            isAvailable,
+            pricePerDay: parseFloat(pricePerDay), // Ensure price is a number
+            deposit: parseFloat(deposit), // Ensure deposit is a number
+            fuelConsumption: fuelConsumption ? parseFloat(fuelConsumption) : undefined, // Optional field
+            features,
+            rentalPolicy: Array.isArray(rentalPolicy) ? rentalPolicy.join('\n') : rentalPolicy, // Handle potential array/string input
+            // Do not update type here as it defines the specific model
+            // Image updates would go here if handled in this function
+        };
+
+        // Update the general Vehicle entry
+        const updatedVehicle = await Vehicle.findByIdAndUpdate(id, vehicleUpdates, { new: true });
+
+        // Update associated specific details (Car or Motorbike) based on the vehicle's type
+        if (vehicleToUpdate.type === 'car' && type === 'car') { // Ensure type in body matches existing type
+            // Find the existing Car document by vehicle and update it
+             const updatedCarDetails = await Car.findOneAndUpdate({ vehicle: id }, { // Corrected foreignField to 'vehicle'
+                seatCount: parseInt(specificData.seatCount, 10), // Corrected field name, ensure number
+                bodyType: specificData.bodyType, // Corrected field name
+                transmission: specificData.transmission ? specificData.transmission.toLowerCase() : undefined, // Corrected field name, ensure lowercase
+                fuelType: specificData.fuelType ? specificData.fuelType.toLowerCase() : undefined, // Corrected field name, ensure lowercase
+             }, { new: true, upsert: true }); // Use upsert: true in case specific details weren't created initially
+
+        } else if (vehicleToUpdate.type === 'motorbike' && type === 'motorbike') { // Ensure type in body matches existing type
+            // Find the existing Motorbike document by vehicle and update it
+            const updatedMotorbikeDetails = await Motorbike.findOneAndUpdate({ vehicle: id }, { // Corrected foreignField to 'vehicle'
+                engineCapacity: specificData.engineCapacity ? parseFloat(specificData.engineCapacity) : undefined, // Corrected field name, ensure number
+                hasGear: specificData.hasGear, // Corrected field name
+            }, { new: true, upsert: true }); // Use upsert: true
+        }
+        // Note: If the vehicle type changes during an update, additional logic would be needed
+        // to delete the old specific details and create new ones. This implementation assumes
+        // the vehicle type remains constant during an update.
+
+        res.status(200).json({ message: 'Vehicle updated successfully!', vehicle: updatedVehicle });
+
+    } catch (error) {
+        console.error('Error updating vehicle:', error);
+
+        if (error.code === 11000 && error.keyPattern && error.keyPattern.licensePlate) {
+             return res.status(400).json({ message: 'License plate already exists.', field: 'licensePlate' });
+        }
+
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({ message: messages.join(', ') });
+        }
+
+        res.status(500).json({ message: 'Failed to update vehicle.', error: error.message });
+    }
+};
+
+// Add function to get all vehicles (potentially with filters/pagination in req.query)
+exports.getVehicles = async (req, res) => {
+    try {
+        // Basic find, populate owner, potentially filter/sort based on query params
+        // The aggregation pipeline below provides comprehensive joining with Car/Motorbike/Owner/Images
+        const vehicles = await Vehicle.aggregate([
+             {
+                $lookup: {
+                    from: 'cars', // The collection name for Car model
+                    let: { vehicleId: '$_id' }, // Define a variable for the local field
+                    pipeline: [
+                         { $match: { $expr: { $eq: ['$vehicle', '$$vehicleId'] } } } // Match car by vehicle ID
+                    ],
+                    as: 'carDetails'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'motorbikes', // The collection name for Motorbike model
+                    let: { vehicleId: '$_id' }, // Define a variable for the local field
+                    pipeline: [
+                         { $match: { $expr: { $eq: ['$vehicle', '$$vehicleId'] } } } // Match motorbike by vehicle ID
+                    ],
+                    as: 'motorbikeDetails'
+                }
+            },
+            // Note: VehicleImage model might be deprecated based on comments,
+            // using primaryImage and gallery arrays on Vehicle model instead.
+            // If VehicleImage is still needed, uncomment and adjust the lookup below.
+            /*
+            {
+                $lookup: {
+                    from: 'vehicleimages', // The collection name for VehicleImage model
+                    localField: '_id',
+                    foreignField: 'vehicle_id',
+                    as: 'images' // This will be an array of image documents
+                }
+            },
+            */
+             {
+                $lookup: {
+                    from: 'users', // The collection name for User model
+                    localField: 'owner', // Corrected localField to 'owner' to match Vehicle schema
+                    foreignField: '_id',
+                    as: 'ownerDetails' // Renamed to avoid conflict with 'owner' field in Vehicle
+                }
+            },
+            {
+                $addFields: {
+                    // Flatten the arrays from lookups
+                    carDetails: { $arrayElemAt: ['$carDetails', 0] },
+                    motorbikeDetails: { $arrayElemAt: ['$motorbikeDetails', 0] },
+                    ownerDetails: { $arrayElemAt: ['$ownerDetails', 0] } // Get the single owner document
+                }
+            },
+            {
+                $project: {
+                    // Exclude fields you don't need or restructure
+                    _id: 1,
+                    owner: '$ownerDetails', // Include the full owner details object
+                    brand: 1,
+                    model: 1,
+                    type: 1,
+                    licensePlate: 1,
+                    location: 1,
+                    isAvailable: 1, // Corrected field name
+                    pricePerDay: 1, // Corrected field name
+                    deposit: 1, // Corrected field name
+                    fuelConsumption: 1, // Corrected field name
+                    features: 1, // Corrected field name
+                    rentalPolicy: 1, // Corrected field name
+                    primaryImage: 1, // Include primary image URL
+                    gallery: 1, // Include gallery image URLs
+                    approvalStatus: 1, // Include approval status
+                    status: 1, // Include general vehicle status
+                    createdAt: 1,
+                    updatedAt: 1, // Include update timestamp
+                    // Include all fields from carDetails and motorbikeDetails
+                    'carDetails.seatCount': 1, // Corrected field name
+                    'carDetails.bodyType': 1, // Corrected field name
+                    'carDetails.transmission': 1,
+                    'carDetails.fuelType': 1, // Corrected field name
+                    'motorbikeDetails.engineCapacity': 1, // Corrected field name
+                    'motorbikeDetails.hasGear': 1, // Corrected field name
+                     // If using VehicleImage, include 'images' here:
+                     // images: 1,
+                }
+            },
+             // Add optional stages for filtering, sorting, pagination based on req.query
+             // Example filtering:
+             // { $match: { type: req.query.type } }
+             // Example sorting:
+             // { $sort: { pricePerDay: parseInt(req.query.sortByPrice) } }
+             // Example pagination:
+             // { $skip: parseInt(req.query.skip) }, { $limit: parseInt(req.query.limit) }
+        ]);
+
+        res.status(200).json({ count: vehicles.length, vehicles });
+    } catch (error) {
+        console.error('Error getting vehicles:', error);
+        res.status(500).json({ message: 'Failed to fetch vehicles.', error: error.message });
+    }
+};
+
+// Add function to get a single vehicle by ID
+exports.getVehicleById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Find vehicle by _id and populate related data using aggregation
+        const vehicle = await Vehicle.aggregate([
+             { $match: { _id: new mongoose.Types.ObjectId(id) } }, // Match by Vehicle _id
+            {
+                $lookup: {
+                    from: 'cars', // The collection name for Car model
+                    let: { vehicleId: '$_id' }, // Define a variable for the local field
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$vehicle', '$$vehicleId'] } } } // Match car by vehicle ID
+                    ],
+                    as: 'carDetails'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'motorbikes', // The collection name for Motorbike model
+                    let: { vehicleId: '$_id' }, // Define a variable for the local field
+                    pipeline: [
+                         { $match: { $expr: { $eq: ['$vehicle', '$$vehicleId'] } } } // Match motorbike by vehicle ID
+                    ],
+                    as: 'motorbikeDetails'
+                }
+            },
+            // Note: VehicleImage model might be deprecated based on comments,
+            // using primaryImage and gallery arrays on Vehicle model instead.
+            // If VehicleImage is still needed, uncomment and adjust the lookup below.
+            /*
+            {
+                $lookup: {
+                    from: 'vehicleimages', // The collection name for VehicleImage model
+                    localField: '_id',
+                    foreignField: 'vehicle_id',
+                    as: 'images' // This will be an array of image documents
+                }
+            },
+            */
+             {
+                $lookup: {
+                    from: 'users', // The collection name for User model
+                    localField: 'owner', // Corrected localField to 'owner' to match Vehicle schema
+                    foreignField: '_id',
+                    as: 'ownerDetails' // Renamed to avoid conflict with 'owner' field in Vehicle
+                }
+            },
+             {
+                $addFields: {
+                    // Flatten the arrays from lookups
+                    carDetails: { $arrayElemAt: ['$carDetails', 0] },
+                    motorbikeDetails: { $arrayElemAt: ['$motorbikeDetails', 0] },
+                    ownerDetails: { $arrayElemAt: ['$ownerDetails', 0] } // Get the single owner document
+                }
+            },
+            {
+                $project: {
+                    // Include all necessary fields, similar to getVehicles but for a single item
+                     _id: 1,
+                    owner: '$ownerDetails', // Include the full owner details object
+                    brand: 1,
+                    model: 1,
+                    type: 1,
+                    licensePlate: 1,
+                    location: 1,
+                    isAvailable: 1, // Corrected field name
+                    pricePerDay: 1, // Corrected field name
+                    deposit: 1, // Corrected field name
+                    fuelConsumption: 1, // Corrected field name
+                    features: 1, // Corrected field name
+                    rentalPolicy: 1, // Corrected field name
+                    primaryImage: 1, // Include primary image URL
+                    gallery: 1, // Include gallery image URLs
+                    approvalStatus: 1, // Include approval status
+                    status: 1, // Include general vehicle status
+                    createdAt: 1,
+                    updatedAt: 1, // Include update timestamp
+                    // Include all fields from carDetails and motorbikeDetails
+                    'carDetails.seatCount': 1, // Corrected field name
+                    'carDetails.bodyType': 1, // Corrected field name
+                    'carDetails.transmission': 1,
+                    'carDetails.fuelType': 1, // Corrected field name
+                    'motorbikeDetails.engineCapacity': 1, // Corrected field name
+                    'motorbikeDetails.hasGear': 1, // Corrected field name
+                     // If using VehicleImage, include 'images' here:
+                     // images: 1,
+                }
+            }
+        ]);
+
+        // Since aggregate returns an array, get the first element
+        const vehicleData = vehicle.length > 0 ? vehicle[0] : null;
+
+        if (!vehicleData) {
+            return res.status(404).json({ message: 'Vehicle not found.' });
+        }
+
+        res.status(200).json({ vehicle: vehicleData });
+
+    } catch (error) {
+        console.error('Error getting vehicle by ID:', error);
+        res.status(500).json({ message: 'Failed to fetch vehicle details.', error: error.message });
+    }
+};
+
