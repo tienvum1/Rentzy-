@@ -213,6 +213,7 @@ const ConsignForm = () => {
     </div>
     <Footer />
     </>
+
   );
 };
 

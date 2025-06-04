@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema({
 
   avatar_url: String,
 
+
   cccd_number: String,
   cccd_front_url: String,
   cccd_back_url: String,

@@ -22,6 +22,8 @@
   .consign-title {
     color: #4ec9b4;
     font-size: 1.8rem;
+
+
     margin-bottom: 8px;
     font-weight: 700;
   }
@@ -30,8 +32,10 @@
   }
   .consign-desc {
     color: #222;
+
     font-size: 1rem;
     margin-bottom: 24px;
+
   }
   .consign-form {
     display: flex;
@@ -80,6 +84,7 @@
   .consign-form input::placeholder {
     color: #aaa;
     font-size: 1rem;
+
   }
   .income-row {
     display: flex;
@@ -101,7 +106,9 @@
     background: #4ec9b4;
     color: #fff;
     border: none;
+
     padding: 14px 0;
+
     border-radius: 6px;
     font-size: 1.1rem;
     font-weight: 600;
@@ -109,6 +116,7 @@
     margin-top: 24px;
     transition: background 0.2s;
     letter-spacing: 1px;
+
   }
   .btn-submit:hover {
     background: #38b29a;
@@ -117,6 +125,7 @@
     background-color: #ccc;
     cursor: not-allowed;
   }
+
   .form-error {
     color: #e74c3c;
     background: #fff0f0;
@@ -124,6 +133,7 @@
     padding: 6px 10px;
     margin-bottom: 12px;
     font-size: 0.95rem;
+
   }
   .form-success {
     color: #10b981;
@@ -132,6 +142,7 @@
     padding: 8px 10px;
     margin-bottom: 12px;
     font-size: 1rem;
+
     text-align: center;
   }
   .consign-navbar {

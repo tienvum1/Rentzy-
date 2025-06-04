@@ -6,6 +6,7 @@ import './Header.css';
 const Header = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+
   const [showDropdown, setShowDropdown] = useState(false);
   const avatarRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -72,6 +73,7 @@ const Header = () => {
         <Link to="/contact" className="header__link">Contact</Link>
       </nav>
       <div className="header__actions">
+
         {isAuthenticated && user && (
             // Check if user is NOT an approved owner to show the consign button
             !user.role.includes('owner') || (user.role.includes('owner') && user.owner_request_owner_status !== 'approved')

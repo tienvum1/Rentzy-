@@ -9,11 +9,14 @@ const RentalSteps = () => {
         <div className="step">
           <div className="circle">1</div>
           <h4>Chuẩn bị xe và nhận đơn nhẹ nhàng</h4>
+
           <p>Khi xe sẵn sàng cho thuê, Rentzy sẽ thay chủ xe định giá cho thuê và ký hợp đồng cho thuê khi khách đặt xe.</p>
+
         </div>
         <div className="step">
           <div className="circle">2</div>
           <h4>Cho thuê xe nhận nhà</h4>
+
           <p>Khách thuê sẽ tự lấy xe và trả tại vị trí xe đậu dưới sự giám sát 24/7 của Rentzy.</p>
         </div>
         <div className="step">
@@ -31,12 +34,11 @@ const RentalSteps = () => {
           </p>
         </div>
 
+
       </div>
 
       <div className="safety-section">
         <h3>Bảo vệ xe tối ưu với công nghệ An toàn</h3>
-  
-
       </div>
 
       <div className="flexibility-section">
@@ -48,11 +50,13 @@ const RentalSteps = () => {
 
       <div className="comparison-section">
         <h3>Rentzy: Giải pháp vượt trội cho thuê xe tự lái</h3>
+
         <table>
           <thead>
             <tr>
               <th></th>
               <th>Rentzy</th>
+
               <th>Tự cho thuê</th>
               <th>Nền tảng khác</th>
             </tr>

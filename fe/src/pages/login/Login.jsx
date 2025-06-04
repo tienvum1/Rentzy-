@@ -20,8 +20,6 @@ const Login = () => {
     e.preventDefault();
     setMessage('');
     setIsError(false);
-
-    // Validate input
     if (!validator.isEmail(email)) {
       setMessage('Email không đúng định dạng.');
       setIsError(true);
@@ -44,6 +42,7 @@ const Login = () => {
       login(response.data.user);
       setMessage(response.data.message || 'Đăng nhập thành công!');
       setIsError(false);
+
 
       const userRole = response.data.user?.role;
       console.log(userRole);
@@ -72,7 +71,6 @@ const Login = () => {
           errorMessage = `Đăng nhập thất bại: ${backendMessage}`;
         }
       }
-
       setMessage(errorMessage);
     }
   };
@@ -88,6 +86,7 @@ const Login = () => {
   };
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
+
 
   return (
     <>

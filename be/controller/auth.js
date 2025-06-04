@@ -9,11 +9,13 @@ dotenv.config();
 // Helper function to generate JWT token and set cookie
 const generateTokenAndSetCookie = (user, res) => {
   const token = jwt.sign(
+
     { user_id: user._id, role: user.role ,owner_request_status :  user.owner_request_status},
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
   console.log("token tạo ra sau khi đăng nhập "  , token)
+
   res.cookie("token", token, {
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -58,7 +60,9 @@ exports.register = async (req, res) => {
       phone,
       is_verified: false,
       role: "renter",
+
       loginMethods: ["password"], // Set login method to password
+
     });
 
     await user.save();
@@ -149,7 +153,9 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email });
 
     // Check if user exists and if password login is enabled for this account
+
     if (!user || !user.loginMethods.includes("password")) {
+
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
@@ -163,11 +169,11 @@ exports.login = async (req, res) => {
       !(await bcrypt.compare(password, user.password_hash))
     ) {
       return res.status(400).json({ message: "Invalid credentials" });
+
     }
 
     // Generate token and set cookie
     generateTokenAndSetCookie(user, res);
-  
     res.status(200).json({
       message: "Logged in successfully",
       user: {
@@ -183,9 +189,11 @@ exports.login = async (req, res) => {
     console.error("Đăng nhập thất bại:", error);
 
     // Simplified error handling for production to prevent leaking info
+
     res
       .status(500)
       .json({ message: "Đã xảy ra lỗi trong quá trình đăng nhập." });
+
   }
 };
 
@@ -197,7 +205,6 @@ exports.logout = (req, res) => {
 };
 
 // GOOGLE LOGIN CALLBACK
-// GOOGLE LOGIN CALLBACK
 exports.googleCallback = async (req, res) => {
   console.log("Inside googleCallback");
   console.log("req.user from Google strategy:", req.user);
@@ -208,6 +215,7 @@ exports.googleCallback = async (req, res) => {
       `${process.env.CLIENT_ORIGIN}/login?error=google_auth_failed`
     );
   }
+
 
   const googleProfile = req.user;
 
@@ -254,6 +262,7 @@ exports.googleCallback = async (req, res) => {
       } else {
         // 3. Tạo tài khoản mới nếu chưa có
         console.log("New user via Google, creating account:", googleProfile.email);
+
 
         user = new User({
           name: googleProfile.displayName,
