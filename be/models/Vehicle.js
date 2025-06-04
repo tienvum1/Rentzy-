@@ -1,32 +1,123 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../db');
-const User = require('./User');
+const mongoose = require("mongoose");
 
-const Vehicle = sequelize.define('Vehicle', {
-  vehicle_id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
+/**
+ * Schema Vehicle: quản lý thông tin chung cho xe đăng lên hệ thống
+ */
+
+const vehicleSchema = new mongoose.Schema(
+  {
+    // Người đăng xe (chủ xe)
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    // Thương hiệu xe
+    brand: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    // Dòng xe
+    model: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    // Loại xe: car hoặc motorbike
+    type: {
+      type: String,
+      enum: ["car", "motorbike"],
+      required: true,
+    },
+
+    // Biển số xe (không được trùng)
+    licensePlate: {
+      type: String,
+      required: true,
+      unique: true,
+      uppercase: true,
+      trim: true,
+    },
+
+    // Địa chỉ 
+    location: {
+      type: String,
+      required: true,
+    },
+
+    // Giá thuê mỗi ngày (VND)
+    pricePerDay: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    // Tiền đặt cọc
+    deposit: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    // Mức tiêu hao nhiên liệu (l/100km hoặc tương đương)
+    fuelConsumption: {
+      type: Number,
+      // required: false by default
+    },
+
+    // Mô tả tính năng (VD: Bluetooth, camera lùi, điều hoà...)
+    features: {
+      type: [String],
+      default: [],
+    },
+    // điều khoản thuê xe
+    rentalPolicy: {
+      type: String,
+      default: "",
+    },
+    // Ảnh chính (Cloudinary URL)
+    primaryImage: {
+      type: String,
+      default: "",
+    },
+
+    // Danh sách ảnh phụ (Cloudinary URL)
+    gallery: {
+      type: [String],
+      default: [],
+    },
+
+    /**
+     * Trạng thái admin duyệt xe:
+     * - pending: mới đăng, chờ admin duyệt
+     * - approved: đã duyệt, hiển thị cho khách
+     * - rejected: bị từ chối
+     */
+    approvalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+
+    /**
+     * Trạng thái xe trong hệ thống
+     * - available: có sẵn để thuê
+     * - reserved: có khách giữ chỗ
+     * - rented: đang được thuê
+     * - maintenance: bảo trì, không cho thuê
+     * - blocked: admin khóa
+     */
+    status: {
+      type: String,
+      enum: ["available", "reserved", "rented", "maintenance", "blocked"],
+      default: "available",
+    },
   },
-  owner_id: {
-    type: DataTypes.UUID,
-    references: { model: 'users', key: 'user_id' }
-  },
-  brand: DataTypes.STRING,
-  model: DataTypes.STRING,
-  type: DataTypes.STRING, // 'car' or 'motorbike'
-  license_plate: DataTypes.STRING,
-  location: DataTypes.TEXT,
-  is_available: DataTypes.BOOLEAN,
-  price_per_day: DataTypes.DECIMAL,
-  deposit_required: DataTypes.DECIMAL,
-  terms: DataTypes.TEXT,
-  created_at: DataTypes.DATE,
-}, {
-  tableName: 'vehicles',
-  timestamps: false,
-});
+  { timestamps: true }
+);
 
-Vehicle.belongsTo(User, { foreignKey: 'owner_id', as: 'owner' });
-
-module.exports = Vehicle;
+module.exports = mongoose.model("Vehicle", vehicleSchema);

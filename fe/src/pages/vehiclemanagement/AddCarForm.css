@@ -1,0 +1,262 @@
+/* Variables for consistent colors and spacing */
+:root {
+    --primary-color: #007bff; /* Màu xanh dương */
+    --secondary-color: #6c757d; /* Màu xám */
+    --success-color: #28a745; /* Màu xanh lá cây */
+    --danger-color: #dc3545; /* Màu đỏ */
+    --warning-color: #ffc107; /* Màu vàng */
+    --info-color: #17a2b8; /* Màu xanh ngọc */
+    --light-color: #f8f9fa; /* Màu nền sáng */
+    --dark-color: #343a40; /* Màu chữ tối */
+    --border-color: #ced4da; /* Màu viền */
+    --border-radius: 8px; /* Bo góc chung */
+    --spacing-sm: 10px;
+    --spacing-md: 15px;
+    --spacing-lg: 25px;
+}
+
+/* General Form Styling */
+.add-vehicle-form {
+    max-width: 950px;
+    margin: var(--spacing-lg) auto;
+    padding: var(--spacing-lg) * 1.5;
+    background-color: var(--light-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    font-family: 'Quicksand', sans-serif;
+    color: var(--dark-color);
+    padding: 40px;
+}
+
+.add-vehicle-form h2 {
+    text-align: center;
+    margin-bottom: var(--spacing-lg) * 1.2;
+    color: var(--dark-color);
+    font-size: 2em;
+    font-weight: 700;
+    position: relative;
+}
+
+.add-vehicle-form h2::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background-color: var(--primary-color);
+    margin: var(--spacing-sm) auto 0;
+    border-radius: 2px;
+}
+
+/* Form Group Styling */
+.add-vehicle-form .form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.add-vehicle-form .form-group label {
+    display: block;
+    margin-bottom: var(--spacing-md);
+    font-weight: 600;
+    color: var(--dark-color);
+    font-size: 1em;
+}
+
+/* Input, Select, Textarea Styling */
+.add-vehicle-form .form-group input[type="text"],
+.add-vehicle-form .form-group input[type="number"],
+.add-vehicle-form .form-group select,
+.add-vehicle-form .form-group textarea {
+    width: 100%;
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1em;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    background-color: #ffffff;
+}
+
+.add-vehicle-form .form-group input[type="file"] {
+    padding: var(--spacing-md) 0;
+}
+
+.add-vehicle-form .form-group input[type="text"]:focus,
+.add-vehicle-form .form-group input[type="number"]:focus,
+.add-vehicle-form .form-group select:focus,
+.add-vehicle-form .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.add-vehicle-form .form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Button Styling */
+.add-vehicle-form button[type="submit"],
+.add-vehicle-form button[type="button"] {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-right: var(--spacing-md);
+    transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
+    font-weight: 600;
+}
+
+.add-vehicle-form button[type="submit"] {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.add-vehicle-form button[type="submit"]:hover {
+    background-color: #218838;
+}
+
+.add-vehicle-form button[type="button"].btn-cancel {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.add-vehicle-form button[type="button"].btn-cancel:hover {
+    background-color: #5a6268;
+}
+
+.add-vehicle-form .form-actions {
+    margin-top: var(--spacing-lg) * 1.2;
+    text-align: right;
+}
+
+/* Image Preview Styling */
+.add-vehicle-form .image-preview-container {
+    margin-top: var(--spacing-sm);
+}
+
+.add-vehicle-form .image-preview {
+    width: 150px;
+    height: 100px;
+    object-fit: cover;
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius) * 0.5;
+    margin-top: var(--spacing-sm);
+    display: block;
+}
+
+/* Additional Images Section */
+.add-vehicle-form .btn-add-images {
+    display: inline-block;
+    background-color: var(--primary-color);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    font-size: 0.9em;
+    border-radius: 5px;
+}
+
+.add-vehicle-form .btn-add-images:hover {
+    background-color: #0056b3;
+}
+
+.add-vehicle-form input[type="file"][name="additional_images"] {
+    display: none;
+}
+
+.add-vehicle-form .additional-images-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+
+.add-vehicle-form .image-wrapper {
+    position: relative;
+    width: 100px;
+    height: 70px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.add-vehicle-form .image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.add-vehicle-form .btn-remove-image {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: var(--danger-color);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s ease-in-out;
+}
+
+.add-vehicle-form .btn-remove-image:hover {
+    background-color: #c82333;
+}
+
+/* Features Grid Styling */
+.add-vehicle-form .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.add-vehicle-form .feature-button {
+    background-color: #f8f9fa;
+    border: 1px solid var(--border-color);
+    color: var(--dark-color);
+    border-radius: 5px;
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    font-size: 0.95em;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 45px;
+    font-weight: 500;
+}
+
+.add-vehicle-form .feature-button:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.add-vehicle-form .feature-button.selected {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+}
+
+/* Error Message Styling */
+.add-vehicle-form .error {
+    color: var(--danger-color);
+    font-size: 0.85em;
+    margin-top: 5px;
+    display: block;
+    font-weight: 500;
+}
+  

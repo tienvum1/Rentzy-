@@ -1,22 +1,46 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../db');
-const Vehicle = require('./Vehicle');
+const mongoose = require('mongoose');
 
-const Car = sequelize.define('Car', {
-  vehicle_id: {
-    type: DataTypes.UUID,
-    primaryKey: true,
-    references: { model: 'vehicles', key: 'vehicle_id' }
+/**
+ * Schema Car: dùng cho các xe là type = 'car'
+ * Lưu thông tin chi tiết về ô tô
+ */
+
+const carSchema = new mongoose.Schema({
+
+  vehicle: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Vehicle',
+    required: true,
+    unique: true
   },
-  seats: DataTypes.INTEGER,
-  body_type: DataTypes.STRING,
-  transmission: DataTypes.STRING,
-  fuel_type: DataTypes.STRING,
-}, {
-  tableName: 'cars',
-  timestamps: false,
-});
 
-Car.belongsTo(Vehicle, { foreignKey: 'vehicle_id' });
+  // Số chỗ ngồi
+  seatCount: {
+    type: Number,
+    required: true,
+    min: 2
+  },
 
-module.exports = Car;
+  // Dạng thân xe (sedan, SUV, hatchback, pickup...)
+  bodyType: {
+    type: String,
+    required: true
+  },
+
+  // Hộp số
+  transmission: {
+    type: String,
+    enum: ['manual', 'automatic'],
+    required: true
+  },
+
+  // Nhiên liệu
+  fuelType: {
+    type: String,
+    enum: ['petrol', 'diesel', 'electric', 'hybrid'],
+    required: true
+  }
+
+}, { timestamps: true });
+
+module.exports = mongoose.model('Car', carSchema);

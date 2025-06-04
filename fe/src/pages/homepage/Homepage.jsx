@@ -5,7 +5,7 @@ import Footer from '../../components/footer/Footer';
 import HeroSection from '../../components/HeroSection/HeroSection';
 import StatsSection from '../../components/StatsSection/StatsSection';
 import BrandsSection from '../../components/BrandsSection/BrandsSection';
-import VehicleList from '../../components/VehicleCard/VehicleList';
+import VehicleList from './VehicleList';
 
 function Homepage() {
   return (

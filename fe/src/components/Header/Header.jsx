@@ -5,7 +5,8 @@ import './Header.css';
 
 const Header = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
+
   const [showDropdown, setShowDropdown] = useState(false);
   const avatarRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -32,10 +33,6 @@ const Header = () => {
     };
   }, [showDropdown]);
 
-  if (isLoading) {
-    return <header className="header-modern"><div>Loading...</div></header>;
-  }
-
   const handleLogout = () => {
     setShowDropdown(false);
     logout();
@@ -46,6 +43,18 @@ const Header = () => {
     setShowDropdown(false);
     navigate('/profile');
   };
+
+  // Temporary: Fetch user profile again if authenticated state changes (for debugging)
+  // The ideal place for this logic might be within the AuthContext itself.
+  useEffect(() => {
+    if (isAuthenticated && user && !user.avatar_url) { // Only fetch if authenticated and avatar is missing (adjust condition as needed)
+        // Assuming AuthContext provides a way to refresh user data
+        // If you have a function like fetchUserProfile in your AuthContext, call it here.
+        // Example (replace with your actual context method if different):
+        // fetchUserProfile(); 
+        console.log("User authenticated but avatar missing. Consider refreshing profile.");
+    }
+  }, [isAuthenticated, user]); // Dependency array
 
   return (
     <header className="header-modern">
@@ -64,12 +73,18 @@ const Header = () => {
         <Link to="/contact" className="header__link">Contact</Link>
       </nav>
       <div className="header__actions">
-        <button
-          className="header__consign-btn"
-          onClick={() => navigate('/consignForm')}
-        >
-          Ký gửi xe
-        </button>
+
+        {isAuthenticated && user && (
+            // Check if user is NOT an approved owner to show the consign button
+            !user.role.includes('owner') || (user.role.includes('owner') && user.owner_request_owner_status !== 'approved')
+        ) && (
+          <button
+            className="header__consign-btn"
+            onClick={() => navigate('/consignForm')}
+          >
+            Ký gửi xe
+          </button>
+        )}
         {isAuthenticated ? (
           <div className="header__user-actions">
             <div
@@ -78,13 +93,13 @@ const Header = () => {
               onClick={() => setShowDropdown((prev) => !prev)}
               style={{ cursor: 'pointer' }}
             >
-              <img
-                src={user.avatar_url || 'https://via.placeholder.com/40/cccccc/ffffff?text=User'}
-                alt={user.name || 'User Avatar'}
-                className="avatar-img"
-                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
-              />
-              <span className="user-name">{user.name}</span>
+             <img
+  src={user.avatar_url || 'https://via.placeholder.com/40/cccccc/ffffff?text=User'}
+  alt={user.name || 'User Avatar'}
+  className="avatar-img"
+  style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+/>
+            
             </div>
             {showDropdown && (
               <div className="header__dropdown" ref={dropdownRef}>

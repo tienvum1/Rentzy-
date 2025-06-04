@@ -4,12 +4,9 @@ import './VehicleCard.css';
 const VehicleCard = ({
   image,
   name,
-  year,
   seats,
   transmission,
   fuel,
-  price,
-  pricePerHour,
   pricePerDay,
   location,
   isSaved,
@@ -28,9 +25,10 @@ const VehicleCard = ({
         </button>
       </div>
       <div className="car-card__body">
-        <div className="car-card__title">{name} – {year}</div>
+        <div className="car-card__title">{name}</div>
         {location && <div className="car-card__location">{location}</div>}
         <div className="car-card__specs">
+          {seats !== 'N/A' && (
           <span>
             {/* User icon */}
             <svg width="20" height="20" fill="none" stroke="#4ec9b4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: 4}}>
@@ -39,6 +37,8 @@ const VehicleCard = ({
             </svg>
             {seats} chỗ
           </span>
+          )}
+           {transmission !== 'N/A' && (
           <span>
             {/* Transmission icon */}
             <svg width="20" height="20" fill="none" stroke="#4ec9b4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: 4}}>
@@ -50,6 +50,8 @@ const VehicleCard = ({
             </svg>
             {transmission}
           </span>
+           )}
+            {fuel !== 'N/A' && (
           <span>
             {/* Fuel icon */}
             <svg width="20" height="20" fill="none" stroke="#4ec9b4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: 4}}>
@@ -58,10 +60,10 @@ const VehicleCard = ({
             </svg>
             {fuel}
           </span>
+            )}
         </div>
         <div className="car-card__price-row">
-          {pricePerHour && <div className="car-card__price-hour">${pricePerHour}/hour</div>}
-          {pricePerDay && <div className="car-card__price-day">${pricePerDay}/day</div>}
+          {pricePerDay && pricePerDay !== 'N/A VNĐ' && <div className="car-card__price-day">{pricePerDay}</div>}
         </div>
         <button className="car-card__details-btn" onClick={onViewDetails}>
           View Details <span style={{marginLeft: 4}}>→</span>

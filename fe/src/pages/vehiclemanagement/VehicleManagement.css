@@ -1,0 +1,193 @@
+/* Variables for consistent colors and spacing */
+:root {
+    --primary-color: #007bff; /* Blue */
+    --secondary-color: #6c757d; /* Gray */
+    --success-color: #28a745; /* Green */
+    --danger-color: #dc3545; /* Red */
+    --warning-color: #ffc107; /* Yellow */
+    --info-color: #17a2b8; /* Cyan */
+    --light-color: #f8f9fa; /* Light background */
+    --dark-color: #343a40; /* Dark text */
+    --border-color: #dee2e6; /* General border color */
+    --border-radius: 8px; /* General border radius */
+    --spacing-sm: 10px;
+    --spacing-md: 15px;
+    --spacing-lg: 25px;
+}
+
+.vehicle-management-container {
+    padding: var(--spacing-lg);
+    margin-left: 250px; /* Adjust based on sidebar width */
+    background-color: var(--light-color);
+    min-height: 100vh;
+    color: var(--dark-color);
+}
+
+.vehicle-management-content {
+    padding: var(--spacing-md);
+    background-color: #ffffff; /* White background for content area */
+    border-radius: var(--border-radius); /* Rounded corners for content */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+}
+
+.vehicle-management-content h2 {
+    color: var(--dark-color);
+    margin-bottom: var(--spacing-lg);
+    font-size: 2em;
+    font-weight: 700;
+    border-bottom: 2px solid var(--border-color); /* Separator */
+    padding-bottom: var(--spacing-sm);
+}
+
+/* Messages (Success, Error, Info) */
+.message {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.message.success {
+    background-color: #d4edda;
+    color: var(--success-color);
+    border: 1px solid #c3e6cb;
+}
+
+.message.error {
+    background-color: #f8d7da;
+    color: var(--danger-color);
+    border: 1px solid #f5c6cb;
+}
+
+.message.info {
+    background-color: #d1ecf1;
+    color: var(--info-color);
+    border: 1px solid #bee5eb;
+}
+
+/* Add Buttons */
+.add-buttons {
+    margin-bottom: var(--spacing-lg);
+    display: flex; /* Arrange buttons horizontally */
+    gap: var(--spacing-sm); /* Space between buttons */
+}
+
+.add-buttons button {
+    padding: var(--spacing-md) var(--spacing-lg); /* Larger padding */
+    color: white;
+    border: none;
+    border-radius: var(--border-radius); /* Rounded corners */
+    cursor: pointer;
+    font-size: 1.1em; /* Slightly larger font */
+    transition: background-color 0.3s ease;
+    flex-grow: 1; /* Allow buttons to grow */
+    text-align: center;
+}
+
+.add-buttons button.btn-add-car {
+    background-color: var(--primary-color);
+}
+
+.add-buttons button.btn-add-motorbike {
+    background-color: var(--secondary-color);
+}
+
+.add-buttons button:hover {
+    opacity: 0.9;
+}
+
+/* Loading and Empty State Messages */
+.vehicle-management-content p {
+    font-size: 1.1em;
+    color: var(--secondary-color);
+    text-align: center;
+    margin-top: var(--spacing-lg);
+}
+
+.vehicle-management-content .error {
+     color: var(--danger-color); /* Style specific error message */
+     font-weight: 600;
+}
+
+/* Table Styling */
+.vehicle-table {
+    width: 100%;
+    border-collapse: collapse; /* Loại bỏ khoảng cách giữa các border */
+    margin-top: var(--spacing-md);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+    border-radius: var(--border-radius); /* Áp dụng border-radius cho bảng */
+    overflow: hidden; /* Đảm bảo border-radius hoạt động với border-collapse */
+}
+
+.vehicle-table thead {
+    background-color: var(--primary-color); /* Màu nền cho header */
+    color: white;
+    text-align: left;
+}
+
+.vehicle-table th,
+.vehicle-table td {
+    padding: var(--spacing-sm) var(--spacing-md); /* Padding cho cell */
+    border: 1px solid var(--border-color); /* Border cho cell */
+}
+
+.vehicle-table th {
+    font-weight: 700;
+    text-transform: uppercase; /* Viết hoa tiêu đề cột */
+    font-size: 0.9em;
+}
+
+.vehicle-table tbody tr:nth-child(even) {
+    background-color: var(--light-color); /* Màu nền xen kẽ cho hàng */
+}
+
+.vehicle-table tbody tr:hover {
+    background-color: #e9ecef; /* Hiệu ứng hover cho hàng */
+}
+
+.vehicle-table td img {
+    display: block; /* Giúp canh giữa ảnh dễ hơn nếu cần */
+    width: 50px; /* Đặt chiều rộng cố định */
+    height: 50px; /* Đặt chiều cao cố định */
+    object-fit: cover; /* Đảm bảo ảnh bao phủ toàn bộ kích thước mà không bị méo */
+    border-radius: 4px;
+    
+}
+
+.vehicle-table td:last-child {
+    white-space: nowrap; /* Ngăn các nút xuống dòng */
+    text-align: center; /* Canh giữa nút hành động */
+}
+
+.vehicle-table td .action-buttons button {
+   padding: 5px 10px; /* Điều chỉnh padding cho nút trong bảng */
+   margin: 0 2px; /* Khoảng cách giữa các nút */
+   font-size: 0.85em; /* Kích thước font nhỏ hơn */
+}
+
+.vehicle-table td .edit-button {
+   background-color: var(--info-color);
+   color: white;
+   border: none;
+   border-radius: 4px;
+   cursor: pointer;
+   transition: background-color 0.2s ease;
+}
+
+.vehicle-table td .edit-button:hover {
+   background-color: #138496;
+}
+
+.vehicle-table td .delete-button {
+   background-color: var(--danger-color);
+   color: white;
+   border: none;
+   border-radius: 4px;
+   cursor: pointer;
+   transition: background-color 0.2s ease;
+}
+
+.vehicle-table td .delete-button:hover {
+   background-color: #c82333;
+}
+

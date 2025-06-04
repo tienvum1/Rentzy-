@@ -1,0 +1,17 @@
+.profile-page {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f7f7f7;
+  }
+  
+  .profile-page__sidebar {
+    width: 280px;
+    background-color: #ffffff;
+    border-right: 1px solid #ddd;
+  }
+  
+  .profile-page__content {
+    flex: 1;
+    padding: 2rem;
+  }
+  
