@@ -282,7 +282,7 @@ const AddCarForm = ({ onSuccess }) => {
            setMessage({ type: 'warning', text: response.data.message || 'Thêm xe thành công nhưng có cảnh báo.' });
            if (onSuccess) onSuccess();
             setTimeout(() => {
-             navigate('/vehiclemanagement'); // Navigate back to list
+             navigate('/ownerpage/vehicle-management'); // Navigate back to list
          }, 2000); // Close form after 2 seconds
       }
 

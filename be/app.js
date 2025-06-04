@@ -2,11 +2,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-require('dotenv').config(); // phải là dòng đầu tiên!
+require("dotenv").config(); // phải là dòng đầu tiên!
 
-const path = require('path');
-
-
+const path = require("path");
 
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
@@ -44,7 +42,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(passport.initialize());
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Mongoose Connection (Centralized here)
 mongoose.connect(process.env.MONGO_URI, {
@@ -54,10 +52,12 @@ mongoose.connect(process.env.MONGO_URI, {
   socketTimeoutMS: 10000,
 });
 
-
 // Check connection events directly on mongoose.connection
-mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
-mongoose.connection.once('open', function() {
+mongoose.connection.on(
+  "error",
+  console.error.bind(console, "MongoDB connection error:")
+);
+mongoose.connection.once("open", function () {
   console.log("MongoDB connected successfully");
 });
 
@@ -70,20 +70,21 @@ app.use("/api/owner", ownerRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/cars", carRoutes);
 
-
-app.get("/", (req, res) => {
+app.get("/hello", (req, res) => {
   res.send("Hello World");
 });
 
-
 // Serve static files (for locally stored images)
 // Configure this only if you are saving images locally as implemented in vehicleController
-app.use('/uploads/vehicles', express.static(path.join(__dirname, 'uploads', 'vehicles')));
+app.use(
+  "/uploads/vehicles",
+  express.static(path.join(__dirname, "uploads", "vehicles"))
+);
 
 // Basic error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(500).send("Something broke!");
 });
 
 app.listen(PORT, () => {
