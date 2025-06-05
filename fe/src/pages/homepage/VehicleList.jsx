@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import VehicleCard from '../../components/VehicleCard/VehicleCard';
+import VehicleCard from '../../components/VehicleCard/VehicleCard.jsx';
 import './VehicleList.css';
 import axios from 'axios';
 
