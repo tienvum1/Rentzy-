@@ -66,7 +66,7 @@ const VerifyEmail = () => {
     <div className="verify-email-container">
       <h2>Xác thực email</h2>
       {isLoading ? (
-        <p>Đang xử lý...</p>
+        <p>Đang xử lý....</p>
       ) : (
         <p className={isError ? 'error-message' : 'success-message'}>{message}</p>
       )}
