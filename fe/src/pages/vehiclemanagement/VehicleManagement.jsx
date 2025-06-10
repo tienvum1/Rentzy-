@@ -47,8 +47,7 @@ const VehicleManagement = () => {
     const handleEdit = async (vehicleId) => {
         console.log('Edit vehicle with ID:', vehicleId);
         // Use navigate to go to the edit page
-        navigate(`/edit-vehicle/${vehicleId}`); // Example path for edit page
-         // setMessage({ type: 'info', text: `Navigate to edit page for vehicle ID: ${vehicleId}` }); // Remove placeholder message
+        navigate(`/ownerpage/edit-vehicle/${vehicleId}`);
     };
 
     // Placeholder function for handling delete action
