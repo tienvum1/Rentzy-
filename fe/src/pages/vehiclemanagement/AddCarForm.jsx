@@ -12,6 +12,7 @@ const AddCarForm = ({ onSuccess }) => {
     model: '',
     license_plate: '',
     location: '',
+    description : '',
     price_per_day: '',
     deposit_required: '',
     seats: '',
@@ -213,8 +214,12 @@ const AddCarForm = ({ onSuccess }) => {
     dataToSubmit.append('brand', formData.brand.trim());
     dataToSubmit.append('model', formData.model.trim());
     dataToSubmit.append('license_plate', formData.license_plate.trim());
-    // Assuming location needs to be stringified based on backend controller
     dataToSubmit.append('location', JSON.stringify(formData.location));
+    if (formData.description.trim()) {
+      dataToSubmit.append('description', formData.description.trim());
+    } else {
+      dataToSubmit.append('description', '');
+    }
     dataToSubmit.append('price_per_day', formData.price_per_day);
     dataToSubmit.append('deposit_required', formData.deposit_required);
     dataToSubmit.append('seats', formData.seats);
@@ -364,6 +369,19 @@ const AddCarForm = ({ onSuccess }) => {
             onChange={handleChange}
           />
           {errors.location && <span className="error">{errors.location}</span>}
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="description">Mô tả xe:</label>
+          <textarea
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            rows="4"
+            placeholder="Nhập mô tả chi tiết về xe..."
+          >
+          </textarea>
         </div>
 
         <div className="form-group">

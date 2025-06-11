@@ -42,7 +42,12 @@ const vehicleSchema = new mongoose.Schema(
       uppercase: true,
       trim: true,
     },
-
+    // thêm mô tả xe
+    description :{
+      type: String,
+      required: true,
+    }
+,
     // Địa chỉ 
     location: {
       type: String,

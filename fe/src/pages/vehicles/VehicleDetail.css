@@ -1,0 +1,623 @@
+.vehicle-detail-page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 20px auto;
+    font-family: 'Arial', sans-serif;
+}
+
+.vehicle-detail-header {
+    text-align: left;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.vehicle-detail-header h1 {
+    color: #333;
+    font-size: 2.2em;
+    margin-bottom: 5px;
+}
+
+.vehicle-detail-location-share {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    color: #777;
+    font-size: 1em;
+}
+
+.vehicle-detail-location-share .location,
+.vehicle-detail-location-share .share {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.vehicle-detail-location-share .share {
+    cursor: pointer;
+    color: #007bff;
+    font-size: 0.9em;
+}
+
+/* Header availability badge */
+.vehicle-detail-location-share .availability-badge-header {
+    background-color: #28a745;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.7em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.vehicle-detail-image-section {
+    margin-bottom: 20px;
+}
+
+.vehicle-detail-main-image-container {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.vehicle-detail-main-image {
+    width: 100%;
+    max-width: 700px; /* Adjusted max-width */
+    height: 450px; /* Adjusted height */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    object-fit: cover;
+}
+
+.vehicle-detail-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.vehicle-detail-thumbnail {
+    width: 100px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.vehicle-detail-thumbnail:hover {
+    transform: scale(1.05);
+}
+
+.vehicle-detail-thumbnail.selected {
+    border: 2px solid #007bff;
+}
+
+/* Main Content Wrapper for two columns */
+.vehicle-detail-content-wrapper {
+    display: grid;
+    grid-template-columns: 1fr; /* Default to single column on small screens */
+    gap: 30px; /* Space between columns */
+    margin-top: 20px;
+}
+
+@media (min-width: 992px) { /* Adjust breakpoint as needed for a two-column layout */
+    .vehicle-detail-content-wrapper {
+        grid-template-columns: 2fr 1fr; /* Two columns: left (wider) and right */
+    }
+}
+
+.vehicle-detail-left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.vehicle-detail-right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.vehicle-detail-section {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.vehicle-detail-section h2 {
+    color: #333;
+    font-size: 1.5em;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* Vehicle Features */
+.vehicle-detail-features .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjusted minmax for smaller items */
+    gap: 15px; /* Adjusted gap */
+}
+
+.vehicle-detail-features .feature-item {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.vehicle-detail-features .feature-item i {
+    font-size: 1.8em; /* Adjusted font size */
+    color: #007bff;
+    margin-bottom: 5px; /* Adjusted margin */
+}
+
+.vehicle-detail-features .feature-item p {
+    font-size: 0.95em; /* Adjusted font size */
+    color: #555;
+}
+
+/* Vehicle Description */
+.vehicle-detail-description p {
+    line-height: 1.6;
+    color: #444;
+}
+
+/* Vehicle Amenities */
+.vehicle-detail-amenities .amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjusted minmax for smaller items */
+    gap: 15px; /* Adjusted gap */
+}
+
+.vehicle-detail-amenities .amenity-item {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.vehicle-detail-amenities .amenity-item i {
+    font-size: 1.6em; /* Adjusted font size */
+    color: #28a745; /* Green color for amenities */
+    margin-bottom: 5px; /* Adjusted margin */
+}
+
+.vehicle-detail-amenities .amenity-item p {
+    font-size: 0.9em; /* Adjusted font size */
+    color: #555;
+}
+
+/* Vehicle Terms */
+.vehicle-detail-terms ul {
+    list-style: none;
+    padding: 0;
+}
+
+.vehicle-detail-terms ul li {
+    margin-bottom: 10px;
+    color: #444;
+    line-height: 1.5;
+}
+
+.vehicle-detail-terms .read-more {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.vehicle-detail-terms .read-more:hover {
+    text-decoration: underline;
+}
+
+/* Cancellation Policy */
+.vehicle-detail-cancellation-policy table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.vehicle-detail-cancellation-policy th,
+.vehicle-detail-cancellation-policy td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+}
+
+.vehicle-detail-cancellation-policy th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    color: #333;
+}
+
+.vehicle-detail-cancellation-policy td small {
+    display: block;
+    color: #777;
+    font-size: 0.85em;
+}
+
+.vehicle-detail-cancellation-policy tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.vehicle-detail-cancellation-policy tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.vehicle-detail-cancellation-policy .fa-circle-check {
+    color: #28a745; /* Green for check */
+    margin-right: 5px;
+}
+
+.vehicle-detail-cancellation-policy .fa-circle-xmark {
+    color: #dc3545; /* Red for xmark */
+    margin-right: 5px;
+}
+
+/* Vehicle Pricing Options */
+.vehicle-pricing-options {
+    background-color: #f8f8f8; /* Light background for the pricing section */
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #eee; /* Subtle border */
+}
+
+.vehicle-pricing-options .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two columns for pricing */
+    gap: 10px; /* Smaller gap */
+    margin-bottom: 10px;
+}
+
+.vehicle-pricing-options .pricing-item {
+    text-align: center;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+.vehicle-pricing-options .pricing-item strong {
+    font-size: 1.3em; /* Adjusted font size */
+    color: #333;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.vehicle-pricing-options .pricing-item span {
+    font-size: 0.9em; /* Adjusted font size */
+    color: #777;
+}
+
+.vehicle-pricing-options .discount-badge {
+    background-color: #e6ffe6; /* Light green for discount */
+    color: #28a745; /* Green text */
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.vehicle-pricing-options .discount-badge i {
+    font-size: 1em;
+}
+
+.vehicle-pricing-options .pricing-note {
+    font-size: 0.85em;
+    color: #999;
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* Vehicle Rental Time */
+.vehicle-rental-time {
+    /* Already has padding and border-radius from .vehicle-detail-section */
+}
+
+.vehicle-rental-time .rental-time-header {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Adjusted gap */
+    margin-bottom: 15px; /* Adjusted margin */
+}
+
+.vehicle-rental-time .rental-time-header i {
+    font-size: 1.5em; /* Adjusted font size */
+    color: #007bff;
+}
+
+.vehicle-rental-time .rental-time-header h2 {
+    font-size: 1.2em; /* Adjusted font size */
+    color: #333;
+    margin: 0;
+    border-bottom: none; /* Remove border from here */
+    padding-bottom: 0; /* Remove padding from here */
+}
+
+.vehicle-rental-time p {
+    font-size: 1em; /* Adjusted font size */
+    color: #555;
+    margin-bottom: 10px;
+}
+
+/* Vehicle Pickup/Delivery */
+.vehicle-pickup-delivery {
+    /* Already has padding and border-radius from .vehicle-detail-section */
+}
+
+.vehicle-pickup-delivery .pickup-options {
+    margin-bottom: 20px;
+}
+
+.vehicle-pickup-delivery .pickup-at-location,
+.vehicle-pickup-delivery .deliver-to-location {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.vehicle-pickup-delivery .pickup-at-location:hover,
+.vehicle-pickup-delivery .deliver-to-location:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.vehicle-pickup-delivery input[type="radio"] {
+    display: none;
+}
+
+.vehicle-pickup-delivery label {
+    display: flex;
+    align-items: center;
+    font-size: 1.1em; /* Adjusted font size */
+    color: #333;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.vehicle-pickup-delivery label i {
+    font-size: 1.2em; /* Adjusted font size */
+    margin-right: 10px;
+    color: #ccc; /* Default color for unchecked radio */
+}
+
+.vehicle-pickup-delivery input[type="radio"]:checked + label i.fa-circle-dot {
+    color: #007bff; /* Color for checked radio */
+}
+
+.vehicle-pickup-delivery input[type="radio"]:not(:checked) + label i.fa-circle-dot {
+    color: #ccc; /* Color for unchecked radio */
+}
+
+.vehicle-pickup-delivery .location-details,
+.vehicle-pickup-delivery .delivery-details {
+    margin-top: 10px;
+    padding-left: 30px; /* Indent details under the radio button */
+    font-size: 0.95em; /* Adjusted font size */
+    color: #666;
+}
+
+.vehicle-pickup-delivery .location-details p,
+.vehicle-pickup-delivery .delivery-details p {
+    margin-bottom: 5px;
+}
+
+.vehicle-pickup-delivery .location-details i,
+.vehicle-pickup-delivery .delivery-details i {
+    margin-right: 5px;
+    color: #007bff;
+}
+
+.vehicle-pickup-delivery .location-note {
+    font-size: 0.85em;
+    color: #999;
+    margin-top: 5px;
+    padding-left: 30px;
+}
+
+.vehicle-pickup-delivery .delivery-details .choose-location {
+    display: block;
+    margin-top: 10px;
+    padding: 8px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease;
+}
+
+.vehicle-pickup-delivery .delivery-details .choose-location:hover {
+    background-color: #0056b3;
+}
+
+/* Vehicle Cost Summary */
+.vehicle-cost-summary {
+    /* Already has padding and border-radius from .vehicle-detail-section */
+}
+
+.vehicle-cost-summary .cost-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px; /* Adjusted margin */
+    font-size: 1em; /* Adjusted font size */
+    color: #444;
+}
+
+.vehicle-cost-summary .cost-item:last-of-type {
+    margin-bottom: 0;
+}
+
+.vehicle-cost-summary .cost-item span {
+    font-weight: normal;
+    color: #777;
+}
+
+.vehicle-cost-summary .cost-item strong {
+    font-weight: bold;
+    color: #333;
+}
+
+.vehicle-cost-summary .total-cost {
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.2em; /* Adjusted font size */
+    font-weight: bold;
+    color: #333;
+}
+
+.vehicle-cost-summary .discount-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 1em;
+    color: #e74c3c; /* Red color for discount */
+}
+
+.vehicle-cost-summary .discount-item .discount-value {
+    font-weight: bold;
+}
+
+.vehicle-cost-summary .discount-promo {
+    background-color: #e6ffe6; /* Light green for promo */
+    color: #28a745; /* Green text */
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    margin-top: 15px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.vehicle-cost-summary .discount-promo i {
+    font-size: 1em;
+}
+
+.vehicle-cost-summary .deposit-item, 
+.vehicle-cost-summary .deposit-note {
+    font-size: 0.9em; /* Adjusted font size */
+    color: #777;
+    margin-top: 15px;
+    line-height: 1.4;
+}
+
+.vehicle-cost-summary .deposit-item span i,
+.vehicle-cost-summary .deposit-note i {
+    margin-right: 5px;
+    color: #007bff;
+}
+
+/* Vehicle Other Costs */
+.vehicle-other-costs h2 {
+    font-size: 1.5em; /* Adjusted font size */
+    margin-bottom: 15px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+.vehicle-other-costs .cost-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px; /* Adjusted margin */
+    font-size: 1em; /* Adjusted font size */
+    color: #444;
+}
+
+.vehicle-other-costs .cost-item:last-of-type {
+    margin-bottom: 0;
+}
+
+.vehicle-other-costs .cost-item span {
+    font-weight: normal;
+    color: #777;
+}
+
+.vehicle-other-costs .cost-item strong {
+    font-weight: bold;
+    color: #333;
+}
+
+.vehicle-other-costs .cost-note {
+    font-size: 0.85em; /* Adjusted font size */
+    color: #999;
+    line-height: 1.4;
+    margin-top: 10px;
+}
+
+/* Vehicle Booking Button */
+.vehicle-booking-button-container {
+    padding-top: 20px; /* Adjusted padding */
+    text-align: center;
+}
+
+.vehicle-booking-button-container .btn-book-vehicle {
+    background-color: #28a745; /* Green button */
+    color: white;
+    padding: 15px 30px; /* Adjusted padding */
+    border: none;
+    border-radius: 8px; /* Adjusted border-radius */
+    font-size: 1.3em; /* Adjusted font size */
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    width: 100%; /* Full width button */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Added shadow */
+}
+
+.vehicle-booking-button-container .btn-book-vehicle:hover {
+    background-color: #218838; /* Darker green on hover */
+    transform: translateY(-2px); /* Slight lift on hover */
+}
+
+/* Vehicle Owner Info */
+.vehicle-owner-info {
+    padding: 20px;
+    background-color: #f8f8f8;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-top: 20px; /* Adjusted margin */
+}
+
+.vehicle-owner-info .owner-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1em; /* Adjusted font size */
+    color: #333;
+}
+
+.vehicle-owner-info .owner-status .bonbon-car-icon,
+.vehicle-owner-info .owner-status .fa-circle-check {
+    font-size: 1.5em; /* Adjusted font size */
+    color: #28a745; /* Green color */
+}
+
+.vehicle-owner-info .owner-status p {
+    margin: 0;
+} 

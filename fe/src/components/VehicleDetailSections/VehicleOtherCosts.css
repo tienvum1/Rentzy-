@@ -1,0 +1,51 @@
+.vehicle-other-costs {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+    font-family: Arial, sans-serif;
+    border: 1px solid #e0e0e0;
+  }
+  
+  .section-header {
+    background-color: #d1f2eb;
+    padding: 16px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #009688;
+  }
+  
+  .cost-item {
+    padding: 16px 20px;
+  }
+  
+  .cost-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  
+  .cost-title {
+    font-size: 16px;
+    color: #222;
+  }
+  
+  .cost-price {
+    font-size: 15px;
+    color: #000;
+  }
+  
+  .cost-note {
+    font-size: 14px;
+    color: #555;
+    margin: 0;
+  }
+  
+  hr {
+    margin: 0;
+    border: none;
+    border-top: 1px solid #eee;
+  }
+  

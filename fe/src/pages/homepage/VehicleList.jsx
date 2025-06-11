@@ -56,19 +56,7 @@ const VehicleList = () => {
           // Map backend vehicle object to VehicleCard props
         <VehicleCard
           key={v._id} // Use unique vehicle ID as key
-          image={v.primaryImage || 'https://via.placeholder.com/300x200?text=No+Image'} // Use primaryImage, fallback to placeholder
-          name={`${v.brand} ${v.model}`} // Combine brand and model for name
-          // Assuming year is not directly available in schema, omit or add placeholder
-          // year={v.year || 'N/A'}
-          seats={v.type === 'car' ? v.specificDetails?.seatCount : 'N/A'} // Get seats if car
-          transmission={v.type === 'car' ? (v.specificDetails?.transmission === 'automatic' ? 'Số tự động' : (v.specificDetails?.transmission === 'manual' ? 'Số sàn' : 'N/A')) : 'N/A'} // Map transmission if car
-          fuel={v.type === 'car' ? (v.specificDetails?.fuelType || 'N/A') : 'N/A'} // Map fuel if car
-          pricePerDay={`${v.pricePerDay ? parseFloat(v.pricePerDay).toLocaleString() : 'N/A'} VNĐ`} // Format price
-          location={v.location || 'N/A'}
-          // isSaved prop would need a mechanism to track saved status (e.g., user saved list)
-          // isSaved={false}
-          onSave={() => {console.log('Save clicked for', v._id)}} // Placeholder save action
-          onViewDetails={() => {console.log('View details clicked for', v._id)}} // Placeholder view details action
+          vehicle={v} // Pass the entire vehicle object
         />
       ))}
     </div>

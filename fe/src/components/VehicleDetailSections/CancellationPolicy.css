@@ -1,0 +1,67 @@
+.cancellation-policy {
+    padding: 24px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .cancellation-policy h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #1f2937;
+  }
+  
+  .table {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .table-header, .table-row {
+    display: flex;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .table-header:last-child, .table-row:last-child {
+    border-bottom: none;
+  }
+  
+  .cell {
+    flex: 1;
+    padding: 16px;
+    text-align: left;
+    font-size: 15px;
+    color: #374151;
+  }
+  
+  .header {
+    font-weight: 600;
+    background-color: #f9fafb;
+    color: #111827;
+  }
+  
+  .cell.policy {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+  }
+  
+  .cell.header.empty {
+    background: transparent;
+  }
+  
+  .icon {
+    font-size: 18px;
+  }
+  
+  .icon.success {
+    color: #10b981; /* green-500 */
+  }
+  
+  .icon.danger {
+    color: #ef4444; /* red-500 */
+  }
+  
