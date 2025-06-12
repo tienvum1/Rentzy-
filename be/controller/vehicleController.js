@@ -173,9 +173,23 @@ exports.addVehicle = async (req, res) => {
       });
       await car.save();
     } else if (type === "motorbike") {
-      console.log(
-        "Motorbike type received. Specific motorbike save logic should be added if needed."
-      );
+      const { engineCapacity, hasGear } = req.body; // Extract motorbike specific fields
+      const engineCapacityNum = parseFloat(engineCapacity);
+      const hasGearBool = hasGear === 'true'; // Convert string 'true'/'false' to boolean
+
+      if (isNaN(engineCapacityNum) || engineCapacityNum <= 0) {
+        return res.status(400).json({ message: "Dung tích động cơ không hợp lệ.", field: "engineCapacity" });
+      }
+      if (hasGear === undefined || hasGear === null || hasGear.trim() === "") {
+        return res.status(400).json({ message: "Loại hộp số là bắt buộc.", field: "hasGear" });
+      }
+
+      const motorbike = new Motorbike({
+        vehicle_id: vehicle._id,
+        engine_capacity: engineCapacityNum,
+        has_gear: hasGearBool,
+      });
+      await motorbike.save();
     }
 
     res.status(201).json({
@@ -949,10 +963,13 @@ exports.requestVehicleUpdate = async (req, res) => {
       pricePerDay: parseFloat(getSingleValue(pricePerDay)),
       deposit: parseFloat(getSingleValue(deposit)),
       fuelConsumption: getSingleValue(fuelConsumption) ? parseFloat(getSingleValue(fuelConsumption)) : undefined,
-      features: JSON.parse(getSingleValue(features)), // features đã là string JSON, parse trực tiếp
+      features: Array.isArray(features) ? features : (getSingleValue(features) ? JSON.parse(getSingleValue(features)) : []), // Handle features correctly
       rentalPolicy: getSingleValue(rentalPolicy),
       specificDetails: {}
     };
+
+    // Debugging: Log features after parsing and before assigning to pendingChanges
+    console.log('DEBUG: Features used for pendingChanges:', pendingChanges.features);
 
     // Add specific details based on vehicle type
     if (vehicleToUpdate.type === "car") {
@@ -1052,7 +1069,45 @@ exports.getVehiclesWithPendingChanges = async (req, res) => {
           motorbikeDetails: { $arrayElemAt: ["$motorbikeDetails", 0] },
           ownerDetails: { $arrayElemAt: ["$ownerDetails", 0] }
         }
-      }
+      },
+      {
+        $project: {
+          _id: 1,
+          owner: 1,
+          brand: 1,
+          model: 1,
+          type: 1,
+          licensePlate: 1,
+          location: 1,
+          pricePerDay: 1,
+          deposit: 1,
+          fuelConsumption: 1,
+          features: 1,
+          rentalPolicy: 1,
+          primaryImage: 1,
+          gallery: 1,
+          approvalStatus: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          pendingChanges: 1, // Explicitly include pendingChanges
+          // Add specific details based on type if needed for display directly from the vehicle object
+          // (though pendingChanges.specificDetails should contain them too)
+          specificDetails: {
+            $cond: {
+              if: { $eq: ["$type", "car"] },
+              then: "$carDetails",
+              else: {
+                $cond: {
+                  if: { $eq: ["$type", "motorbike"] },
+                  then: "$motorbikeDetails",
+                  else: null,
+                },
+              },
+            },
+          },
+        },
+      },
     ]);
 
     res.status(200).json({
@@ -1156,10 +1211,10 @@ exports.reviewVehicleChanges = async (req, res) => {
           );
         } else if (vehicle.type === "motorbike" && changesToApply.specificDetails) {
           motorbikeUpdate = Motorbike.findOneAndUpdate(
-            { vehicle: objectVehicleId },
+            { vehicle_id: objectVehicleId }, // Corrected from 'vehicle' to 'vehicle_id'
             {
-              engineCapacity: changesToApply.specificDetails.engineCapacity,
-              hasGear: changesToApply.specificDetails.hasGear
+              engine_capacity: changesToApply.specificDetails.engineCapacity, // Corrected field name
+              has_gear: changesToApply.specificDetails.hasGear // Corrected field name
             },
             { new: true, upsert: true } // Use upsert: true to create if not exists
           );

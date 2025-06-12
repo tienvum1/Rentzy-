@@ -79,16 +79,22 @@ const VehicleChangesPage = () => {
                                     <ul>
                                         {Object.entries(value).map(([detailKey, detailValue]) => (
                                             <li key={detailKey}>
-                                                {detailKey}: {detailValue.toString()}
+                                                {detailKey}: {detailValue !== undefined && detailValue !== null ? detailValue.toString() : ''}
                                             </li>
                                         ))}
                                     </ul>
                                 </div>
                             );
+                        } else if (key === 'features') {
+                            return (
+                                <div key={key} className="change-item">
+                                    <strong>{key}:</strong> {Array.isArray(value) ? value.join(', ') : (value ? value.toString() : '')}
+                                </div>
+                            );
                         }
                         return (
                             <div key={key} className="change-item">
-                                <strong>{key}:</strong> {value ? value.toString() : ''}
+                                <strong>{key}:</strong> {value !== undefined && value !== null ? value.toString() : ''}
                             </div>
                         );
                     })}

@@ -12,7 +12,7 @@ const AddMotorbikeForm = () => {
     brand: '',
     model: '',
     license_plate: '',
-    location: '',
+    location: { address: '' },
     price_per_day: '',
     deposit_required: '',
     engineCapacity: '', // Motorbike specific
@@ -42,7 +42,6 @@ const AddMotorbikeForm = () => {
     'Sạc USB',
     'Hỗ trợ định vị GPS',
     'Smart key',
-    'Cổng sạc USB',
     'Đèn pha tự động',
     'Báo động chống trộm',
     'Khởi động bằng cần đạp',
@@ -142,7 +141,7 @@ const AddMotorbikeForm = () => {
     if (!formData.model.trim()) newErrors.model = 'Dòng xe là bắt buộc';
     if (!formData.license_plate.trim())
       newErrors.license_plate = 'Biển số xe là bắt buộc';
-    if (!formData.location.address.trim())
+    if (!formData.location || !formData.location.address || !formData.location.address.trim())
       newErrors.location = 'Địa điểm là bắt buộc';
 
     const price = parseFloat(formData.price_per_day);
@@ -217,22 +216,30 @@ const AddMotorbikeForm = () => {
     });
 
     try {
-      const token = localStorage.getItem('token');
+      // No need to get token from localStorage if using httpOnly cookies
+      // const token = localStorage.getItem('token');
+      // if (!token) {
+      //   setMessage('Bạn cần đăng nhập để thêm xe máy.');
+      //   setLoading(false);
+      //   return;
+      // }
       const response = await axios.post(
-        `${backendUrl}/api/vehicles`,
+        `${backendUrl}/api/vehicles/add`,
         dataToSubmit,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`,
+            // No need for Authorization header if token is in httpOnly cookie
+            // Authorization: `Bearer ${token}`,
           },
+          withCredentials: true, // Crucial for sending httpOnly cookies with cross-origin requests
         }
       );
       setMessage('Xe máy đã được thêm thành công và đang chờ admin duyệt!');
       setLoading(false);
       // Optional: Clear form or redirect
       setFormData({
-        brand: '', model: '', license_plate: '', location: '', price_per_day: '',
+        brand: '', model: '', license_plate: '', location: { address: '' }, price_per_day: '',
         deposit_required: '', engineCapacity: '', hasGear: '', fuelConsumption: '',
         main_image: null, additional_images: [], type: 'motorbike', features: [], rentalPolicy: '',
       });
