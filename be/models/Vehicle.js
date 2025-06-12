@@ -26,6 +26,11 @@ const vehicleSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    // thêm mô tả xe 
+    description: {
+      type: String,
+      required: true,
+    },
 
     // Loại xe: car hoặc motorbike
     type: {

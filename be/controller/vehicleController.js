@@ -60,6 +60,7 @@ exports.addVehicle = async (req, res) => {
     fuel_type,
     features,
     rentalPolicy,
+    description,
   } = req.body;
   console.log("body lay tu req ", req.body);
   console.log("files", req.files);
@@ -157,6 +158,7 @@ exports.addVehicle = async (req, res) => {
         : rentalPolicy,
       primaryImage: primaryImageUrl,
       gallery: galleryImageUrls,
+      description,
     });
 
     await vehicle.save();
@@ -292,6 +294,7 @@ exports.getOwnerVehicles = async (req, res) => {
           status: 1,
           createdAt: 1,
           updatedAt: 1,
+          description: 1,
           // Include specific details based on type
           specificDetails: {
             // Create a new field to hold car or motorbike details
@@ -409,6 +412,7 @@ exports.getPendingVehicleApprovalsForAdmin = async (req, res) => {
           status: 1,
           createdAt: 1,
           updatedAt: 1,
+          description: 1,
           specificDetails: {
             // Create a new field to hold car or motorbike details
             $cond: {
@@ -704,6 +708,7 @@ exports.getVehicles = async (req, res) => {
           status: 1, // Include general vehicle status
           createdAt: 1,
           updatedAt: 1, // Include update timestamp
+          description: 1,
           // Include all fields from carDetails and motorbikeDetails
           "carDetails.seatCount": 1, // Corrected field name
           "carDetails.bodyType": 1, // Corrected field name
@@ -811,6 +816,7 @@ exports.getVehicleById = async (req, res) => {
           status: 1, // Include general vehicle status
           createdAt: 1,
           updatedAt: 1, // Include update timestamp
+          description: 1,
           // Include all fields from carDetails and motorbikeDetails
           "carDetails.seatCount": 1, // Corrected field name
           "carDetails.bodyType": 1, // Corrected field name
@@ -916,6 +922,7 @@ exports.requestVehicleUpdate = async (req, res) => {
     features,
     rentalPolicy,
     type,
+    description,
     ...specificData
   } = req.body;
 
@@ -965,6 +972,7 @@ exports.requestVehicleUpdate = async (req, res) => {
       fuelConsumption: getSingleValue(fuelConsumption) ? parseFloat(getSingleValue(fuelConsumption)) : undefined,
       features: Array.isArray(features) ? features : (getSingleValue(features) ? JSON.parse(getSingleValue(features)) : []), // Handle features correctly
       rentalPolicy: getSingleValue(rentalPolicy),
+      description: getSingleValue(description),
       specificDetails: {}
     };
 
@@ -1091,8 +1099,7 @@ exports.getVehiclesWithPendingChanges = async (req, res) => {
           createdAt: 1,
           updatedAt: 1,
           pendingChanges: 1, // Explicitly include pendingChanges
-          // Add specific details based on type if needed for display directly from the vehicle object
-          // (though pendingChanges.specificDetails should contain them too)
+          description: 1,
           specificDetails: {
             $cond: {
               if: { $eq: ["$type", "car"] },
@@ -1191,6 +1198,7 @@ exports.reviewVehicleChanges = async (req, res) => {
             rentalPolicy: changesToApply.rentalPolicy,
             primaryImage: changesToApply.primaryImage, // Apply new image if present
             gallery: changesToApply.gallery,           // Apply new gallery if present
+            description: changesToApply.description,   // Apply new description
             pendingChangeStatus: "approved",
             changeRejectionReason: null,
         };

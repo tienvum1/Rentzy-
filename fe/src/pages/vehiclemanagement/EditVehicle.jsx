@@ -22,6 +22,7 @@ const EditVehicle = () => {
         fuelConsumption: '',
         features: [],
         rentalPolicy: '',
+        description: '',
         primaryImage: null,
         gallery: [],
         // Car specific fields
@@ -104,6 +105,7 @@ const EditVehicle = () => {
                     fuelConsumption: vehicleData.fuelConsumption || '',
                     features: vehicleData.features || [],
                     rentalPolicy: vehicleData.rentalPolicy || '',
+                    description: vehicleData.description || '',
                     primaryImage: null,
                     gallery: vehicleData.gallery || [],
                     // Set type-specific fields based on vehicle type
@@ -186,10 +188,11 @@ const EditVehicle = () => {
                     formData.gallery.forEach(file => {
                         formDataToSend.append('additional_images', file);
                     });
-                } else if (key !== 'primaryImage' && key !== 'gallery') {
+                } else if (key !== 'primaryImage' && key !== 'gallery' && key !== 'description') {
                     formDataToSend.append(key, formData[key]);
                 }
             });
+            formDataToSend.append('description', formData.description);
 
             // Add type-specific fields
             if (vehicle.type === 'car') {
@@ -352,6 +355,17 @@ const EditVehicle = () => {
                             value={formData.rentalPolicy}
                             onChange={handleInputChange}
                             rows="4"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Description:</label>
+                        <textarea
+                            name="description"
+                            value={formData.description}
+                            onChange={handleInputChange}
+                            rows="4"
+                            required
                         />
                     </div>
 

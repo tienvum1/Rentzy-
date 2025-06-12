@@ -23,6 +23,7 @@ const AddMotorbikeForm = () => {
     type: 'motorbike', // Set vehicle type to motorbike
     features: [],
     rentalPolicy: '',
+    description: '', // Add new description field
   });
 
   const [loading, setLoading] = useState(false);
@@ -160,6 +161,7 @@ const AddMotorbikeForm = () => {
       newErrors.hasGear = 'Hộp số là bắt buộc';
 
     if (!formData.main_image) newErrors.main_image = 'Ảnh chính là bắt buộc';
+    if (!formData.description.trim()) newErrors.description = 'Mô tả là bắt buộc'; // Add validation for description
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -183,6 +185,7 @@ const AddMotorbikeForm = () => {
     dataToSubmit.append('price_per_day', formData.price_per_day);
     dataToSubmit.append('deposit_required', formData.deposit_required);
     dataToSubmit.append('type', formData.type); // 'motorbike'
+    dataToSubmit.append('description', formData.description.trim()); // Append description
 
     // Motorbike specific fields
     dataToSubmit.append('engineCapacity', formData.engineCapacity);
@@ -242,6 +245,7 @@ const AddMotorbikeForm = () => {
         brand: '', model: '', license_plate: '', location: { address: '' }, price_per_day: '',
         deposit_required: '', engineCapacity: '', hasGear: '', fuelConsumption: '',
         main_image: null, additional_images: [], type: 'motorbike', features: [], rentalPolicy: '',
+        description: '', // Reset description
       });
       setMainImagePreview(null);
       setAdditionalImagesPreviews([]);
@@ -409,7 +413,18 @@ const AddMotorbikeForm = () => {
             ></textarea>
           </div>
 
-          
+          <div className="form-group">
+            <label htmlFor="description">Mô tả</label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows="5"
+              className={errors.description ? 'input-error' : ''}
+            ></textarea>
+            {errors.description && <span className="error-text">{errors.description}</span>}
+          </div>
 
           <div className="form-group">
             <h3>Tính năng</h3>
