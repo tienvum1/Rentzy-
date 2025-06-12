@@ -35,7 +35,7 @@ const EditVehicle = () => {
     });
 
     // Danh sách các tính năng phổ biến (có thể mở rộng tuỳ ý)
-    const FEATURE_OPTIONS = [
+    const CAR_FEATURE_OPTIONS = [
         "Bản đồ",
         "Bluetooth",
         "Camera 360",
@@ -56,6 +56,28 @@ const EditVehicle = () => {
         "Túi khí an toàn"
     ];
 
+    const MOTORBIKE_FEATURE_OPTIONS = [
+      'Gương chiếu hậu',
+      'Đèn LED',
+      'Khóa chống trộm',
+      'Cốp rộng',
+      'Sạc USB',
+      'Hỗ trợ định vị GPS',
+      'Smart key',
+      'Đèn pha tự động',
+      'Báo động chống trộm',
+      'Khởi động bằng cần đạp',
+      'Phanh đĩa trước',
+      'Phanh đĩa sau', 
+      'Chế độ lái tiết kiệm (Eco)',
+      'Chế độ lái thể thao (Sport)',
+      'Công tắc ngắt động cơ khẩn cấp',
+      'Chế độ lùi (cho xe điện)',
+      'Chìa khóa cơ',
+      'Giá đèo hàng phía sau',
+      'Giá để chân sau sau thoải mái',
+    ];
+
     // Fetch vehicle data
     useEffect(() => {
         const fetchVehicle = async () => {
@@ -66,6 +88,11 @@ const EditVehicle = () => {
                 const vehicleData = response.data.vehicle;
                 setVehicle(vehicleData);
                 
+                // DEBUGGING: Log vehicleData to inspect type and features
+                console.log('DEBUG: vehicleData in EditVehicle.jsx', vehicleData);
+                console.log('DEBUG: vehicleData.type', vehicleData.type);
+                console.log('DEBUG: vehicleData.features', vehicleData.features);
+
                 // Set form data with vehicle information
                 setFormData({
                     brand: vehicleData.brand || '',
@@ -305,7 +332,7 @@ const EditVehicle = () => {
                     <div className="form-group">
                         <label>Tính năng:</label>
                         <div className="features-button-group">
-                            {FEATURE_OPTIONS.map((feature) => (
+                            {(vehicle?.type === 'car' ? CAR_FEATURE_OPTIONS : MOTORBIKE_FEATURE_OPTIONS).map((feature) => (
                                 <button
                                     type="button"
                                     key={feature}

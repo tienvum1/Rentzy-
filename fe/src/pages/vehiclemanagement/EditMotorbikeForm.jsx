@@ -13,6 +13,7 @@ const EditMotorbikeForm = ({ vehicle, onCancel, onSubmit }) => {
         price_per_day_raw: vehicle.price_per_day || 0,
         deposit_required_raw: vehicle.deposit_required || 0,
         terms: vehicle.terms || '',
+        features: vehicle.features || [], // Initialize features
         // Motorbike specific details
         engine_capacity: vehicle.motorbikeDetails?.engine_capacity || '',
         has_gear: vehicle.motorbikeDetails?.has_gear || false,
@@ -23,6 +24,29 @@ const EditMotorbikeForm = ({ vehicle, onCancel, onSubmit }) => {
     // State for formatted numbers to display in inputs
     const [formattedPrice, setFormattedPrice] = useState('');
     const [formattedDeposit, setFormattedDeposit] = useState('');
+
+    // Motorbike specific features list
+    const availableFeatures = [
+      'Gương chiếu hậu',
+      'Đèn LED',
+      'Khóa chống trộm',
+      'Cốp rộng',
+      'Sạc USB',
+      'Hỗ trợ định vị GPS',
+      'Smart key',
+      'Đèn pha tự động',
+      'Báo động chống trộm',
+      'Khởi động bằng cần đạp',
+      'Phanh đĩa trước',
+      'Phanh đĩa sau', 
+      'Chế độ lái tiết kiệm (Eco)',
+      'Chế độ lái thể thao (Sport)',
+      'Công tắc ngắt động cơ khẩn cấp',
+      'Chế độ lùi (cho xe điện)',
+      'Chìa khóa cơ',
+      'Giá đèo hàng phía sau',
+      'Giá để chân sau sau thoải mái',
+    ];
 
     // Effect to update form state when vehicle prop changes
     useEffect(() => {
@@ -36,6 +60,7 @@ const EditMotorbikeForm = ({ vehicle, onCancel, onSubmit }) => {
                 price_per_day_raw: vehicle.price_per_day || 0,
                 deposit_required_raw: vehicle.deposit_required || 0,
                 terms: vehicle.terms || '',
+                features: vehicle.features || [], // Update features here too
                 engine_capacity: vehicle.motorbikeDetails?.engine_capacity || '',
                 has_gear: vehicle.motorbikeDetails?.has_gear || false,
                 images: [] // Keep as placeholder for now
@@ -77,8 +102,22 @@ const EditMotorbikeForm = ({ vehicle, onCancel, onSubmit }) => {
         }
     };
 
-    // Assume a function to handle image changes if image editing is implemented
-    // const handleImageChange = (e) => { ... };
+    const handleFeatureToggle = (feature) => {
+        setFormData((prev) => {
+          const currentFeatures = prev.features || [];
+          if (currentFeatures.includes(feature)) {
+            return {
+              ...prev,
+              features: currentFeatures.filter((f) => f !== feature),
+            };
+          } else {
+            return {
+              ...prev,
+              features: [...currentFeatures, feature].sort(),
+            };
+          }
+        });
+      };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -152,6 +191,25 @@ const EditMotorbikeForm = ({ vehicle, onCancel, onSubmit }) => {
                 <div className="form-group">
                     <label>Has Gear:</label>
                     <input type="checkbox" name="has_gear" checked={formData.has_gear} onChange={handleInputChange} />
+                </div>
+
+                {/* Features Section */}
+                <div className="form-group">
+                    <h3>Features</h3>
+                    <div className="features-grid">
+                        {availableFeatures.map((feature) => (
+                            <button
+                                key={feature}
+                                type="button"
+                                className={`feature-button ${
+                                    formData.features.includes(feature) ? 'selected' : ''
+                                }`}
+                                onClick={() => handleFeatureToggle(feature)}
+                            >
+                                {feature}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Image handling would go here */}
