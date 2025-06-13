@@ -1,0 +1,517 @@
+.vehicle-booking-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: auto;
+}
+
+.pricing-section {
+  margin-bottom: 25px;
+}
+
+.pricing-section h3 {
+  color: #0080ff;
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+}
+
+.price-per-day {
+  margin-bottom: 20px;
+}
+
+.price-per-day .price {
+  font-size: 28px;
+  font-weight: bold;
+  color: #1abc9c;
+}
+
+.price-per-day .unit {
+  color: #7f8c8d;
+  margin-left: 5px;
+}
+
+.date-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.date-input {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.date-input label {
+  margin-bottom: 5px;
+  color: #7f8c8d;
+  font-weight: 500;
+}
+
+.date-input input {
+  padding: 12px;
+  border: 1px solid #bdc3c7;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border 0.3s;
+}
+
+.date-input input:focus {
+  border-color: #1abc9c;
+  outline: none;
+}
+
+.time-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #bdc3c7;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border 0.3s;
+}
+
+.time-input:focus {
+  border-color: #1abc9c;
+  outline: none;
+}
+
+/* Pickup and Delivery Section */
+.pickup-delivery-section {
+  margin-bottom: 25px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.pickup-delivery-section h3 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+.location-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.location-input {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.location-input label {
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.location-select {
+  padding: 12px;
+  border: 1px solid #bdc3c7;
+  border-radius: 6px;
+  font-size: 16px;
+  background-color: white;
+  cursor: pointer;
+  transition: border 0.3s;
+}
+
+.location-select:hover {
+  border-color: #1abc9c;
+}
+
+.cost-summary {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cost-summary h3 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+.cost-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cost-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.cost-item.total {
+  font-weight: bold;
+  border-bottom: none;
+  margin-top: 10px;
+  padding-top: 15px;
+  border-top: 2px solid #bdc3c7;
+}
+
+.cancellation-policy {
+  margin-bottom: 25px;
+}
+
+.policy-toggle {
+  width: 100%;
+  padding: 15px;
+  background: #f8f9fa;
+  border: 1px solid #bdc3c7;
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.3s;
+}
+
+.policy-toggle:hover {
+  background: #e9ecef;
+}
+
+.arrow {
+  transition: transform 0.3s ease;
+}
+
+.arrow.up {
+  transform: rotate(180deg);
+}
+
+.policy-content {
+  margin-top: 10px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.policy-content h4 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.policy-content ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.policy-content li {
+  margin-bottom: 8px;
+  color: #7f8c8d;
+  padding-left: 20px;
+  position: relative;
+}
+
+.policy-content li:before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #1abc9c;
+}
+
+.book-now-button {
+  width: 100%;
+  padding: 15px;
+  background: #1abc9c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.book-now-button:hover {
+  background: #16a085;
+}
+
+.book-now-button:disabled {
+  background: #95a5a6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .date-picker,
+  .location-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .vehicle-booking-section {
+    padding: 20px;
+  }
+  
+  .price-per-day .price {
+    font-size: 24px;
+  }
+}
+
+.pickup-boxes {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pickup-box {
+  position: relative;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(30, 180, 156, 0.08);
+  border: 2px solid #e0e0e0;
+  padding: 20px 30px 15px 60px;
+  cursor: pointer;
+  transition: border 0.25s, box-shadow 0.25s, background 0.2s;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.pickup-box.selected {
+  border: 2.5px solid #1abc9c;
+  background: linear-gradient(90deg, #f6fffa 60%, #e8fff6 100%);
+  box-shadow: 0 6px 24px rgba(30, 180, 156, 0.13);
+}
+
+.pickup-box:hover {
+  border: 2.5px solid #16a085;
+  background: #f8fffc;
+}
+
+.pickup-box input[type="checkbox"] {
+  position: absolute;
+  left: 24px;
+  top: 32px;
+  width: 26px;
+  height: 26px;
+  accent-color: #1abc9c;
+  z-index: 2;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(30, 180, 156, 0.10);
+}
+
+.pickup-box b {
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.pickup-box .pickup-location-label {
+  color: #444;
+  margin-left: 0;
+  font-size: 1.1rem;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pickup-box .pickup-address-input {
+  margin-top: 12px;
+  width: 95%;
+  padding: 12px 14px;
+  border: 1.7px solid #1abc9c;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  outline: none;
+  background: #f8f9fa;
+  transition: border 0.2s, background 0.2s;
+  font-family: inherit;
+}
+
+.pickup-box .pickup-address-input:focus {
+  border: 2.2px solid #16a085;
+  background: #ffffff;
+}
+
+.pickup-box .pickup-fee-info {
+  color: #e74c3c;
+  font-size: 0.95rem;
+  margin-top: 10px;
+  margin-left: 2px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .pickup-box {
+    padding: 16px 8px 14px 40px;
+    min-height: 70px;
+  }
+  .pickup-box input[type="checkbox"] {
+    left: 8px;
+    top: 16px;
+    width: 20px;
+    height: 20px;
+  }
+  .pickup-box .pickup-address-input {
+    width: 98%;
+    font-size: 0.95rem;
+    padding: 10px 8px;
+  }
+}
+
+.promo-modal-overlay {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  background: rgba(44, 62, 80, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.promo-modal {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 40px rgba(44,62,80,0.18);
+  padding: 32px 28px 24px 28px;
+  min-width: 350px;
+  max-width: 420px;
+  width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: popupIn 0.22s;
+}
+
+@keyframes popupIn {
+  from { transform: translateY(40px) scale(0.98); opacity: 0.7; }
+  to   { transform: none; opacity: 1; }
+}
+
+.promo-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.promo-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin-left: 10px;
+}
+.promo-modal-close:hover {
+  color: #e74c3c;
+}
+
+.promo-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #16a085;
+  font-size: 1.08rem;
+  margin-bottom: 18px;
+  background: #f8f9fa;
+  outline: none;
+  transition: border 0.2s;
+}
+.promo-input:focus {
+  border: 2px solid #1abc9c;
+  background: #fff;
+}
+
+.promo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.promo-item {
+  display: flex;
+  align-items: flex-start;
+  background: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(30,180,156,0.07);
+  border: 1.5px solid #e0e0e0;
+  padding: 18px 16px;
+  gap: 16px;
+  position: relative;
+}
+
+.promo-item-left {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.promo-icon {
+  width: 44px;
+  height: 44px;
+  background: #1abc9c;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+}
+
+.promo-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.promo-item-action {
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+}
+.promo-apply-btn {
+  background: #1abc9c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+  margin-top: 8px;
+}
+.promo-apply-btn:hover {
+  background: #16a085;
+}
+
+@media (max-width: 600px) {
+  .promo-modal {
+    padding: 16px 4vw 12px 4vw;
+    min-width: 0;
+    max-width: 98vw;
+  }
+  .promo-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 8px;
+  }
+  .promo-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.3rem;
+  }
+}
