@@ -1,5 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import DatePicker from 'react-datepicker';
+import TimePicker from 'react-time-picker';
+import { toast } from 'react-toastify';
+import "react-datepicker/dist/react-datepicker.css";
+import "react-time-picker/dist/TimePicker.css";
+import "react-toastify/dist/ReactToastify.css";
 import './VehicleBookingSection.css';
+import DateTimeSelector from '../DateTimeSelector/DateTimeSelector';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const PROMO_LIST = [
   {
@@ -35,7 +45,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
   });
 
   const [pickupLocation, setPickupLocation] = useState(vehicle.location);
-  const [pickupAddress, setPickupAddress] = useState('');
+  const [returnLocation, setReturnLocation] = useState(vehicle.location);
   const [pickupTime, setPickupTime] = useState('08:00');
   const [returnTime, setReturnTime] = useState('17:00');
 
@@ -45,50 +55,102 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
   const [selectedPromo, setSelectedPromo] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
 
-  // Tính toán tổng chi phí
-  const calculateTotalCost = () => {
-    if (!selectedDates.startDate || !selectedDates.endDate) return 0;
-    const start = new Date(`${selectedDates.startDate}T${pickupTime}`);
-    const end = new Date(`${selectedDates.endDate}T${returnTime}`);
-    let days = Math.floor((end - start) / (1000 * 60 * 60 * 24));
-    // Nếu còn dư giờ/phút hoặc giờ trả > giờ nhận thì tính thêm 1 ngày
-    if (
-      end > start &&
-      (end.getHours() > start.getHours() ||
-        (end.getHours() === start.getHours() && end.getMinutes() > start.getMinutes()) ||
-        days === 0)
-    ) {
-      days += 1;
+  // State để lưu các ngày đã được đặt
+  const [bookedDates, setBookedDates] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // State để điều khiển việc hiển thị modal chọn ngày giờ
+  const [showDateTimeModal, setShowDateTimeModal] = useState(false);
+
+  // Thêm useAuth và useNavigate
+  const { isAuthenticated, token } = useAuth();
+  const navigate = useNavigate();
+
+  // Fetch các ngày đã được đặt của xe
+  useEffect(() => {
+    const fetchBookedDates = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/vehicle/${vehicle._id}/dates`);
+        setBookedDates(response.data.bookedDates);
+      } catch (error) {
+        toast.error('Lỗi khi lấy thông tin lịch đặt xe.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookedDates();
+  }, [vehicle._id]);
+
+  // Callback từ DateTimeSelector khi người dùng xác nhận
+  const handleDateTimeSelect = (data) => {
+    if (data) {
+      setSelectedDates({ startDate: data.startDate, endDate: data.endDate });
+      setPickupTime(data.pickupTime);
+      setReturnTime(data.returnTime);
     }
-    return days * vehicle.pricePerDay;
+    setShowDateTimeModal(false);
   };
 
-  // Tính toán các chi phí khác
-  const calculateOtherCosts = () => {
-    const totalCost = calculateTotalCost();
+  // Đã loại bỏ hàm calculateBookingDetails. Logic được nhúng trực tiếp vào useMemo.
+
+  const otherCosts = React.useMemo(() => ({
+    deposit: vehicle.deposit,
+    deliveryFee: pickupLocation !== vehicle.location ? 200000 : 0,
+  }), [pickupLocation, vehicle.deposit]);
+
+  const bookingDetails = React.useMemo(() => {
+    if (!selectedDates.startDate || !selectedDates.endDate || !pickupTime || !returnTime) {
+      return {
+        totalDays: 0,
+        rentalFee: 0,
+        deliveryFee: 0,
+        finalAmount: 0
+      };
+    }
+
+    // Chuyển đổi ngày và giờ đã chọn thành đối tượng Date với múi giờ Việt Nam
+    const start = new Date(`${selectedDates.startDate}T${pickupTime}:00+07:00`);
+    const end = new Date(`${selectedDates.endDate}T${returnTime}:00+07:00`);
+
+    if (isNaN(start.getTime())) {
+      return { totalDays: 0, rentalFee: 0, deliveryFee: 0, finalAmount: 0 };
+    }
+    if (isNaN(end.getTime())) {
+      return { totalDays: 0, rentalFee: 0, deliveryFee: 0, finalAmount: 0 };
+    }
+
+    // Tính số ngày thuê
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    let totalDays = 0;
+    if (diffTime === 0) {
+      totalDays = 0;
+    } else if (diffTime <= (24 * 60 * 60 * 1000)) {
+      totalDays = 1;
+    } else {
+      totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    const rentalFee = totalDays * vehicle.pricePerDay;
     const deliveryFee = pickupLocation !== vehicle.location ? 200000 : 0;
+    const finalAmount = rentalFee + deliveryFee - discountAmount;
 
     return {
-      deposit: vehicle.deposit,
-      serviceFee: totalCost * 0.1, // Phí dịch vụ 10%
-      insurance: totalCost * 0.05, // Bảo hiểm 5%
-      deliveryFee, // Phí giao xe
+      totalDays,
+      rentalFee,
+      deliveryFee,
+      finalAmount,
     };
-  };
+  }, [selectedDates.startDate, selectedDates.endDate, pickupTime, returnTime, discountAmount, pickupLocation, vehicle.pricePerDay]);
 
-  const otherCosts = calculateOtherCosts();
-  const totalCost = calculateTotalCost();
+  const totalCost = React.useMemo(() => bookingDetails.finalAmount, [bookingDetails.finalAmount]);
 
-  const holdFee = vehicle.holdFee || 500000; // 500.000đ mặc định
+  const holdFee = vehicle.holdFee || 500000;
 
-  // Tính tổng trước giảm
-  const totalBeforeDiscount =
-    totalCost +
-    otherCosts.deposit +
-    otherCosts.serviceFee +
-    otherCosts.insurance +
-    otherCosts.deliveryFee +
-    holdFee;
+  const totalBeforeDiscount = React.useMemo(
+    () => totalCost + otherCosts.deposit + otherCosts.deliveryFee + holdFee,
+    [totalCost, otherCosts.deposit, otherCosts.deliveryFee, holdFee]
+  );
 
   // Tính giảm giá khi chọn mã
   const handleApplyPromo = (promo) => {
@@ -111,67 +173,155 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
   };
 
   const handleBoxSelect = (location) => {
-    setPickupLocation(location);
-    if (location === vehicle.location) setPickupAddress('');
+    if (location === vehicle.location) {
+      // Nếu chọn nhận xe tại vị trí xe
+      setPickupLocation(vehicle.location);
+      setReturnLocation(vehicle.location);
+    } else {
+      // Nếu chọn giao xe tận nơi
+      setPickupLocation('delivery');
+      setReturnLocation('delivery');
+    }
   };
 
-  const handleBookNow = () => {
-    onBookNow({
-      ...selectedDates,
-      pickupLocation,
-      pickupAddress: pickupLocation !== vehicle.location ? pickupAddress : '',
-      returnLocation: vehicle.location, // Luôn trả xe tại địa điểm xe
-      pickupTime,
-      returnTime,
-      promoCode,
-      discountAmount,
-    });
+  // Thêm hàm xử lý khi thay đổi địa chỉ
+  const handleAddressChange = (e) => {
+    const newAddress = e.target.value;
+    if (pickupLocation !== vehicle.location) {
+      setPickupLocation(newAddress);
+      setReturnLocation(newAddress);
+    }
+  };
+
+  // Cập nhật hàm handleSubmit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (bookingDetails.finalAmount <= 0) {
+      toast.error('Tổng số tiền phải lớn hơn 0.');
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast.error('Bạn cần đăng nhập để đặt xe.');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      // Format dates for API
+      const formatDateForAPI = (dateString) => {
+        const [year, month, day] = dateString.split('-');
+        return `${year}-${month}-${day}`;
+      };
+
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/createBooking`, {
+        vehicleId: vehicle._id,
+        startDate: formatDateForAPI(selectedDates.startDate),
+        endDate: formatDateForAPI(selectedDates.endDate),
+        pickupLocation: pickupLocation,
+        returnLocation: returnLocation,
+        pickupTime: pickupTime,
+        returnTime: returnTime,
+        totalDays: bookingDetails.totalDays,
+        totalAmount: bookingDetails.finalAmount,
+        promoCode: selectedPromo ? selectedPromo.code : null,
+        discountAmount: discountAmount
+      }, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        },
+        withCredentials: true
+      });
+
+      if (response.data.success) {
+        toast.success(response.data.message);
+        if (onBookNow) {
+          onBookNow(response.data.data.booking._id, response.data.data.transaction._id, response.data.data.booking.totalAmount);
+        }
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      console.error('Booking error:', error.response ? error.response.data : error.message);
+      toast.error(error.response?.data?.message || 'Đã có lỗi xảy ra khi đặt xe.');
+    }
+  };
+
+  const formatDisplayDate = (dateString, timeString) => {
+    if (!dateString || !timeString) return 'Chưa chọn';
+    
+    // Parse date and time components
+    const [year, month, day] = dateString.split('-').map(Number);
+    const [hours, minutes] = timeString.split(':').map(Number);
+    
+    // Create date object with local timezone
+    const date = new Date(year, month - 1, day, hours, minutes);
+    
+    if (isNaN(date.getTime())) {
+        return 'Thời gian không hợp lệ';
+    }
+    
+    // Format with Vietnam locale
+    return new Intl.DateTimeFormat('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).format(date);
   };
 
   return (
     <div className="vehicle-booking-section">
-      {/* Phần giá và thời gian thuê */}
       <div className="pricing-section">
         <h3>Giá thuê và thời gian</h3>
         <div className="price-per-day">
           <span className="price">{vehicle.pricePerDay.toLocaleString('vi-VN')} VND</span>
           <span className="unit">/ ngày</span>
         </div>
-        <div className="date-picker">
-          <div className="date-input">
-            <label>Ngày nhận xe</label>
-            <input
-              type="date"
-              value={selectedDates.startDate}
-              onChange={(e) => setSelectedDates({ ...selectedDates, startDate: e.target.value })}
-              min={new Date().toISOString().split('T')[0]}
-            />
-            <input
-              type="time"
-              value={pickupTime}
-              onChange={(e) => setPickupTime(e.target.value)}
-              className="time-input"
-            />
+
+        {/* Nút mở modal chọn thời gian */}
+        <button 
+          className="select-datetime-button"
+          onClick={() => setShowDateTimeModal(true)}
+        >
+          <span>📅</span> Chọn thời gian thuê xe
+        </button>
+
+        {/* Hiển thị thời gian đã chọn */}
+        {selectedDates.startDate && selectedDates.endDate && (
+          <div className="selected-datetime">
+            <div className="datetime-item">
+              <span className="label">Nhận xe:</span>
+              <span className="value">
+                {formatDisplayDate(selectedDates.startDate, pickupTime)}
+              </span>
+            </div>
+            <div className="datetime-item">
+              <span className="label">Trả xe:</span>
+              <span className="value">
+                {formatDisplayDate(selectedDates.endDate, returnTime)}
+              </span>
+            </div>
           </div>
-          <div className="date-input">
-            <label>Ngày trả xe</label>
-            <input
-              type="date"
-              value={selectedDates.endDate}
-              onChange={(e) => setSelectedDates({ ...selectedDates, endDate: e.target.value })}
-              min={selectedDates.startDate || new Date().toISOString().split('T')[0]}
-            />
-            <input
-              type="time"
-              value={returnTime}
-              onChange={(e) => setReturnTime(e.target.value)}
-              className="time-input"
-            />
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Phần địa điểm nhận xe - UI đẹp với 2 box chọn */}
+      {/* Modal chọn thời gian */}
+      {showDateTimeModal && (
+        <DateTimeSelector
+          bookedDates={bookedDates}
+          onDateTimeChange={handleDateTimeSelect}
+          initialStartDate={selectedDates.startDate}
+          initialEndDate={selectedDates.endDate}
+          initialPickupTime={pickupTime}
+          initialReturnTime={returnTime}
+        />
+      )}
+
+      {/* Phần địa điểm nhận xe */}
       <div className="pickup-section">
         <h3>Địa điểm nhận xe</h3>
         <div className="pickup-boxes">
@@ -191,6 +341,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
               <span role="img" aria-label="location"></span> {vehicle.location}
             </div>
           </div>
+          
           {/* Box 2: Giao xe tận nơi */}
           <div
             className={`pickup-box${pickupLocation !== vehicle.location ? ' selected' : ''}`}
@@ -208,8 +359,8 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
               {pickupLocation !== vehicle.location ? (
                 <input
                   type="text"
-                  value={pickupAddress}
-                  onChange={e => setPickupAddress(e.target.value)}
+                  value={pickupLocation === 'delivery' ? '' : pickupLocation}
+                  onChange={handleAddressChange}
                   placeholder="Nhập địa chỉ nhận xe (số nhà, tên đường, phường, quận,...)"
                   className="pickup-address-input"
                 />
@@ -218,13 +369,14 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
               )}
             </div>
             <div className="pickup-fee-info">
-              Phí giao xe (1 chiều): 25k/km, phụ phí sân bay 50k, thời gian giao xe: 6am - 10pm. Phí giao xe tối thiểu 150k.
+              Phí giao xe (2 chiều): 200.000đ - Chủ xe sẽ tự giao và nhận xe
             </div>
           </div>
         </div>
         {pickupLocation !== vehicle.location && (
           <div className="delivery-note" style={{ marginTop: 8 }}>
-            <p>* Xe sẽ được trả tại địa điểm giao xe </p>
+            <p>* Chủ xe sẽ tự giao xe đến địa chỉ của bạn và nhận xe khi kết thúc thuê</p>
+            <p>* Phí giao xe 200.000đ đã bao gồm cả 2 chiều</p>
           </div>
         )}
       </div>
@@ -243,7 +395,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
           </div>
           {otherCosts.deliveryFee > 0 && (
             <div className="cost-item">
-              <span>Phí giao xe</span>
+              <span>Phí giao xe (2 chiều)</span>
               <span>{otherCosts.deliveryFee.toLocaleString('vi-VN')} VND</span>
             </div>
           )}
@@ -263,54 +415,54 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
               -{discountAmount > 0 ? discountAmount.toLocaleString('vi-VN') : 0}đ
             </span>
           </div>
-          <div style={{ margin: '8px 0 0 0', width: '100%' }}>
-            <button
-              className="apply-promo-btn"
-              type="button"
-              onClick={() => setShowPromoModal(true)}
-              style={{
-                width: '100%',
-                background: '#e8fff6',
-                color: '#16a085',
-                border: '2px solid #16a085',
-                borderRadius: 10,
-                fontWeight: 600,
-                fontSize: 16,
-                padding: '12px 0',
-                marginTop: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                cursor: 'pointer',
-              }}
-            >
-              <span style={{ fontSize: 20 }}>💸</span> Áp dụng mã khuyến mãi / giới thiệu <span style={{ fontSize: 18 }}>➔</span>
-            </button>
-            {selectedPromo && (
-              <button
-                type="button"
-                style={{
-                  marginTop: 6,
-                  background: 'none',
-                  color: '#e74c3c',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                  textDecoration: 'underline',
-                }}
-                onClick={handleRemovePromo}
-              >
-                Bỏ mã khuyến mãi
-              </button>
-            )}
-          </div>
           <div className="cost-item total">
             <span>Tổng cộng</span>
             <span>
               {(totalBeforeDiscount - discountAmount).toLocaleString('vi-VN')} VND
             </span>
           </div>
+        </div>
+        <div style={{ margin: '8px 0 0 0', width: '100%' }}>
+          <button
+            className="apply-promo-btn"
+            type="button"
+            onClick={() => setShowPromoModal(true)}
+            style={{
+              width: '100%',
+              background: '#e8fff6',
+              color: '#16a085',
+              border: '2px solid #16a085',
+              borderRadius: 10,
+              fontWeight: 600,
+              fontSize: 16,
+              padding: '12px 0',
+              marginTop: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              cursor: 'pointer',
+            }}
+          >
+            <span style={{ fontSize: 20 }}>💸</span> Áp dụng mã khuyến mãi / giới thiệu <span style={{ fontSize: 18 }}>➔</span>
+          </button>
+          {selectedPromo && (
+            <button
+              type="button"
+              style={{
+                marginTop: 6,
+                background: 'none',
+                color: '#e74c3c',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 13,
+                textDecoration: 'underline',
+              }}
+              onClick={handleRemovePromo}
+            >
+              Bỏ mã khuyến mãi
+            </button>
+          )}
         </div>
       </div>
 
@@ -370,15 +522,14 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
       {/* Nút đặt xe */}
       <button
         className="book-now-button"
-        onClick={handleBookNow}
-        disabled={!selectedDates.startDate || !selectedDates.endDate || (pickupLocation !== vehicle.location && !pickupAddress)}
+        onClick={handleSubmit}
+        disabled={!selectedDates.startDate || !selectedDates.endDate || (pickupLocation !== vehicle.location && !pickupLocation)}
       >
         Đặt xe ngay
       </button>
-      <>Bằng việc chuyển giữ chỗ và thuê xe, bạn đồng ý với
-
-              khoản sử dụng và Chính sách bảo mật</>
-    
+      <div className="terms-agreement">
+        Bằng việc chuyển giữ chỗ và thuê xe, bạn đồng ý với khoản sử dụng và Chính sách bảo mật
+      </div>
     </div>
   );
 };

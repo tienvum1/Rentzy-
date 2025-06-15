@@ -27,7 +27,6 @@ const transactionSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: [
-        "deposit",        // Đặt cọc
         "rental_fee",     // Phí thuê xe
         "additional_fee", // Phí phát sinh
         "cancellation",   // Phí hủy

@@ -28,6 +28,18 @@ const bookingSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Giờ nhận xe
+    pickupTime: {
+      type: String,
+      required: true,
+    },
+
+    // Giờ trả xe
+    returnTime: {
+      type: String,
+      required: true,
+    },
+
     // Tổng số ngày thuê
     totalDays: {
       type: Number,
@@ -37,13 +49,6 @@ const bookingSchema = new mongoose.Schema(
 
     // Tổng tiền thuê (VND)
     totalAmount: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-
-    // Tiền đặt cọc
-    deposit: {
       type: Number,
       required: true,
       min: 0,
@@ -121,12 +126,6 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       enum: ["renter", "system", "owner"],
     },
-
-    // Danh sách các giao dịch thanh toán
-    transactions: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Transaction",
-    }],
   },
   { timestamps: true }
 );
