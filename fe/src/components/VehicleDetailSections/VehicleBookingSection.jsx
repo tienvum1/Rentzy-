@@ -216,7 +216,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
       };
 
       // Tính tổng tiền trước giảm giá
-      const totalBeforeDiscount = totalCost + otherCosts.deposit + holdFee;
+      const totalBeforeDiscount = totalCost + otherCosts.deposit + holdFee + otherCosts.deliveryFee;
       // Tính tổng tiền sau khi trừ giảm giá
       const totalAmount = totalBeforeDiscount - discountAmount;
 
@@ -224,8 +224,8 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         vehicleId: vehicle._id,
         startDate: formatDateForAPI(selectedDates.startDate),
         endDate: formatDateForAPI(selectedDates.endDate),
-        pickupLocation: pickupLocation,
-        returnLocation: returnLocation,
+        pickupLocation: pickupLocation === 'delivery' ? '' : pickupLocation,
+        returnLocation: returnLocation === 'delivery' ? '' : returnLocation,
         pickupTime: pickupTime,
         returnTime: returnTime,
         totalDays: bookingDetails.totalDays,
@@ -234,7 +234,8 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         promoCode: selectedPromo ? selectedPromo.code : null,
         discountAmount: discountAmount,
         deposit: vehicle.deposit,
-        reservationFee: holdFee
+        reservationFee: holdFee,
+        isDelivery: pickupLocation !== vehicle.location
       }, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -247,6 +248,8 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         if (onBookNow) {
           onBookNow(response.data.data.booking._id, response.data.data.transaction._id, totalAmount);
         }
+        // Navigate to confirmation page with booking ID
+        navigate(`/confirm/${response.data.data.booking._id}`);
       } else {
         toast.error(response.data.message);
       }

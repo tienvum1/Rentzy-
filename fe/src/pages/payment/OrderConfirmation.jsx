@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { FaArrowLeft, FaUser, FaPhone, FaCalendarAlt, FaMapMarkerAlt, FaCheck, FaCar, FaCircle } from 'react-icons/fa';
 import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom';
 import './OrderConfirmation.css';
 
 const OrderConfirmation = () => {
+  const { bookingId } = useParams();
+  const navigate = useNavigate();
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,7 +22,7 @@ const OrderConfirmation = () => {
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
-        const response = await axios.get('http://localhost:4999/api/bookings/685012c80e65ce87382b86d1', {
+        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${bookingId}`, {
           withCredentials: true
         });
         
@@ -40,8 +43,15 @@ const OrderConfirmation = () => {
       }
     };
 
-    fetchBookingDetails();
-  }, []);
+    if (bookingId) {
+      fetchBookingDetails();
+    }
+  }, [bookingId]);
+
+  // Add back button handler
+  const handleBack = () => {
+    navigate(-1);
+  };
 
   const handleInputChange = (e) => {
     setFormData({
@@ -75,7 +85,7 @@ const OrderConfirmation = () => {
     const totalCost = booking.totalAmount; // Tiền thuê xe cơ bản (rentalFee + deliveryFee - discountAmount)
     const deliveryFee = booking.pickupLocation !== booking.vehicle?.location ? DELIVERY_FEE : 0;
     const discountAmount = booking.discountAmount || 0;
-    const deposit = booking.vehicle?.deposit || 0;
+    const deposit = booking.deposit || 0;
     const holdFee = HOLD_FEE;
 
     // totalAmount là tiền thuê xe cơ bản (giống như bookingDetails.finalAmount trong VehicleBookingSection)
@@ -133,7 +143,7 @@ const OrderConfirmation = () => {
   return (
     <div className="order-confirmation-container">
       <div className="order-card">
-        <div className="back-link">
+        <div className="back-link" onClick={handleBack}>
           <FaArrowLeft className="mr-2" />
           <span className="font-semibold">Quay lại</span>
         </div>
