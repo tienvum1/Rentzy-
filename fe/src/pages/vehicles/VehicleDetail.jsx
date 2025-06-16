@@ -101,7 +101,7 @@ const VehicleDetail = () => {
 
         // Chuyển hướng sau 2 giây
         setTimeout(() => {
-            navigate(`/payment/${bookingId}`);
+            navigate(`/confirm/${bookingId}`);
         }, 2000);
     };
 

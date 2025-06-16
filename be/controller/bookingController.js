@@ -20,10 +20,14 @@ const createBooking = async (req, res) => {
             returnTime,
             totalDays,
             totalAmount,
+            totalCost,
+            deposit,
+            reservationFee,
             promoCode,
-            discountAmount
+            discountAmount,
+            
         } = req.body;
-
+ console.log(req.body);
         // Validate required fields
         if (!vehicleId || !startDate || !endDate || !pickupLocation || !returnLocation || !pickupTime || !returnTime) {
             return res.status(400).json({
@@ -91,9 +95,14 @@ const createBooking = async (req, res) => {
             returnTime,
             totalDays,
             totalAmount,
+            totalCost,
+            deposit,
+            reservationFee,
+            discountAmount,
             status: 'pending',
             promoCode,
-            discountAmount
+            
+            
         });
 
         await booking.save();
@@ -188,42 +197,62 @@ const getUserBookings = async (req, res) => {
     }
 };
 
-// Lấy chi tiết một booking
+// @desc    Get booking details by ID
+// @route   GET /api/bookings/:id
+// @access  Private
 const getBookingDetails = async (req, res) => {
-    try {
-        const bookingId = req.params.id;
-        const booking = await Booking.findById(bookingId)
-            .populate('vehicle')
-            .populate('renter', 'name email phone');
-
-        if (!booking) {
-            return res.status(404).json({
-                success: false,
-                message: 'Không tìm thấy booking'
-            });
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate({
+        path: 'renter',
+        select: 'name  phone '
+      })
+      .populate({
+        path: 'vehicle',
+        select: ' model licensePlate primaryImage ',
+        populate: {
+          path: 'owner',
+          select: 'name phone email'
         }
+      });
 
-        // Kiểm tra quyền xem booking
-        if (booking.renter._id.toString() !== req.user._id.toString() && 
-            req.user.role !== 'admin' && 
-            req.user.role !== 'owner') {
-            return res.status(403).json({
-                success: false,
-                message: 'Không có quyền xem booking này'
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            booking
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi khi lấy thông tin booking',
-            error: error.message
-        });
+    if (!booking) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Không tìm thấy đơn đặt xe" 
+      });
     }
+
+    // Check if user is authorized to view this booking
+    if (booking.renter._id.toString() !== req.user._id.toString() && 
+        !req.user.role.includes('admin')) {
+      return res.status(403).json({ 
+        success: false,
+        message: "Không có quyền xem đơn đặt xe này" 
+      });
+    }
+
+    // Format dates for response
+    const formattedBooking = {
+      ...booking.toObject(),
+      startDate: booking.startDate.toISOString(),
+      endDate: booking.endDate.toISOString(),
+      createdAt: booking.createdAt.toISOString(),
+      updatedAt: booking.updatedAt.toISOString()
+    };
+
+    res.json({
+      success: true,
+      booking: formattedBooking
+    });
+
+  } catch (error) {
+    console.error("Get booking details error:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Lỗi server khi lấy thông tin đơn đặt xe" 
+    });
+  }
 };
 
 // Hủy booking

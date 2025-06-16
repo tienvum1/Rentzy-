@@ -215,6 +215,11 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         return `${year}-${month}-${day}`;
       };
 
+      // Tính tổng tiền trước giảm giá
+      const totalBeforeDiscount = totalCost + otherCosts.deposit + holdFee;
+      // Tính tổng tiền sau khi trừ giảm giá
+      const totalAmount = totalBeforeDiscount - discountAmount;
+
       const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/createBooking`, {
         vehicleId: vehicle._id,
         startDate: formatDateForAPI(selectedDates.startDate),
@@ -224,9 +229,12 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         pickupTime: pickupTime,
         returnTime: returnTime,
         totalDays: bookingDetails.totalDays,
-        totalAmount: bookingDetails.finalAmount,
+        totalCost: totalCost, // tiền thuê xe chưa tính tiền khác 
+        totalAmount: totalAmount, // tổng tiền sau khi trừ giảm giá
         promoCode: selectedPromo ? selectedPromo.code : null,
-        discountAmount: discountAmount
+        discountAmount: discountAmount,
+        deposit: vehicle.deposit,
+        reservationFee: holdFee
       }, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -237,7 +245,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
       if (response.data.success) {
         toast.success(response.data.message);
         if (onBookNow) {
-          onBookNow(response.data.data.booking._id, response.data.data.transaction._id, response.data.data.booking.totalAmount);
+          onBookNow(response.data.data.booking._id, response.data.data.transaction._id, totalAmount);
         }
       } else {
         toast.error(response.data.message);

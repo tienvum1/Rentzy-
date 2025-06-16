@@ -53,6 +53,29 @@ const bookingSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    totalCost:{
+      type: Number,
+        required: true,
+        min: 0,
+      },
+      // Tiền đặt cọc
+      deposit: {
+        type: Number,
+        required: true,
+        min: 0,
+      },
+        // Tiền giữ chỗ
+        reservationFee: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+
+        // Tiền giảm giá
+        discountAmount: {
+          type: Number,
+          min: 0,
+        },
 
     // Trạng thái đơn thuê
     status: {

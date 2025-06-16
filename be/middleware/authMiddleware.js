@@ -1,7 +1,8 @@
 // middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
- const  protect = (req, res, next) => {
+const protect = (req, res, next) => {
   let token;
   if (req.cookies && req.cookies.token) {
     token = req.cookies.token;
@@ -29,7 +30,37 @@ const adminOnly = (req, res, next) => {
   }
 };
 
+const verifyRenterRequirements = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.is_phone_verified) {
+      return res.status(403).json({ 
+        message: "Phone number verification required",
+        requiresPhoneVerification: true
+      });
+    }
+
+    if (user.driver_license_verification_status !== 'verified') {
+      return res.status(403).json({ 
+        message: "Driver's license verification required",
+        requiresLicenseVerification: true
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Error in verifyRenterRequirements:", error);
+    res.status(500).json({ message: "Error checking renter requirements" });
+  }
+};
+
 module.exports = {
   protect,
   adminOnly,
+  verifyRenterRequirements
 };

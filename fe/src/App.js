@@ -16,6 +16,10 @@ import ResetPassword from "./pages/login/ResetPassword";
 import ChangePassword from "./pages/changePassword/ChangePassword";
 import VehicleDetail from "./pages/vehicles/VehicleDetail"; // Import VehicleDetail
 
+// order booking 
+import OrderConfirmation  from "./pages/payment/OrderConfirmation";
+import ReservationPayment  from "./pages/payment/ReservationPayment"
+
 import ConsignForm from "./pages/consignForm/ConsignForm";
 
 // owner
@@ -48,6 +52,11 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile/change-password" element={<ChangePassword />}/>
             <Route path="/vehicles/:id" element={<VehicleDetail />} /> {/* Add VehicleDetail route */}
+
+             {/* Add VehicleDetail route */}
+             <Route path="/confirm/:bookingId" element={<OrderConfirmation />} />   
+             <Route path="/payment/:bookingId" element={<ReservationPayment />} /> 
+
             {/* Add route for OwnerPage */}
             <Route path="/consignForm" element={<ConsignForm />} />
             {/* Add a root route if needed */}

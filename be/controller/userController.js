@@ -39,6 +39,7 @@ exports.getProfile = async (req, res) => {
         role: user.role,
         avatar_url: user.avatar_url,
         is_verified: user.is_verified,
+        is_phone_verified:user.is_phone_verified,
         phone: user.phone,
         cccd_number: user.cccd_number,
         driver_license_number: user.driver_license_number,
