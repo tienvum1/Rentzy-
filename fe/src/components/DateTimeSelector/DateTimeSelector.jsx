@@ -10,12 +10,19 @@ import './DateTimeSelector.css'; // Assuming some basic styling
 const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, initialEndDate, initialPickupTime, initialReturnTime }) => {
     const [startDate, setStartDate] = useState(initialStartDate ? new Date(initialStartDate) : null);
     const [endDate, setEndDate] = useState(initialEndDate ? new Date(initialEndDate) : null);
-    const [pickupTime, setPickupTime] = useState(initialPickupTime || '08:00');
-    const [returnTime, setReturnTime] = useState(initialReturnTime || '17:00');
+    const [pickupTime, setPickupTime] = useState(initialPickupTime || null);
+    const [returnTime, setReturnTime] = useState(initialReturnTime || null);
+    const [selectedPickupSlot, setSelectedPickupSlot] = useState(null);
+    const [selectedReturnSlot, setSelectedReturnSlot] = useState(null);
 
     const handleConfirm = () => {
-        if (!startDate || !endDate || !pickupTime || !returnTime) {
-            toast.error('Vui lòng chọn đầy đủ ngày và giờ');
+        if (!startDate || !endDate) {
+            toast.error('Vui lòng chọn ngày nhận và trả xe');
+            return;
+        }
+
+        if (!pickupTime || !returnTime) {
+            toast.error('Vui lòng chọn giờ nhận và trả xe');
             return;
         }
 
@@ -50,10 +57,19 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
     };
 
     const isDateAvailable = useCallback((date) => {
-        if (!bookedDates || bookedDates.length === 0) return true;
+        if (!date) return false;
 
         const currentDate = new Date(date);
         currentDate.setHours(0, 0, 0, 0);
+
+        // Kiểm tra ngày trong quá khứ
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (currentDate < today) {
+            return false;
+        }
+
+        if (!bookedDates || bookedDates.length === 0) return true;
 
         // Kiểm tra từng booking
         for (const booking of bookedDates) {
@@ -136,6 +152,12 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
         const selectedDateTime = new Date(date);
         selectedDateTime.setHours(hour, 0, 0, 0);
 
+        // Kiểm tra giờ trong quá khứ
+        const now = new Date();
+        if (selectedDateTime < now) {
+            return true;
+        }
+
         const vietnamOffset = 7 * 60; // 7 hours in minutes
         const localOffset = selectedDateTime.getTimezoneOffset();
         const totalOffset = vietnamOffset + localOffset;
@@ -196,7 +218,7 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
             }
             return dates;
         }).filter(Boolean).flat();
-
+   
         return [
             {
                 "react-datepicker__day--highlighted-custom": highlight
@@ -206,8 +228,15 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
 
     const handleDateChange = (type, date) => {
         if (!date) {
-            if (type === 'startDate') setStartDate(null);
-            else setEndDate(null);
+            if (type === 'startDate') {
+                setStartDate(null);
+                setPickupTime(null);
+                setSelectedPickupSlot(null);
+            } else {
+                setEndDate(null);
+                setReturnTime(null);
+                setSelectedReturnSlot(null);
+            }
             return;
         }
 
@@ -216,74 +245,68 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
             return;
         }
 
-        // Kiểm tra ngày bắt đầu phải lớn hơn thời gian hiện tại
+        // Kiểm tra ngày trong quá khứ
         const now = new Date();
+        now.setHours(0, 0, 0, 0);
         const selectedDate = new Date(date);
-        
-        // Nếu chọn ngày hiện tại, kiểm tra giờ
-        if (type === 'startDate') {
-            if (selectedDate.toDateString() === now.toDateString()) {
-                // Nếu là ngày hiện tại, giờ phải lớn hơn giờ hiện tại
-                const currentHour = now.getHours();
-                const currentMinute = now.getMinutes();
-                if (pickupTime) {
-                    const [selectedHour, selectedMinute] = pickupTime.split(':').map(Number);
-                    if (selectedHour < currentHour || (selectedHour === currentHour && selectedMinute <= currentMinute)) {
-                        toast.warning(`Không thể chọn giờ trong quá khứ. Vui lòng chọn giờ sau ${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`);
-                        return;
-                    }
-                }
-            } else if (selectedDate < now) {
-                toast.warning('Ngày bắt đầu phải lớn hơn thời gian hiện tại.');
-                return;
-            }
+        selectedDate.setHours(0, 0, 0, 0);
+
+        if (selectedDate < now) {
+            toast.warning('Không thể chọn ngày trong quá khứ.');
+            return;
+        }
+
+        // Kiểm tra ngày đã được đặt
+        if (!isDateAvailable(selectedDate)) {
+            toast.warning('Ngày này đã được đặt hoặc không khả dụng.');
+            return;
         }
 
         if (type === 'startDate') {
             setStartDate(date);
+            // Reset time khi thay đổi ngày
+            setPickupTime(null);
+            setSelectedPickupSlot(null);
+            
             if (endDate && date > endDate) {
                 setEndDate(null);
+                setReturnTime(null);
+                setSelectedReturnSlot(null);
                 toast.warning('Ngày trả xe không thể trước ngày nhận xe. Vui lòng chọn lại ngày trả.');
             }
         } else {
-            setEndDate(date);
             if (startDate && date < startDate) {
-                setStartDate(null);
-                toast.warning('Ngày trả xe không thể trước ngày nhận xe. Vui lòng chọn lại ngày nhận.');
+                toast.warning('Ngày trả xe không thể trước ngày nhận xe.');
+                return;
             }
+            setEndDate(date);
+            // Reset time khi thay đổi ngày
+            setReturnTime(null);
+            setSelectedReturnSlot(null);
         }
     };
 
-    const handleTimeChange = (type, value) => {
-        if (!value) return;
+    const handleTimeSlotClick = (type, time) => {
+        const [selectedHour] = time.split(':').map(Number);
+        const selectedDate = type === 'pickup' ? startDate : endDate;
+        const selectedDateTime = new Date(selectedDate);
+        selectedDateTime.setHours(selectedHour, 0, 0, 0);
 
+        // Kiểm tra giờ trong quá khứ
         const now = new Date();
-        const [selectedHour, selectedMinute] = value.split(':').map(Number);
-
-        // Kiểm tra nếu đang chọn giờ cho ngày hiện tại
-        if (type === 'pickup' && startDate && startDate.toDateString() === now.toDateString()) {
-            const currentHour = now.getHours();
-            const currentMinute = now.getMinutes();
-            if (selectedHour < currentHour || (selectedHour === currentHour && selectedMinute <= currentMinute)) {
-                toast.warning(`Không thể chọn giờ trong quá khứ. Vui lòng chọn giờ sau ${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`);
-                return;
-            }
+        if (selectedDateTime < now) {
+            toast.warning('Không thể chọn giờ trong quá khứ.');
+            return;
         }
 
         // Kiểm tra logic thời gian nhận/trả xe
         if (type === 'pickup') {
             if (endDate && returnTime) {
-                // Tạo đối tượng Date cho thời gian nhận xe
-                const pickupDateTime = new Date(startDate);
-                pickupDateTime.setHours(selectedHour, selectedMinute, 0, 0);
-
-                // Tạo đối tượng Date cho thời gian trả xe
-                const [returnHour, returnMinute] = returnTime.split(':').map(Number);
+                const [returnHour] = returnTime.split(':').map(Number);
                 const returnDateTime = new Date(endDate);
-                returnDateTime.setHours(returnHour, returnMinute, 0, 0);
+                returnDateTime.setHours(returnHour, 0, 0, 0);
 
-                // So sánh cả ngày và giờ
-                if (pickupDateTime >= returnDateTime) {
+                if (selectedDateTime >= returnDateTime) {
                     if (startDate.toDateString() === endDate.toDateString()) {
                         toast.warning('Giờ nhận xe phải trước giờ trả xe.');
                     } else {
@@ -292,20 +315,15 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
                     return;
                 }
             }
-            setPickupTime(value);
+            setPickupTime(time);
+            setSelectedPickupSlot(time);
         } else {
             if (startDate && pickupTime) {
-                // Tạo đối tượng Date cho thời gian nhận xe
-                const [pickupHour, pickupMinute] = pickupTime.split(':').map(Number);
+                const [pickupHour] = pickupTime.split(':').map(Number);
                 const pickupDateTime = new Date(startDate);
-                pickupDateTime.setHours(pickupHour, pickupMinute, 0, 0);
+                pickupDateTime.setHours(pickupHour, 0, 0, 0);
 
-                // Tạo đối tượng Date cho thời gian trả xe
-                const returnDateTime = new Date(endDate);
-                returnDateTime.setHours(selectedHour, selectedMinute, 0, 0);
-
-                // So sánh cả ngày và giờ
-                if (pickupDateTime >= returnDateTime) {
+                if (selectedDateTime <= pickupDateTime) {
                     if (startDate.toDateString() === endDate.toDateString()) {
                         toast.warning('Giờ trả xe phải sau giờ nhận xe.');
                     } else {
@@ -314,7 +332,8 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
                     return;
                 }
             }
-            setReturnTime(value);
+            setReturnTime(time);
+            setSelectedReturnSlot(time);
         }
     };
 
@@ -322,7 +341,7 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
         <div className="date-time-modal-overlay">
             <div className="date-time-modal">
                 <div className="modal-header">
-                    <h3>Chọn thời gian thuê xe</h3>
+                    <h3>Chọn thời gian thuê xe </h3>
                     <button onClick={() => onDateTimeChange(null)}>✕</button>
                 </div>
 
@@ -340,42 +359,33 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
                             highlightDates={getHighlightDates()}
                             tileClassName={getDateClassName}
                             tileContent={({ date }) => <BookingInfo date={date} />}
+                            withPortal
                         />
-                        {startDate && !isNaN(startDate.getTime()) ? (
-                            <div className="time-slots">
-                                {getAvailableHours(startDate).map(({ time, isAvailable }) => (
-                                    <button
-                                        key={time}
-                                        className={`time-slot ${pickupTime === time ? 'selected' : ''} ${!isAvailable ? 'time-slot-booked' : ''}`}
-                                        onClick={() => isAvailable && handleTimeChange('pickup', time)}
-                                        disabled={!isAvailable}
-                                        title={!isAvailable ? 'Giờ này đã được đặt' : ''}
-                                    >
-                                        {time}
-                                    </button>
-                                ))}
-                                {getAvailableHours(startDate).every(hour => !hour.isAvailable) && (
-                                    <div className="no-available-hours">
-                                        Không có giờ khả dụng cho ngày này
-                                    </div>
-                                )}
+                        {startDate ? (
+                            <div className="time-content-wrapper">
+                                <div className="time-slots">
+                                    {getAvailableHours(startDate).length > 0 ? (
+                                        getAvailableHours(startDate).map((slot) => (
+                                            <button
+                                                key={slot.time}
+                                                className={`time-slot ${selectedPickupSlot === slot.time ? 'selected' : ''} ${!slot.isAvailable ? 'time-slot-booked' : ''}`}
+                                                onClick={() => slot.isAvailable && handleTimeSlotClick('pickup', slot.time)}
+                                                disabled={!slot.isAvailable}
+                                            >
+                                                {slot.time}
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <div className="no-available-hours">Không có giờ trống cho ngày này</div>
+                                    )}
+                                </div>
+                                {!pickupTime && <div className="validation-message">Vui lòng chọn giờ nhận xe</div>}
                             </div>
                         ) : (
-                            <div className="no-available-hours">
-                                Vui lòng chọn ngày nhận xe hợp lệ
+                            <div className="time-content-wrapper">
+                                <div className="validation-message">Vui lòng chọn ngày nhận xe</div>
                             </div>
                         )}
-                        <TimePicker
-                            onChange={(value) => handleTimeChange('pickup', value)}
-                            value={pickupTime}
-                            disableClock={true}
-                            format="HH:mm"
-                            clearIcon={null}
-                            className="custom-time-picker"
-                            minTime={startDate && startDate.toDateString() === new Date().toDateString() ? new Date().getHours() + ':00' : '00:00'}
-                            hourPlaceholder="HH"
-                            minutePlaceholder="mm"
-                        />
                     </div>
 
                     <div className="return-section">
@@ -383,50 +393,43 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
                         <DatePicker
                             selected={endDate}
                             onChange={(date) => handleDateChange('endDate', date)}
-                            minDate={startDate || new Date()}
-                            dateFormat="dd/MM/yyyy"
-                            placeholderText="Chọn ngày trả xe"
-                            className="date-picker-input"
+                            selectsEnd
+                            startDate={startDate}
+                            endDate={endDate}
+                            minDate={startDate || new Date()} // Disallow past dates, or before start date
                             filterDate={filterPassedDates}
+                            dateFormat="dd/MM/yyyy"
+                            className="date-picker-input"
+                            placeholderText="Chọn ngày trả xe"
+                            dayClassName={getDateClassName}
                             highlightDates={getHighlightDates()}
-                            tileClassName={getDateClassName}
-                            tileContent={({ date }) => <BookingInfo date={date} />}
+                            withPortal
                         />
-                        {endDate && !isNaN(endDate.getTime()) ? (
-                            <div className="time-slots">
-                                {getAvailableHours(endDate).map(({ time, isAvailable }) => (
-                                    <button
-                                        key={time}
-                                        className={`time-slot ${returnTime === time ? 'selected' : ''} ${!isAvailable ? 'time-slot-booked' : ''}`}
-                                        onClick={() => isAvailable && handleTimeChange('return', time)}
-                                        disabled={!isAvailable}
-                                        title={!isAvailable ? 'Giờ này đã được đặt' : ''}
-                                    >
-                                        {time}
-                                    </button>
-                                ))}
-                                {getAvailableHours(endDate).every(hour => !hour.isAvailable) && (
-                                    <div className="no-available-hours">
-                                        Không có giờ khả dụng cho ngày này
-                                    </div>
-                                )}
+                        {endDate ? (
+                            <div className="time-content-wrapper">
+                                <div className="time-slots">
+                                    {getAvailableHours(endDate).length > 0 ? (
+                                        getAvailableHours(endDate).map((slot) => (
+                                            <button
+                                                key={slot.time}
+                                                className={`time-slot ${selectedReturnSlot === slot.time ? 'selected' : ''} ${!slot.isAvailable ? 'time-slot-booked' : ''}`}
+                                                onClick={() => slot.isAvailable && handleTimeSlotClick('return', slot.time)}
+                                                disabled={!slot.isAvailable}
+                                            >
+                                                {slot.time}
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <div className="no-available-hours">Không có giờ trống cho ngày này</div>
+                                    )}
+                                </div>
+                                {!returnTime && <div className="validation-message">Vui lòng chọn giờ trả xe</div>}
                             </div>
                         ) : (
-                            <div className="no-available-hours">
-                                Vui lòng chọn ngày trả xe hợp lệ
+                            <div className="time-content-wrapper">
+                                <div className="validation-message">Vui lòng chọn ngày trả xe</div>
                             </div>
                         )}
-                        <TimePicker
-                            onChange={(value) => handleTimeChange('return', value)}
-                            value={returnTime}
-                            disableClock={true}
-                            format="HH:mm"
-                            clearIcon={null}
-                            className="custom-time-picker"
-                            minTime={endDate && endDate.toDateString() === new Date().toDateString() ? new Date().getHours() + ':00' : '00:00'}
-                            hourPlaceholder="HH"
-                            minutePlaceholder="mm"
-                        />
                     </div>
                 </div>
 
@@ -434,6 +437,7 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
                     <button
                         className="confirm-button"
                         onClick={handleConfirm}
+                        disabled={!startDate || !endDate || !pickupTime || !returnTime}
                     >
                         Xác nhận
                     </button>

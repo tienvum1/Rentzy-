@@ -60,13 +60,10 @@ const bookingSchema = new mongoose.Schema(
       enum: [
         "pending",         // Mới đặt, chưa thanh toán
         "paid",            // Khách đã thanh toán, chờ chủ xe xác nhận
-        "accepted",        // Chủ xe xác nhận giữ xe cho khách
-        "rejected",        // Chủ xe từ chối booking (sau khi khách đã thanh toán, cần hoàn tiền)
         "auto_cancelled",  // Hệ thống tự động hủy do quá hạn xác nhận/thanh toán
         "in_progress",     // Đang trong quá trình thuê xe
         "completed",       // Đã trả xe, kết thúc chuyến thuê
         "cancelled",       // Khách tự hủy booking
-        "paid_refunded"    // Đã thanh toán nhưng hoàn tiền (do bị từ chối/hủy)
       ],
       default: "pending",
     },

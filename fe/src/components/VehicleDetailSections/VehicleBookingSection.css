@@ -1,239 +1,446 @@
 .vehicle-booking-section {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  max-width: 800px;
-  margin: auto;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
+/* Phần giá và thời gian */
 .pricing-section {
-  margin-bottom: 25px;
-}
-
-.pricing-section h3 {
-  color: #0080ff;
-  margin-bottom: 10px;
-  font-size: 1.5rem;
-}
-
-.price-per-day {
-  margin-bottom: 20px;
-}
-
-.price-per-day .price {
-  font-size: 28px;
-  font-weight: bold;
-  color: #1abc9c;
-}
-
-.price-per-day .unit {
-  color: #7f8c8d;
-  margin-left: 5px;
-}
-
-.date-picker {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.date-input {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.date-input label {
-  margin-bottom: 5px;
-  color: #7f8c8d;
-  font-weight: 500;
-}
-
-.date-input input {
-  padding: 12px;
-  border: 1px solid #bdc3c7;
-  border-radius: 6px;
-  font-size: 16px;
-  transition: border 0.3s;
-}
-
-.date-input input:focus {
-  border-color: #1abc9c;
-  outline: none;
-}
-
-.time-input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #bdc3c7;
-  border-radius: 6px;
-  font-size: 16px;
-  transition: border 0.3s;
-}
-
-.time-input:focus {
-  border-color: #1abc9c;
-  outline: none;
-}
-
-/* Pickup and Delivery Section */
-.pickup-delivery-section {
-  margin-bottom: 25px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.pickup-delivery-section h3 {
-  color: #2c3e50;
-  margin-bottom: 15px;
-  font-size: 1.5rem;
-}
-
-.location-inputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.location-input {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.location-input label {
-  color: #7f8c8d;
-  font-size: 14px;
-}
-
-.location-select {
-  padding: 12px;
-  border: 1px solid #bdc3c7;
-  border-radius: 6px;
-  font-size: 16px;
-  background-color: white;
-  cursor: pointer;
-  transition: border 0.3s;
-}
-
-.location-select:hover {
-  border-color: #1abc9c;
-}
-
-.cost-summary {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 25px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.cost-summary h3 {
-  color: #2c3e50;
-  margin-bottom: 15px;
-  font-size: 1.5rem;
-}
-
-.cost-details {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.cost-item {
+.pricing-section h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin: 0;
+}
+
+.price-per-day {
   display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
+  align-items: baseline;
+  gap: 4px;
 }
 
-.cost-item.total {
-  font-weight: bold;
-  border-bottom: none;
-  margin-top: 10px;
-  padding-top: 15px;
-  border-top: 2px solid #bdc3c7;
+.price {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2ecc71;
 }
 
-.cancellation-policy {
-  margin-bottom: 25px;
+.unit {
+  color: #666;
+  font-size: 0.9rem;
 }
 
-.policy-toggle {
-  width: 100%;
-  padding: 15px;
+.select-datetime-button {
   background: #f8f9fa;
-  border: 1px solid #bdc3c7;
+  border: 1px solid #e9ecef;
+  padding: 12px;
   border-radius: 6px;
-  text-align: left;
-  cursor: pointer;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  transition: background 0.3s;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
 }
 
-.policy-toggle:hover {
+.select-datetime-button:hover {
   background: #e9ecef;
 }
 
-.arrow {
-  transition: transform 0.3s ease;
+.selected-datetime {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
 }
 
-.arrow.up {
-  transform: rotate(180deg);
-}
-
-.policy-content {
-  margin-top: 10px;
-  padding: 15px;
+.datetime-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
   background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.datetime-item .label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.datetime-item .value {
+  font-weight: 500;
+  color: #333;
+}
+
+/* Phần địa điểm nhận xe */
+.pickup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pickup-section h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin: 0;
+}
+
+.pickup-boxes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pickup-box {
+  border: 1px solid #e9ecef;
   border-radius: 6px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.policy-content h4 {
-  color: #2c3e50;
-  margin-bottom: 10px;
+.pickup-box:hover {
+  border-color: #2ecc71;
 }
 
-.policy-content ul {
-  list-style-type: none;
-  padding: 0;
+.pickup-box.selected {
+  border-color: #2ecc71;
+  background: #f0fff4;
 }
 
-.policy-content li {
-  margin-bottom: 8px;
-  color: #7f8c8d;
-  padding-left: 20px;
-  position: relative;
+.pickup-box input[type="checkbox"] {
+  margin-top: 2px;
 }
 
-.policy-content li:before {
-  content: "•";
-  position: absolute;
+.pickup-box-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pickup-box-content b {
+  font-size: 1rem;
+  color: #333;
+}
+
+.pickup-location-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Targeting the 📍 icon to ensure it doesn't shrink */
+.pickup-location-label span[role="img"] {
+  flex-shrink: 0;
+  flex-grow: 0;
+  flex-basis: auto;
+}
+
+.address-input-wrapper {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.pickup-address-input {
+  flex: 1;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 0.9rem;
+  min-width: 0;
+}
+
+.pickup-address-input:focus {
+  outline: none;
+  border-color: #2ecc71;
+}
+
+.placeholder {
+  color: #bbb;
+  flex: 1;
+  min-width: 0;
+}
+
+.pickup-fee-info {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+.delivery-note {
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  padding: 12px;
+  margin-top: 8px;
+}
+
+.delivery-note p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #856404;
+}
+
+/* Phần tổng chi phí */
+.cost-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cost-summary h3 {
+  margin-top:12px;
+  font-size: 1.2rem;
+  color: #333;
+  margin: 0;
+}
+
+.cost-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cost-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.cost-item:last-child {
+  border-bottom: none;
+}
+
+.cost-item.total {
+  font-weight: 600;
+  color: #2ecc71;
+  font-size: 1.1rem;
+  margin-top: 8px;
+}
+
+.promo-description {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 2px;
+}
+
+.discount-amount {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.promo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.apply-promo-btn {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  padding: 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.apply-promo-btn:hover {
+  background: #e9ecef;
+}
+
+.remove-promo-btn {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 4px;
+}
+
+.remove-promo-btn:hover {
+  text-decoration: underline;
+}
+
+/* Modal mã khuyến mãi */
+.promo-modal-overlay {
+  position: fixed;
+  top: 0;
   left: 0;
-  color: #1abc9c;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.promo-modal {
+  background: #fff;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.promo-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.promo-modal-header b {
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.promo-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #666;
+}
+
+.promo-input {
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 12px;
+  font-size: 1rem;
+  width: 100%;
+}
+
+.promo-input:focus {
+  outline: none;
+  border-color: #2ecc71;
+}
+
+.promo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.promo-item {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  gap: 12px;
+}
+
+.promo-item-left {
+  display: flex;
+  align-items: center;
+}
+
+.promo-icon {
+  font-size: 1.5rem;
+}
+
+.promo-item-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.promo-code {
+  font-weight: 600;
+  color: #2ecc71;
+}
+
+.promo-title {
+  font-weight: 500;
+  color: #333;
+}
+
+.promo-desc,
+.promo-time,
+.promo-valid,
+.promo-note,
+.promo-left {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.promo-item-action {
+  display: flex;
+  align-items: center;
+}
+
+.promo-apply-btn {
+  background: #2ecc71;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.promo-apply-btn:hover {
+  background: #27ae60;
+}
+
+.no-promo-found {
+  text-align: center;
+  color: #666;
+  padding: 20px;
+}
+
+/* Nút đặt xe và điều khoản */
+.booking-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
 }
 
 .book-now-button {
-  width: 100%;
-  padding: 15px;
-  background: #1abc9c;
-  color: white;
+  background: #2ecc71;
+  color: #fff;
   border: none;
+  padding: 16px;
   border-radius: 6px;
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.2s;
+  width: 100%;
 }
 
 .book-now-button:hover {
-  background: #16a085;
+  background: #27ae60;
 }
 
 .book-now-button:disabled {
@@ -241,376 +448,47 @@
   cursor: not-allowed;
 }
 
-@media (max-width: 768px) {
-  .date-picker,
-  .location-inputs {
-    grid-template-columns: 1fr;
-  }
-  
-  .vehicle-booking-section {
-    padding: 20px;
-  }
-  
-  .price-per-day .price {
-    font-size: 24px;
-  }
-}
-
-.pickup-boxes {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.pickup-box {
-  position: relative;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 2px 12px rgba(30, 180, 156, 0.08);
-  border: 2px solid #e0e0e0;
-  padding: 20px 30px 15px 60px;
-  cursor: pointer;
-  transition: border 0.25s, box-shadow 0.25s, background 0.2s;
-  min-height: 100px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.pickup-box.selected {
-  border: 2.5px solid #1abc9c;
-  background: linear-gradient(90deg, #f6fffa 60%, #e8fff6 100%);
-  box-shadow: 0 6px 24px rgba(30, 180, 156, 0.13);
-}
-
-.pickup-box:hover {
-  border: 2.5px solid #16a085;
-  background: #f8fffc;
-}
-
-.pickup-box input[type="checkbox"] {
-  position: absolute;
-  left: 24px;
-  top: 32px;
-  width: 26px;
-  height: 26px;
-  accent-color: #1abc9c;
-  z-index: 2;
-  border-radius: 50%;
-  box-shadow: 0 1px 4px rgba(30, 180, 156, 0.10);
-}
-
-.pickup-box b {
-  font-size: 1.2rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-.pickup-box .pickup-location-label {
-  color: #444;
-  margin-left: 0;
-  font-size: 1.1rem;
-  margin-top: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.pickup-box .pickup-address-input {
-  margin-top: 12px;
-  width: 95%;
-  padding: 12px 14px;
-  border: 1.7px solid #1abc9c;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  outline: none;
-  background: #f8f9fa;
-  transition: border 0.2s, background 0.2s;
-  font-family: inherit;
-}
-
-.pickup-box .pickup-address-input:focus {
-  border: 2.2px solid #16a085;
-  background: #ffffff;
-}
-
-.pickup-box .pickup-fee-info {
-  color: #e74c3c;
-  font-size: 0.95rem;
-  margin-top: 10px;
-  margin-left: 2px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-@media (max-width: 600px) {
-  .pickup-box {
-    padding: 16px 8px 14px 40px;
-    min-height: 70px;
-  }
-  .pickup-box input[type="checkbox"] {
-    left: 8px;
-    top: 16px;
-    width: 20px;
-    height: 20px;
-  }
-  .pickup-box .pickup-address-input {
-    width: 98%;
-    font-size: 0.95rem;
-    padding: 10px 8px;
-  }
-}
-
-.promo-modal-overlay {
-  position: fixed;
-  z-index: 1000;
-  inset: 0;
-  background: rgba(44, 62, 80, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.2s;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-.promo-modal {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 8px 40px rgba(44,62,80,0.18);
-  padding: 32px 28px 24px 28px;
-  min-width: 350px;
-  max-width: 420px;
-  width: 95vw;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  animation: popupIn 0.22s;
-}
-
-@keyframes popupIn {
-  from { transform: translateY(40px) scale(0.98); opacity: 0.7; }
-  to   { transform: none; opacity: 1; }
-}
-
-.promo-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-
-.promo-modal-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #888;
-  cursor: pointer;
-  transition: color 0.2s;
-  margin-left: 10px;
-}
-.promo-modal-close:hover {
-  color: #e74c3c;
-}
-
-.promo-input {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 8px;
-  border: 1.5px solid #16a085;
-  font-size: 1.08rem;
-  margin-bottom: 18px;
-  background: #f8f9fa;
-  outline: none;
-  transition: border 0.2s;
-}
-.promo-input:focus {
-  border: 2px solid #1abc9c;
-  background: #fff;
-}
-
-.promo-list {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.promo-item {
-  display: flex;
-  align-items: flex-start;
-  background: #f8f9fa;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(30,180,156,0.07);
-  border: 1.5px solid #e0e0e0;
-  padding: 18px 16px;
-  gap: 16px;
-  position: relative;
-}
-
-.promo-item-left {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.promo-icon {
-  width: 44px;
-  height: 44px;
-  background: #1abc9c;
-  color: #fff;
-  border-radius: 50%;
-  font-size: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 4px;
-}
-
-.promo-item-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.promo-item-action {
-  display: flex;
-  align-items: center;
-  margin-left: 10px;
-}
-.promo-apply-btn {
-  background: #1abc9c;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 18px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.18s;
+.terms-agreement {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #666;
   margin-top: 8px;
 }
-.promo-apply-btn:hover {
-  background: #16a085;
-}
 
-@media (max-width: 600px) {
-  .promo-modal {
-    padding: 16px 4vw 12px 4vw;
-    min-width: 0;
-    max-width: 98vw;
-  }
-  .promo-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 12px 8px;
-  }
-  .promo-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 1.3rem;
-  }
-}
-
-.date-time-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.date-time-modal {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.modal-header button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
-}
-
-.date-time-selection {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.time-slots {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.time-slot {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 14px;
-}
-
-.time-slot:hover {
-  background: #e8fff6;
-  border-color: #16a085;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.time-slot.selected {
-  background: #16a085;
-  color: white;
-  border-color: #16a085;
-  transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(22, 160, 133, 0.3);
-}
-
-.no-available-hours {
-  grid-column: 1 / -1;
-  text-align: center;
-  color: #e74c3c;
-  padding: 20px;
-  background: #fdf3f2;
-  border-radius: 8px;
-  margin-top: 12px;
-}
-
-/* Responsive styles */
+/* Responsive */
 @media (max-width: 768px) {
-  .time-slots {
-    grid-template-columns: repeat(4, 1fr);
+  .vehicle-booking-section {
+    padding: 16px;
+  }
+
+  .price {
+    font-size: 1.5rem;
+  }
+
+  .promo-modal {
+    width: 95%;
+    padding: 16px;
   }
 }
 
 @media (max-width: 480px) {
-  .time-slots {
-    grid-template-columns: repeat(3, 1fr);
+  .vehicle-booking-section {
+    padding: 12px;
+  }
+
+  .price {
+    font-size: 1.3rem;
+  }
+
+  .promo-item {
+    flex-direction: column;
+  }
+
+  .promo-item-action {
+    margin-top: 8px;
+  }
+
+  .promo-apply-btn {
+    width: 100%;
   }
 }

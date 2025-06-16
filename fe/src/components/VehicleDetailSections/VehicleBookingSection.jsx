@@ -275,14 +275,14 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
 
   return (
     <div className="vehicle-booking-section">
-      <div className="pricing-section">
+      {/* Phần giá và thời gian */}
+      <section className="pricing-section">
         <h3>Giá thuê và thời gian</h3>
         <div className="price-per-day">
           <span className="price">{vehicle.pricePerDay.toLocaleString('vi-VN')} VND</span>
           <span className="unit">/ ngày</span>
         </div>
 
-        {/* Nút mở modal chọn thời gian */}
         <button 
           className="select-datetime-button"
           onClick={() => setShowDateTimeModal(true)}
@@ -290,7 +290,6 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
           <span>📅</span> Chọn thời gian thuê xe
         </button>
 
-        {/* Hiển thị thời gian đã chọn */}
         {selectedDates.startDate && selectedDates.endDate && (
           <div className="selected-datetime">
             <div className="datetime-item">
@@ -307,7 +306,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
             </div>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Modal chọn thời gian */}
       {showDateTimeModal && (
@@ -322,10 +321,9 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
       )}
 
       {/* Phần địa điểm nhận xe */}
-      <div className="pickup-section">
+      <section className="pickup-section">
         <h3>Địa điểm nhận xe</h3>
         <div className="pickup-boxes">
-          {/* Box 1: Nhận xe tại vị trí xe */}
           <div
             className={`pickup-box${pickupLocation === vehicle.location ? ' selected' : ''}`}
             onClick={() => handleBoxSelect(vehicle.location)}
@@ -336,13 +334,14 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
               onChange={() => handleBoxSelect(vehicle.location)}
               tabIndex={-1}
             />
-            <b>Nhận xe tại vị trí xe</b>
-            <div className="pickup-location-label">
-              <span role="img" aria-label="location"></span> {vehicle.location}
+            <div className="pickup-box-content">
+              <b>Nhận xe tại vị trí xe</b>
+              <div className="pickup-location-label">
+                <span role="img" aria-label="location">📍</span> {vehicle.location}
+              </div>
             </div>
           </div>
           
-          {/* Box 2: Giao xe tận nơi */}
           <div
             className={`pickup-box${pickupLocation !== vehicle.location ? ' selected' : ''}`}
             onClick={() => handleBoxSelect('delivery')}
@@ -353,36 +352,35 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
               onChange={() => handleBoxSelect('delivery')}
               tabIndex={-1}
             />
-            <b style={{ color: '#1abc9c' }}>Giao xe tận nơi</b>
-            <div className="pickup-location-label">
-              <span role="img" aria-label="location"></span>
-              {pickupLocation !== vehicle.location ? (
-                <input
-                  type="text"
-                  value={pickupLocation === 'delivery' ? '' : pickupLocation}
-                  onChange={handleAddressChange}
-                  placeholder="Nhập địa chỉ nhận xe (số nhà, tên đường, phường, quận,...)"
-                  className="pickup-address-input"
-                />
-              ) : (
-                <span style={{ color: '#bbb' }}>Chọn địa điểm</span>
-              )}
-            </div>
-            <div className="pickup-fee-info">
-              Phí giao xe (2 chiều): 200.000đ - Chủ xe sẽ tự giao và nhận xe
+            <div className="pickup-box-content">
+              <b style={{ color: '#1abc9c' }}>Giao xe tận nơi</b>
+              <div className="pickup-location-label">
+                <span role="img" aria-label="location">📍</span>
+                <div className="address-input-wrapper">
+                  {pickupLocation !== vehicle.location ? (
+                    <input
+                      type="text"
+                      value={pickupLocation === 'delivery' ? '' : pickupLocation}
+                      onChange={handleAddressChange}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder="Nhập địa chỉ nhận xe"
+                      className="pickup-address-input"
+                    />
+                  ) : (
+                    <span className="placeholder">Chọn địa điểm</span>
+                  )}
+                </div>
+              </div>
+              <div className="pickup-fee-info">
+                Phí giao xe (2 chiều): 200.000đ - Chủ xe sẽ tự giao và nhận xe
+              </div>
             </div>
           </div>
         </div>
-        {pickupLocation !== vehicle.location && (
-          <div className="delivery-note" style={{ marginTop: 8 }}>
-            <p>* Chủ xe sẽ tự giao xe đến địa chỉ của bạn và nhận xe khi kết thúc thuê</p>
-            <p>* Phí giao xe 200.000đ đã bao gồm cả 2 chiều</p>
-          </div>
-        )}
-      </div>
+      </section>
 
-      {/* Tóm tắt chi phí */}
-      <div className="cost-summary">
+      {/* Phần tổng chi phí */}
+      <section className="cost-summary">
         <h3>Tổng chi phí</h3>
         <div className="cost-details">
           <div className="cost-item">
@@ -403,15 +401,14 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
             <span>Tiền giữ chỗ</span>
             <span>{holdFee.toLocaleString('vi-VN')} VND</span>
           </div>
-          {/* Discount section */}
           <div className="cost-item">
             <span>
               <b>Giảm giá</b>
-              <div style={{ fontWeight: 400, fontSize: 13, color: '#444' }}>
+              <div className="promo-description">
                 {selectedPromo ? selectedPromo.title : 'Khuyến mãi mặc định'}
               </div>
             </span>
-            <span style={{ color: '#e74c3c', fontWeight: 600 }}>
+            <span className="discount-amount">
               -{discountAmount > 0 ? discountAmount.toLocaleString('vi-VN') : 0}đ
             </span>
           </div>
@@ -422,51 +419,30 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
             </span>
           </div>
         </div>
-        <div style={{ margin: '8px 0 0 0', width: '100%' }}>
+
+        <div className="promo-actions">
           <button
             className="apply-promo-btn"
             type="button"
             onClick={() => setShowPromoModal(true)}
-            style={{
-              width: '100%',
-              background: '#e8fff6',
-              color: '#16a085',
-              border: '2px solid #16a085',
-              borderRadius: 10,
-              fontWeight: 600,
-              fontSize: 16,
-              padding: '12px 0',
-              marginTop: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              cursor: 'pointer',
-            }}
           >
-            <span style={{ fontSize: 20 }}>💸</span> Áp dụng mã khuyến mãi / giới thiệu <span style={{ fontSize: 18 }}>➔</span>
+            <span role="img" aria-label="money-bag">💸</span> 
+            Áp dụng mã khuyến mãi / giới thiệu 
+            <span role="img" aria-label="arrow-right">➔</span>
           </button>
           {selectedPromo && (
             <button
               type="button"
-              style={{
-                marginTop: 6,
-                background: 'none',
-                color: '#e74c3c',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 13,
-                textDecoration: 'underline',
-              }}
+              className="remove-promo-btn"
               onClick={handleRemovePromo}
             >
               Bỏ mã khuyến mãi
             </button>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* Popup mã khuyến mãi */}
+      {/* Modal mã khuyến mãi */}
       {showPromoModal && (
         <div className="promo-modal-overlay">
           <div className="promo-modal">
@@ -484,7 +460,6 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
               placeholder="Nhập mã khuyến mãi"
               value={promoCode}
               onChange={e => setPromoCode(e.target.value.toUpperCase())}
-              style={{ margin: '16px 0', width: '100%', padding: 10, borderRadius: 8, border: '1.5px solid #16a085', fontSize: 16 }}
             />
             <div className="promo-list">
               {PROMO_LIST.filter(p => !promoCode || p.code.includes(promoCode)).map(promo => (
@@ -493,13 +468,13 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
                     <div className="promo-icon">💸</div>
                   </div>
                   <div className="promo-item-main">
-                    <div style={{ fontWeight: 600, fontSize: 16 }}>{promo.code}</div>
-                    <div style={{ color: '#16a085', fontWeight: 500 }}>{promo.title}</div>
-                    <div style={{ fontSize: 14, color: '#444', margin: '2px 0' }}>{promo.desc}</div>
-                    <div style={{ fontSize: 13, color: '#e67e22', margin: '2px 0' }}>{promo.time}</div>
-                    <div style={{ fontSize: 13, color: '#888' }}>{promo.valid}</div>
-                    <div style={{ fontSize: 13, color: '#888' }}>{promo.note}</div>
-                    <div style={{ fontSize: 13, color: '#888' }}>Số lượng còn lại: {promo.left}</div>
+                    <div className="promo-code">{promo.code}</div>
+                    <div className="promo-title">{promo.title}</div>
+                    <div className="promo-desc">{promo.desc}</div>
+                    <div className="promo-time">{promo.time}</div>
+                    <div className="promo-valid">{promo.valid}</div>
+                    <div className="promo-note">{promo.note}</div>
+                    <div className="promo-left">Số lượng còn lại: {promo.left}</div>
                   </div>
                   <div className="promo-item-action">
                     <button
@@ -510,7 +485,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
                 </div>
               ))}
               {PROMO_LIST.filter(p => !promoCode || p.code.includes(promoCode)).length === 0 && (
-                <div style={{ color: '#e74c3c', textAlign: 'center', margin: '20px 0' }}>
+                <div className="no-promo-found">
                   Không tìm thấy mã phù hợp
                 </div>
               )}
@@ -519,16 +494,18 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         </div>
       )}
 
-      {/* Nút đặt xe */}
-      <button
-        className="book-now-button"
-        onClick={handleSubmit}
-        disabled={!selectedDates.startDate || !selectedDates.endDate || (pickupLocation !== vehicle.location && !pickupLocation)}
-      >
-        Đặt xe ngay
-      </button>
-      <div className="terms-agreement">
-        Bằng việc chuyển giữ chỗ và thuê xe, bạn đồng ý với khoản sử dụng và Chính sách bảo mật
+      {/* Nút đặt xe và điều khoản */}
+      <div className="booking-actions">
+        <button
+          className="book-now-button"
+          onClick={handleSubmit}
+          disabled={!selectedDates.startDate || !selectedDates.endDate || (pickupLocation !== vehicle.location && !pickupLocation)}
+        >
+          Đặt xe ngay
+        </button>
+        <div className="terms-agreement">
+          Bằng việc chuyển giữ chỗ và thuê xe, bạn đồng ý với khoản sử dụng và Chính sách bảo mật
+        </div>
       </div>
     </div>
   );
