@@ -22,6 +22,7 @@ import VehicleManagement from "./pages/vehiclemanagement/VehicleManagement";
 import AddCarForm from "./pages/vehiclemanagement/AddCarForm";
 import EditVehicle from "./pages/vehiclemanagement/EditVehicle";
 import AddMotorbikeForm from "./pages/vehiclemanagement/AddMotorbikeForm"; // NEW: Import AddMotorbikeForm
+import NotificationPage from "./pages/notification/NotificationPage";
 
 // admin 
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -33,7 +34,6 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        {" "}
         {/* Wrap the application with AuthProvider */}
         <div className="App">
           <Routes>
@@ -61,6 +61,7 @@ function App() {
             <Route path="/ownerpage" element={<OwnerRouteGuard />}>
               <Route path="overview" element={<OwnerPage />} />
               <Route path="vehicle-management" element={<VehicleManagement />} />
+              <Route path="notification" element={<NotificationPage />} />
               <Route path="add-car" element={<AddCarForm />} />
               <Route path="add-motorbike" element={<AddMotorbikeForm />} /> // NEW: Add route for AddMotorbikeForm
               <Route path="edit-vehicle/:id" element={<EditVehicle />} />

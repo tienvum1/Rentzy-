@@ -273,7 +273,18 @@ exports.getOwnerVehicles = async (req, res) => {
         },
       },
 
-      // Stage 4: Project the final output shape
+      // Stage 4: Join với bảng users để lấy thông tin currentRenter
+      {
+        $lookup: {
+          from: "users",
+          localField: "currentRenter",
+          foreignField: "_id",
+          as: "currentRenter_details"
+        }
+      },
+      { $unwind: { path: "$currentRenter_details", preserveNullAndEmptyArrays: true } },
+
+      // Stage 5: Project the final output shape
       {
         $project: {
           _id: 1,
@@ -295,19 +306,22 @@ exports.getOwnerVehicles = async (req, res) => {
           createdAt: 1,
           updatedAt: 1,
           description: 1,
+          currentRenter: {
+            _id: "$currentRenter_details._id",
+            name: "$currentRenter_details.name",
+            email: "$currentRenter_details.email",
+            phone: "$currentRenter_details.phone"
+          },
           // Include specific details based on type
           specificDetails: {
-            // Create a new field to hold car or motorbike details
             $cond: {
-              // Use $cond to conditionally include car or motorbike details
-              if: { $eq: ["$type", "car"] }, // If type is car
-              then: "$car_details", // Include car details
+              if: { $eq: ["$type", "car"] },
+              then: "$car_details",
               else: {
-                // If not car, check if it's a motorbike
                 $cond: {
-                  if: { $eq: ["$type", "motorbike"] }, // If type is motorbike
-                  then: "$motorbike_details", // Include motorbike details
-                  else: null, // Otherwise, include null
+                  if: { $eq: ["$type", "motorbike"] },
+                  then: "$motorbike_details",
+                  else: null,
                 },
               },
             },
@@ -1261,3 +1275,41 @@ exports.reviewVehicleChanges = async (req, res) => {
 };
 
 // lấy tất cả vehicles approved
+exports.updateVehicleStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status, userId } = req.body;
+  const ownerId = req.user._id; // ID của chủ xe đã xác thực
+
+  try {
+    // Kiểm tra tính hợp lệ của status
+    const allowedStatuses = ["available", "reserved", "rented", "maintenance", "blocked"];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status provided." });
+    }
+
+    const vehicle = await Vehicle.findOne({ _id: id, owner: ownerId });
+
+    if (!vehicle) {
+      return res.status(404).json({ message: "Vehicle not found or you are not the owner." });
+    }
+
+    // Cập nhật trạng thái xe và currentRenter
+    vehicle.status = status;
+    if (status === "rented" || status === "reserved") {
+      if (!userId) {
+        return res.status(400).json({ message: "userId is required when setting status to rented or reserved." });
+      }
+      vehicle.currentRenter = userId;
+    } else if (status === "available") {
+      vehicle.currentRenter = null;
+    }
+    // Các trạng thái khác giữ nguyên currentRenter
+
+    await vehicle.save();
+
+    res.status(200).json({ message: "Vehicle status updated successfully!", vehicle });
+  } catch (error) {
+    console.error("Error updating vehicle status:", error);
+    res.status(500).json({ message: "Failed to update vehicle status.", error: error.message });
+  }
+};

@@ -122,6 +122,13 @@ const vehicleSchema = new mongoose.Schema(
       default: "available",
     },
 
+    // User hiện tại đang thuê hoặc giữ chỗ xe này
+    currentRenter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+
     // Thông tin thay đổi đang chờ duyệt
     pendingChanges: {
       type: {
