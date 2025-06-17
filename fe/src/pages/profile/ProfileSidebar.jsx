@@ -15,7 +15,7 @@ const ProfileSidebar = () => {
         { path: '/profile', label: 'Tài khoản của tôi', icon: <FaUser /> }, // Path for main profile page
         { path: '/profile/favorites', label: 'Xe yêu thích', icon: <FaHeart /> },
         { path: '/profile/my-cars', label: 'Xe của tôi', icon: <FaCar /> },
-        { path: '/profile/trips', label: 'Chuyến của tôi', icon: <FaSuitcaseRolling /> },
+        { path: '/profile/my-bookings', label: 'Đơn thuê của tôi', icon: <FaSuitcaseRolling /> },
         { path: '/ownerpage/overview', label: 'Quản lí xe cho owner', icon: <FaClipboardCheck /> }, // Full path for owner dashboard overview
     
         { path: '/profile/gifts', label: 'Quà tặng', icon: <FaGift /> },

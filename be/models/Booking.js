@@ -80,15 +80,8 @@ const bookingSchema = new mongoose.Schema(
     // Trạng thái đơn thuê
     status: {
       type: String,
-      enum: [
-        "pending",         // Mới đặt, chưa thanh toán
-        "paid",            // Khách đã thanh toán, chờ chủ xe xác nhận
-        "auto_cancelled",  // Hệ thống tự động hủy do quá hạn xác nhận/thanh toán
-        "in_progress",     // Đang trong quá trình thuê xe
-        "completed",       // Đã trả xe, kết thúc chuyến thuê
-        "cancelled",       // Khách tự hủy booking
-      ],
-      default: "pending",
+      enum: ['pending', 'DEPOSIT_PAID', 'accepted', 'in_progress', 'completed', 'canceled', 'rejected'],
+      default: 'pending',
     },
 
     // Địa chỉ nhận xe
@@ -146,6 +139,17 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       enum: ["renter", "system", "owner"],
     },
+
+    // Mã khuyến mãi
+    promoCode: {
+      type: String,
+    },
+
+    // Giao dịch
+    transactions: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Transaction'
+    }],
   },
   { timestamps: true }
 );

@@ -85,24 +85,15 @@ const VehicleDetail = () => {
     const handleBookingSuccess = (bookingId, transactionId, amount) => {
         toast.success('Đặt xe thành công! Đang chuyển đến trang thanh toán...', {
             position: "top-right",
-            autoClose: 3000,
+            autoClose: 2000,
             hideProgressBar: false,
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
         });
 
-        // Lưu thông tin booking
-        localStorage.setItem('currentBooking', JSON.stringify({
-            bookingId: bookingId,
-            amount: amount,
-            transactionId: transactionId
-        }));
-
-        // Chuyển hướng sau 2 giây
-        setTimeout(() => {
-            navigate(`/confirm/${bookingId}`);
-        }, 2000);
+        // Chuyển hướng trực tiếp đến trang thanh toán
+        navigate(`/confirm/${bookingId}`);
     };
 
     const handleDateTimeSelect = (newDates) => {

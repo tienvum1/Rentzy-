@@ -19,6 +19,8 @@ const ownerRoutes = require("./route/ownerRoutes");
 const adminRoutes = require("./route/adminRoutes");
 const carRoutes = require("./route/carRoutes");
 const bookingRoutes = require('./route/bookingRoutes');
+const paymentRoutes = require('./route/paymentRoute');
+const momoRoutes = require('./route/momoRoutes');
 
 const app = express();
 
@@ -71,6 +73,9 @@ app.use("/api/owner", ownerRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/cars", carRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/momo', momoRoutes);
+
 
 app.get("/hello", (req, res) => {
   res.send("Hello World");

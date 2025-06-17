@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import DatePicker from 'react-datepicker';
-import TimePicker from 'react-time-picker';
 import { toast } from 'react-toastify';
 import "react-datepicker/dist/react-datepicker.css";
 import "react-time-picker/dist/TimePicker.css";
@@ -13,28 +11,28 @@ import { useNavigate } from 'react-router-dom';
 
 const PROMO_LIST = [
   {
-    code: 'BONBON15',
-    title: 'Giảm 15% (tối đa 999.999đ)',
-    desc: 'Giảm 15% tối đa 1 triệu cho đơn từ 2,2 triệu',
+    code: 'BONBON10',
+    title: 'Giảm 10% (tối đa 50.000đ)',
+    desc: 'Giảm 10% tối đa 50k cho đơn từ 1 triệu',
     time: 'Thời gian thuê xe từ 01/03/2025 00:00 đến 31/08/2025 23:59',
     valid: 'Có giá trị từ ngày 09/04/2025 00:00 đến hết ngày 31/08/2025 00:00',
     note: 'Không áp dụng chung với các CTKM khác',
-    left: 1379,
-    percent: 0.15,
-    max: 999999,
-    minOrder: 2200000,
+    left: 2000,
+    percent: 0.1,
+    max: 50000,
+    minOrder: 1000000,
   },
   {
-    code: 'BONBON12',
-    title: 'Giảm 12% (tối đa 500.000đ)',
-    desc: 'Giảm 12% tối đa 500k cho đơn từ 1,5 triệu',
+    code: 'BONBON5',
+    title: 'Giảm 5% (tối đa 30.000đ)',
+    desc: 'Giảm 5% tối đa 30k cho đơn từ 500k',
     time: 'Thời gian thuê xe từ 01/04/2025 00:00 đến 31/08/2025 23:59',
     valid: 'Có giá trị từ ngày 09/04/2025 00:00 đến hết ngày 31/08/2025 00:00',
     note: 'Không áp dụng chung với các CTKM khác',
-    left: 500,
-    percent: 0.12,
-    max: 500000,
-    minOrder: 1500000,
+    left: 1000,
+    percent: 0.05,
+    max: 30000,
+    minOrder: 500000,
   },
 ];
 
@@ -58,6 +56,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
   // State để lưu các ngày đã được đặt
   const [bookedDates, setBookedDates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // State để điều khiển việc hiển thị modal chọn ngày giờ
   const [showDateTimeModal, setShowDateTimeModal] = useState(false);
@@ -133,7 +132,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
 
     const rentalFee = totalDays * vehicle.pricePerDay;
     const deliveryFee = pickupLocation !== vehicle.location ? 200000 : 0;
-    const finalAmount = rentalFee + deliveryFee - discountAmount;
+    const finalAmount = rentalFee + deliveryFee;
 
     return {
       totalDays,
@@ -141,29 +140,60 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
       deliveryFee,
       finalAmount,
     };
-  }, [selectedDates.startDate, selectedDates.endDate, pickupTime, returnTime, discountAmount, pickupLocation, vehicle.pricePerDay]);
-
-  const totalCost = React.useMemo(() => bookingDetails.finalAmount, [bookingDetails.finalAmount]);
+  }, [selectedDates.startDate, selectedDates.endDate, pickupTime, returnTime, pickupLocation, vehicle.pricePerDay]);
 
   const holdFee = vehicle.holdFee || 500000;
 
-  const totalBeforeDiscount = React.useMemo(
-    () => totalCost + otherCosts.deposit + otherCosts.deliveryFee + holdFee,
-    [totalCost, otherCosts.deposit, otherCosts.deliveryFee, holdFee]
-  );
+  // Tính tổng tiền sau khi trừ giảm giá
+  const totalBeforeDiscount = React.useMemo(() => {
+    const baseAmount = bookingDetails.rentalFee + bookingDetails.deliveryFee + otherCosts.deposit + holdFee;
+    return baseAmount;
+  }, [bookingDetails.rentalFee, bookingDetails.deliveryFee, otherCosts.deposit, holdFee]);
 
   // Tính giảm giá khi chọn mã
   const handleApplyPromo = (promo) => {
+    console.log('Selected promo:', promo);
+    console.log('Current booking details:', bookingDetails);
+    
     setSelectedPromo(promo);
     setPromoCode(promo.code);
-    // Tính giảm giá
+    
+    // Tính giảm giá chỉ trên tiền thuê xe
     let discount = 0;
-    if (totalBeforeDiscount >= promo.minOrder) {
-      discount = Math.min(totalBeforeDiscount * promo.percent, promo.max);
+    
+    // Kiểm tra điều kiện áp dụng mã
+    if (bookingDetails.rentalFee >= promo.minOrder) {
+      // Tính giảm giá dựa trên tiền thuê xe (promo.percent đã là số phần trăm)
+      const calculatedDiscount = Math.floor(bookingDetails.rentalFee * promo.percent );
+      console.log('Discount calculation details:', {
+        rentalFee: bookingDetails.rentalFee,
+        promoPercent: promo.percent,
+        calculatedDiscount,
+        maxDiscount: promo.max
+      });
+      
+      // Lấy giá trị nhỏ hơn giữa giảm giá tính được và giới hạn tối đa
+      discount = Math.min(calculatedDiscount, promo.max);
+    } else {
+      console.log('Minimum order not met:', {
+        rentalFee: bookingDetails.rentalFee,
+        minOrder: promo.minOrder
+      });
     }
+    
+    console.log('Final discount amount:', discount);
     setDiscountAmount(discount);
     setShowPromoModal(false);
   };
+
+  // Cập nhật useEffect để log khi bookingDetails thay đổi
+  React.useEffect(() => {
+    console.log('Booking details updated:', bookingDetails);
+    if (selectedPromo) {
+      console.log('Recalculating discount for selected promo:', selectedPromo);
+      handleApplyPromo(selectedPromo);
+    }
+  }, [bookingDetails]);
 
   // Bỏ mã giảm giá
   const handleRemovePromo = () => {
@@ -197,6 +227,8 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (isSubmitting) return;
+    
     if (bookingDetails.finalAmount <= 0) {
       toast.error('Tổng số tiền phải lớn hơn 0.');
       return;
@@ -209,14 +241,13 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
     }
 
     try {
+      setIsSubmitting(true);
       // Format dates for API
       const formatDateForAPI = (dateString) => {
         const [year, month, day] = dateString.split('-');
         return `${year}-${month}-${day}`;
       };
 
-      // Tính tổng tiền trước giảm giá
-      const totalBeforeDiscount = totalCost + otherCosts.deposit + holdFee + otherCosts.deliveryFee;
       // Tính tổng tiền sau khi trừ giảm giá
       const totalAmount = totalBeforeDiscount - discountAmount;
 
@@ -229,7 +260,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         pickupTime: pickupTime,
         returnTime: returnTime,
         totalDays: bookingDetails.totalDays,
-        totalCost: totalCost, // tiền thuê xe chưa tính tiền khác 
+        totalCost: bookingDetails.rentalFee, // tiền thuê xe cơ bản
         totalAmount: totalAmount, // tổng tiền sau khi trừ giảm giá
         promoCode: selectedPromo ? selectedPromo.code : null,
         discountAmount: discountAmount,
@@ -244,18 +275,17 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
       });
 
       if (response.data.success) {
-        toast.success(response.data.message);
         if (onBookNow) {
-          onBookNow(response.data.data.booking._id, response.data.data.transaction._id, totalAmount);
+          onBookNow(response.data.data.booking._id, null, totalAmount);
         }
-        // Navigate to confirmation page with booking ID
-        navigate(`/confirm/${response.data.data.booking._id}`);
       } else {
         toast.error(response.data.message);
       }
     } catch (error) {
       console.error('Booking error:', error.response ? error.response.data : error.message);
       toast.error(error.response?.data?.message || 'Đã có lỗi xảy ra khi đặt xe.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -396,7 +426,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         <div className="cost-details">
           <div className="cost-item">
             <span>Giá thuê xe</span>
-            <span>{totalCost.toLocaleString('vi-VN')} VND</span>
+            <span>{bookingDetails.rentalFee.toLocaleString('vi-VN')} VND</span>
           </div>
           <div className="cost-item">
             <span>Tiền đặt cọc</span>
@@ -416,11 +446,11 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
             <span>
               <b>Giảm giá</b>
               <div className="promo-description">
-                {selectedPromo ? selectedPromo.title : 'Khuyến mãi mặc định'}
+                {selectedPromo ? `Giảm ${selectedPromo.percent}% (tối đa ${selectedPromo.max.toLocaleString('vi-VN')}đ)` : 'Khuyến mãi mặc định'}
               </div>
             </span>
             <span className="discount-amount">
-              -{discountAmount > 0 ? discountAmount.toLocaleString('vi-VN') : 0}đ
+              -{discountAmount.toLocaleString('vi-VN')}đ
             </span>
           </div>
           <div className="cost-item total">
@@ -510,9 +540,9 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         <button
           className="book-now-button"
           onClick={handleSubmit}
-          disabled={!selectedDates.startDate || !selectedDates.endDate || (pickupLocation !== vehicle.location && !pickupLocation)}
+          disabled={!selectedDates.startDate || !selectedDates.endDate || (pickupLocation !== vehicle.location && !pickupLocation) || isSubmitting}
         >
-          Đặt xe ngay
+          {isSubmitting ? 'Đang xử lý...' : 'Đặt xe ngay'}
         </button>
         <div className="terms-agreement">
           Bằng việc chuyển giữ chỗ và thuê xe, bạn đồng ý với khoản sử dụng và Chính sách bảo mật

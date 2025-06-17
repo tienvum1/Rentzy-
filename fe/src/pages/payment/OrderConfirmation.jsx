@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { FaArrowLeft, FaUser, FaPhone, FaCalendarAlt, FaMapMarkerAlt, FaCheck, FaCar, FaCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaUser, FaPhone,FaRegCircle, FaCalendarAlt, FaMapMarkerAlt, FaCheck, FaCar, FaCircle } from 'react-icons/fa';
 import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import './OrderConfirmation.css';
+import Header from '../../components/Header/Header';
 
 const OrderConfirmation = () => {
   const { bookingId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,6 +17,7 @@ const OrderConfirmation = () => {
     name: '',
     phone: ''
   });
+  const [paymentStatus, setPaymentStatus] = useState('UNKNOWN'); // PENDING, COMPLETED, FAILED, CANCELED
 
   // Constants
   const HOLD_FEE = 500000; // Tiền giữ chỗ
@@ -22,23 +26,27 @@ const OrderConfirmation = () => {
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${bookingId}`, {
-          withCredentials: true
-        });
-        
-        if (response.data.success) {
-          setBooking(response.data.booking);
-          if (response.data.booking.renter) {
-            setFormData({
-              name: response.data.booking.renter.name || '',
-              phone: response.data.booking.renter.phone || ''
-            });
-          }
+        const config = {
+          withCredentials: true, // Đảm bảo gửi kèm cookie xác thực
+        };
+        const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${bookingId}`, config);
+        setBooking(res.data.booking);
+        setLoading(false);
+
+        // Determine payment status from transactions
+        const depositTransaction = res.data.booking.transactions.find(
+          t => t.type === 'DEPOSIT' && t.paymentMethod === 'MOMO'
+        );
+
+        if (depositTransaction) {
+          setPaymentStatus(depositTransaction.status);
+        } else {
+          setPaymentStatus('NO_DEPOSIT_FOUND');
         }
+
       } catch (err) {
-        setError('Không thể tải thông tin đơn hàng');
-        console.error('Error fetching booking:', err);
-      } finally {
+        console.error('Error fetching booking details:', err);
+        setError(err.response?.data?.message || 'Failed to fetch booking details');
         setLoading(false);
       }
     };
@@ -46,7 +54,7 @@ const OrderConfirmation = () => {
     if (bookingId) {
       fetchBookingDetails();
     }
-  }, [bookingId]);
+  }, [bookingId, navigate]);
 
   // Add back button handler
   const handleBack = () => {
@@ -82,14 +90,14 @@ const OrderConfirmation = () => {
   const calculateFees = () => {
     if (!booking) return null;
 
-    const totalCost = booking.totalAmount; // Tiền thuê xe cơ bản (rentalFee + deliveryFee - discountAmount)
+    const totalCost = booking.totalCost; // Tiền thuê xe cơ bản
     const deliveryFee = booking.pickupLocation !== booking.vehicle?.location ? DELIVERY_FEE : 0;
     const discountAmount = booking.discountAmount || 0;
     const deposit = booking.deposit || 0;
-    const holdFee = HOLD_FEE;
+    const holdFee = booking.reservationFee || HOLD_FEE;
 
-    // totalAmount là tiền thuê xe cơ bản (giống như bookingDetails.finalAmount trong VehicleBookingSection)
-    const totalAmount = totalCost;
+    // Tổng tiền sau khi trừ giảm giá
+    const totalAmount = booking.totalAmount;
 
     return {
       totalCost,
@@ -104,29 +112,20 @@ const OrderConfirmation = () => {
   const fees = calculateFees();
 
   const handleConfirm = async () => {
-    try {
-      const response = await axios.post('http://localhost:4999/api/bookings/confirm', {
-        bookingId: booking._id,
-        name: formData.name,
-        phone: formData.phone,
-        totalCost: fees.totalCost,
-        deliveryFee: fees.deliveryFee,
-        holdFee: fees.holdFee,
-        deposit: fees.deposit,
-        discountAmount: fees.discountAmount,
-        totalAmount: fees.totalAmount
-      }, {
-        withCredentials: true
-      });
-
-      if (response.data.success) {
-        // Handle successful confirmation
-        console.log('Booking confirmed:', response.data);
-      }
-    } catch (error) {
-      console.error('Error confirming booking:', error);
+    // Directly navigate to the payment page
+    if (booking && booking._id) {
+      navigate(`/payment-deposit/${booking._id}`);
+    } else {
+      console.error('Booking ID not available for navigation.');
     }
   };
+
+  const handleBackToHome = () => {
+    navigate('/');
+  };
+
+  const isPaymentCompleted = paymentStatus === 'COMPLETED';
+  const isPaymentFailedOrCanceled = paymentStatus === 'FAILED' || paymentStatus === 'CANCELED';
 
   if (loading) {
     return <div className="loading">Đang tải thông tin...</div>;
@@ -141,6 +140,7 @@ const OrderConfirmation = () => {
   }
 
   return (
+    <><Header/>
     <div className="order-confirmation-container">
       <div className="order-card">
         <div className="back-link" onClick={handleBack}>
@@ -149,60 +149,57 @@ const OrderConfirmation = () => {
         </div>
 
         <div className="progress-steps">
-          <div className="progress-step">
-            <div className="step-icon active">
-              <FaCheck />
+            <div className="progress-step completed">
+              <div className="step-icon">
+                <FaCheck />
+              </div>
+              <span className="step-text">Tìm và chọn xe</span>
             </div>
-            <span className="step-text">Tìm và chọn xe</span>
-          </div>
-          <div className="progress-divider"></div>
-          <div className="progress-step">
-            <div className="step-icon current">
-              <FaCar />
+            <div className="progress-divider completed"></div>
+            <div className={`progress-step completed ${isPaymentCompleted ? 'completed' : 'current'}`}>
+              <div className="step-icon">
+                <FaCheck />
+              </div>
+              <span className="step-text">Xác nhận đơn hàng</span>
             </div>
-            <span className="step-text">Xác nhận đơn hàng</span>
-          </div>
-          <div className="progress-divider"></div>
-          <div className="progress-step">
-            <div className="step-icon inactive">
-              <FaCircle />
+            <div className={`progress-divider ${isPaymentCompleted ? 'completed' : ''}`}></div>
+            <div className={`progress-step ${isPaymentCompleted ? 'completed' : 'current'}`}>
+              <div className="step-icon">
+                <FaCar />
+              </div>
+              <span className="step-text">Thanh toán giữ chỗ</span>
             </div>
-            <span className="step-text">Thanh toán giữ chỗ</span>
-          </div>
-          <div className="progress-divider"></div>
-          <div className="progress-step">
-            <div className="step-icon inactive">
-              <FaCircle />
+            <div className={`progress-divider ${isPaymentCompleted ? 'completed' : ''}`}></div>
+            <div className={`progress-step ${isPaymentCompleted ? 'completed' : ''}`}>
+              <div className="step-icon">
+                <FaRegCircle />
+              </div>
+              <span className="step-text">Tải app & lấy xe</span>
             </div>
-            <span className="step-text">Tải app & lấy xe</span>
           </div>
-        </div>
 
-        <h2 className="section-title text-center">Thông tin liên hệ</h2>
-        <p className="info-text">Vui lòng để lại thông tin liên lạc. Chúng tôi sẽ liên hệ bạn sớm nhất</p>
+        <h2 className="section-title text-center">
+            {isPaymentCompleted ? 'Thanh toán giữ chỗ thành công!' : isPaymentFailedOrCanceled ? 'Thanh toán thất bại hoặc đã hủy.' : 'Đang chờ xác nhận thanh toán...'}
+        </h2>
+        {isPaymentCompleted && (
+            <div className="payment-success-message text-center">
+                <p>Mã đơn hàng của bạn: <strong>{booking._id}</strong></p>
+                <p>Cảm ơn bạn đã thanh toán thành công. Đơn hàng của bạn đang chờ chủ xe xác nhận.</p>
+            </div>
+        )}
 
-        <div className="input-grid">
-          <div className="input-field">
-            <FaUser />
-            <input 
-              type="text" 
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              placeholder="Nhập tên" 
-            />
-          </div>
-          <div className="input-field">
-            <FaPhone />
-            <input 
-              type="text" 
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              placeholder="Nhập số điện thoại" 
-            />
-          </div>
-        </div>
+        {!isPaymentCompleted && (
+            <div className="input-grid">
+                <div className="input-field">
+                    <FaUser />
+                    <span className="display-field">{booking.renter.name || 'Chưa có thông tin tên'}</span>
+                </div>
+                <div className="input-field">
+                    <FaPhone />
+                    <span className="display-field">{booking.renter.phone || 'Chưa có thông tin số điện thoại'}</span>
+                </div>
+            </div>
+        )}
 
         <h2 className="section-title">Thông tin đơn hàng</h2>
 
@@ -219,14 +216,21 @@ const OrderConfirmation = () => {
           <div className="order-detail-item">
             <FaMapMarkerAlt />
             <div>
-              <p className="detail-label">Nhận xe tại vị trí của xe</p>
+              <p className="detail-label">Địa điểm nhận xe</p>
               <p className="detail-value">{booking.pickupLocation}</p>
+            </div>
+          </div>
+          <div className="order-detail-item">
+            <FaMapMarkerAlt />
+            <div>
+              <p className="detail-label">Địa điểm trả xe</p>
+              <p className="detail-value">{booking.returnLocation}</p>
             </div>
           </div>
 
           <div className="summary-section">
             <div className="summary-item">
-              <span className="summary-label">Phí thuê xe <span className="info-icon">(i)</span></span>
+              <span className="summary-label">Phí thuê xe </span>
               <span className="summary-value">{formatCurrency(fees.totalCost)}</span>
             </div>
             {fees.deliveryFee > 0 && (
@@ -264,41 +268,42 @@ const OrderConfirmation = () => {
               1
             </div>
             <div className="payment-step-content">
-              <p className="payment-step-title">Thanh toán giữ chỗ qua BonbonCar</p>
-              <p className="payment-step-description">Tiền này để xác nhận đơn thuê và giữ xe, sẽ được trừ vào tiền thế chấp khi nhận xe</p>
+              <p className="payment-step-title">Thanh toán giữ chỗ qua Rentzy</p>
+              <p className="payment-step-description">Tiền này để xác nhận đơn thuê và giữ xe, sẽ được trừ vào số tiền còn lại phải thanh toán khi nhận xe.</p>
             </div>
             <span className="payment-amount">{formatCurrency(fees.holdFee)}</span>
           </div>
           <div className="payment-step">
-            <div className="payment-step-number inactive">
+            <div className={`payment-step-number ${isPaymentCompleted ? 'completed' : ''}`}>
               2
             </div>
             <div className="payment-step-content">
-              <p className="payment-step-title">Thanh toán khi nhận xe</p>
-              <div className="payment-sub-details">
-                <p className="payment-amount">{formatCurrency(fees.totalCost + fees.deliveryFee - fees.discountAmount + fees.deposit)}</p>
-                <p>Tiền thuê <span>{formatCurrency(fees.totalCost + fees.deliveryFee - fees.discountAmount)}</span></p>
-                <p>Tiền thế chấp <span>{formatCurrency(fees.deposit)}</span></p>
-                <p>Sẽ hoàn lại khi trả xe</p>
-              </div>
+              <p className="payment-step-title">Thanh toán số tiền còn lại khi nhận xe</p>
+              <p className="payment-step-description">Số tiền còn lại <span>{formatCurrency(fees.totalAmount - fees.holdFee)}</span></p>
+              <p className="payment-step-description">Tiền cọc xe sẽ được thanh toán sau khi hoàn thành chuyến đi <span>{formatCurrency(fees.deposit)}</span></p>
             </div>
+            <span className="payment-amount">{formatCurrency(fees.totalAmount - fees.holdFee)}</span>
           </div>
         </div>
 
-        <div className="vat-checkbox-container">
-          <input type="checkbox" id="vat" />
-          <label htmlFor="vat">Xuất hoá đơn VAT</label>
+        <div className="action-buttons">
+            {!isPaymentCompleted && (
+                <button className="confirm-button" onClick={handleConfirm}>
+                    Đi đến thanh toán giữ chỗ
+                </button>
+            )}
         </div>
-
-        <button className="confirm-button" onClick={handleConfirm}>
-          Xác nhận
-        </button>
 
         <p className="terms-text">
           Bằng việc chuyển giữ chỗ và thuê xe, bạn đồng ý với <a href="#">Điều khoản sử dụng</a> và <a href="#">Chính sách bảo mật</a>
         </p>
+
+        <button className="back-to-home-button" onClick={handleBackToHome}>
+          Quay về trang chủ
+        </button>
       </div>
     </div>
+    </>
   );
 };
 

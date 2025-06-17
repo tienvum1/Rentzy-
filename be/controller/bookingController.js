@@ -2,12 +2,10 @@
 const Booking = require('../models/Booking');
 const Vehicle = require('../models/Vehicle');
 const Car = require('../models/Car');
-
 const Transaction = require('../models/Transaction');
 const User = require('../models/User');
 
 // Tạo booking mới
-// be/controller/bookingController.js
 const createBooking = async (req, res) => {
     try {
         const {
@@ -27,7 +25,7 @@ const createBooking = async (req, res) => {
             discountAmount,
             
         } = req.body;
- console.log(req.body);
+
         // Validate required fields
         if (!vehicleId || !startDate || !endDate || !pickupLocation || !returnLocation || !pickupTime || !returnTime) {
             return res.status(400).json({
@@ -66,27 +64,34 @@ const createBooking = async (req, res) => {
         }
 
         // Check for existing bookings
+        const car = await Car.findById(vehicleId);
+
+        if (!car) {
+            return res.status(404).json({ message: "Không tìm thấy xe." });
+        }
+
+        const realVehicleId = car.vehicle;
+
+        // Kiểm tra các lịch thuê bị trùng
         const existingBookings = await Booking.find({
-            vehicle: vehicleId,
+            vehicle: realVehicleId,
+            status: { $in: ['pending', 'DEPOSIT_PAID', 'accepted', 'in_progress'] }, // Only check against active/pending bookings
             $or: [
                 {
                     startDate: { $lte: endDateTime },
-                    endDate: { $gte: startDateTime }
+                    endDate: { $gte: startDateTime },
                 }
             ]
         });
 
         if (existingBookings.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Xe đã được đặt trong khoảng thời gian này'
-            });
+            return res.status(409).json({ message: "Xe đã được đặt trong thời gian này." });
         }
 
         // Create new booking
         const booking = new Booking({
             renter: req.user._id,
-            vehicle: vehicleId,
+            vehicle: car.vehicle,
             startDate: startDateTime,
             endDate: endDateTime,
             pickupLocation,
@@ -99,36 +104,20 @@ const createBooking = async (req, res) => {
             deposit,
             reservationFee,
             discountAmount,
-            status: 'pending',
+            status: 'pending', // Trạng thái ban đầu là pending
             promoCode,
-            
-            
         });
 
         await booking.save();
 
-        // Create transaction record
-        const transaction = new Transaction({
-            booking: booking._id,
-            payer: req.user._id,
-            amount: totalAmount,
-            status: 'pending',
-            type: 'rental_fee',
-            method: 'credit_card'
-        });
-
-        await transaction.save();
-
-        // Update booking with transaction
-        booking.transactions = [transaction._id];
-        await booking.save();
+        // Initial transaction for holding fee (this is created when user initiates payment)
+        // We don't create it here. It's handled in paymentController.js when MoMo payment is initiated.
 
         res.status(201).json({
             success: true,
             message: 'Đặt xe thành công',
             data: {
                 booking,
-                transaction
             }
         });
     } catch (error) {
@@ -139,18 +128,20 @@ const createBooking = async (req, res) => {
         });
     }
 };
-// be/controller/bookingController.js
+
+// Lấy lịch xe đã đặt
 const getVehicleBookedDates = async (req, res) => {
     try {
         const { vehicleId } = req.params;
-
+        console.log(vehicleId);
+        const car = await Car.findById(vehicleId);
+        console.log("id của vehicle",car.vehicle._id);
         const bookings = await Booking.find({
-            vehicle: vehicleId,
-            status: { $in: ['pending', 'paid', 'accepted', 'in_progress'] }
+            vehicle: car.vehicle._id,
+            status: { $in: ['pending', 'DEPOSIT_PAID', 'accepted', 'in_progress'] } // Chỉ lấy booking đang hoạt động
         }).select('startDate endDate pickupTime returnTime');
 
         const bookedDates = bookings.map(booking => {
-            // Chuyển đổi thời gian từ UTC sang giờ Việt Nam
             const startDateTime = new Date(booking.startDate);
             const endDateTime = new Date(booking.endDate);
 
@@ -175,37 +166,55 @@ const getVehicleBookedDates = async (req, res) => {
     }
 };
 
-
 // Lấy danh sách booking của user
 const getUserBookings = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const bookings = await Booking.find({ renter: userId })
-            .populate('vehicle')
-            .sort({ createdAt: -1 });
+  try {
+    const userId = req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const status = req.query.status; // Optional filter by status
 
-        res.status(200).json({
-            success: true,
-            bookings
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi khi lấy danh sách booking',
-            error: error.message
-        });
+    const query = { renter: userId };
+    if (status) {
+      query.status = status;
     }
+
+    const bookings = await Booking.find(query)
+      .populate('vehicle', 'name images price ownerId')
+      .populate('renter', 'fullName email phone')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const total = await Booking.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      bookings,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error in getUserBookings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
 };
 
-// @desc    Get booking details by ID
-// @route   GET /api/bookings/:id
-// @access  Private
+// Lấy chi tiết booking theo ID
 const getBookingDetails = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
       .populate({
         path: 'renter',
-        select: 'name  phone '
+        select: 'name phone '
       })
       .populate({
         path: 'vehicle',
@@ -214,21 +223,25 @@ const getBookingDetails = async (req, res) => {
           path: 'owner',
           select: 'name phone email'
         }
+      })
+      .populate({
+        path: 'transactions',
+        select: 'amount type status paymentMethod paymentMetadata createdAt'
       });
 
     if (!booking) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "Không tìm thấy đơn đặt xe" 
+        message: "Không tìm thấy đơn đặt xe"
       });
     }
 
     // Check if user is authorized to view this booking
     if (booking.renter._id.toString() !== req.user._id.toString() && 
         !req.user.role.includes('admin')) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
-        message: "Không có quyền xem đơn đặt xe này" 
+        message: "Không có quyền xem đơn đặt xe này"
       });
     }
 
@@ -241,16 +254,16 @@ const getBookingDetails = async (req, res) => {
       updatedAt: booking.updatedAt.toISOString()
     };
 
-    res.json({
-      success: true,
-      booking: formattedBooking
+    res.status(200).json({
+        success: true,
+        booking: formattedBooking
     });
-
   } catch (error) {
-    console.error("Get booking details error:", error);
-    res.status(500).json({ 
+    console.error('Get booking details error:', error);
+    res.status(500).json({
       success: false,
-      message: "Lỗi server khi lấy thông tin đơn đặt xe" 
+      message: "Lỗi server khi lấy chi tiết đơn đặt xe",
+      error: error.message
     });
   }
 };
@@ -258,113 +271,144 @@ const getBookingDetails = async (req, res) => {
 // Hủy booking
 const cancelBooking = async (req, res) => {
     try {
-        const bookingId = req.params.id;
-        const booking = await Booking.findById(bookingId);
+        const { id } = req.params;
+        const booking = await Booking.findById(id);
 
         if (!booking) {
             return res.status(404).json({
                 success: false,
-                message: 'Không tìm thấy booking'
+                message: "Không tìm thấy đơn đặt xe.",
             });
         }
 
-        // Kiểm tra quyền hủy booking
-        if (booking.renter.toString() !== req.user._id.toString()) {
-            return res.status(403).json({
-                success: false,
-                message: 'Không có quyền hủy booking này'
-            });
-        }
-
-        // Kiểm tra trạng thái booking có thể hủy không
-        if (!['pending', 'paid'].includes(booking.status)) {
+        // Only allow cancellation if booking is still pending or accepted
+        if (booking.status !== "pending" && booking.status !== "accepted") {
             return res.status(400).json({
                 success: false,
-                message: 'Không thể hủy booking ở trạng thái này'
+                message: "Chỉ có thể hủy đơn đặt xe đang chờ hoặc đã được chấp nhận.",
             });
         }
 
-        // Cập nhật trạng thái booking
-        booking.status = 'cancelled';
-        booking.cancelledAt = new Date();
-        booking.cancelledBy = 'renter';
-        booking.cancellationReason = req.body.reason || 'Người dùng hủy';
+        // Check if the user is the renter or an admin/owner to cancel
+        if (
+            booking.renter.toString() !== req.user._id.toString() &&
+            !req.user.role.includes("admin") &&
+            !req.user.role.includes("owner")
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: "Bạn không có quyền hủy đơn đặt xe này.",
+            });
+        }
 
+        booking.status = "canceled";
         await booking.save();
 
         res.status(200).json({
             success: true,
-            message: 'Hủy booking thành công'
+            message: "Đơn đặt xe đã được hủy thành công.",
+            booking,
         });
     } catch (error) {
+        console.error("Cancel booking error:", error);
         res.status(500).json({
             success: false,
-            message: 'Lỗi khi hủy booking',
+            message: "Lỗi server khi hủy đơn đặt xe",
+            error: error.message,
+        });
+    }
+};
+
+// Hủy booking hết hạn (dùng nội bộ)
+const cancelExpiredBooking = async (bookingId) => {
+    try {
+        const booking = await Booking.findById(bookingId);
+
+        if (!booking) {
+            console.log(`Booking ${bookingId} not found.`);
+            return { success: false, message: "Booking not found." };
+        }
+
+        if (booking.status === 'pending') {
+            const createdAt = new Date(booking.createdAt).getTime();
+            const paymentTimeLimit = 10 * 60 * 1000; // 10 minutes in milliseconds
+            const expirationTime = createdAt + paymentTimeLimit;
+            const now = Date.now();
+
+            if (now > expirationTime) {
+                booking.status = 'canceled';
+                await booking.save();
+                console.log(`Booking ${bookingId} has been canceled due to expiration.`);
+                return { success: true, message: "Booking expired and canceled." };
+            } else {
+                return { success: false, message: "Booking is still within the time limit." };
+            }
+        } else {
+            // If booking is not in pending status, it means it's already paid, accepted, or canceled by other means
+            return { success: false, message: "Booking not in pending status." };
+        }
+    } catch (error) {
+        console.error(`Error canceling expired booking ${bookingId}:`, error);
+        return { success: false, message: error.message };
+    }
+};
+
+// Cập nhật trạng thái thanh toán (dùng bởi webhook)
+const updatePaymentStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        const booking = await Booking.findById(id);
+
+        if (!booking) {
+            return res.status(404).json({
+                success: false,
+                message: 'Booking not found'
+            });
+        }
+
+        booking.status = status; // Update booking status based on webhook
+        await booking.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Booking payment status updated',
+            booking
+        });
+    } catch (error) {
+        console.error('Update payment status error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating payment status',
             error: error.message
         });
     }
 };
 
-// Cập nhật trạng thái thanh toán
-const updatePaymentStatus = async (req, res) => {
-    try {
-        const { bookingId, transactionId, status, paymentMethod } = req.body;
+const cancelBookingByFrontend = async (req, res) => {
+  try {
+    const { id } = req.params; // Lấy booking ID từ URL parameter
+    const result = await cancelExpiredBooking(id);
 
-        const booking = await Booking.findById(bookingId);
-        if (!booking) {
-            return res.status(404).json({
-                success: false,
-                message: 'Không tìm thấy booking'
-            });
-        }
-
-        const transaction = await Transaction.findById(transactionId);
-        if (!transaction) {
-            return res.status(404).json({
-                success: false,
-                message: 'Không tìm thấy giao dịch'
-            });
-        }
-
-        // Cập nhật trạng thái giao dịch
-        transaction.status = status;
-        transaction.method = paymentMethod;
-        if (status === 'completed') {
-            transaction.completedAt = new Date();
-        }
-        await transaction.save();
-
-        // Cập nhật trạng thái booking
-        if (status === 'completed') {
-            booking.status = 'paid';
-        } else if (status === 'failed') {
-            booking.status = 'pending';
-        }
-        await booking.save();
-
-        res.status(200).json({
-            success: true,
-            message: 'Cập nhật trạng thái thanh toán thành công',
-            data: {
-                booking: {
-                    _id: booking._id,
-                    status: booking.status
-                },
-                transaction: {
-                    _id: transaction._id,
-                    status: transaction.status
-                }
-            }
-        });
-
-    } catch (error) {
-        console.error('Error updating payment status:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi khi cập nhật trạng thái thanh toán',
-            error: error.message
-        });
+    if (result.success) {
+      res.status(200).json({ success: true, message: result.message });
+    } else {
+      // Sử dụng các mã trạng thái HTTP phù hợp với thông báo lỗi
+      if (result.message.includes("Booking not found")) {
+        res.status(404).json({ success: false, message: result.message });
+      } else if (result.message.includes("Booking not in pending status")) {
+        res.status(400).json({ success: false, message: result.message });
+      } else if (result.message.includes("Booking is still active")) {
+        res.status(400).json({ success: false, message: result.message });
+      } else {
+        res.status(500).json({ success: false, message: result.message });
+      }
     }
+  } catch (error) {
+    console.error("Error in cancelBookingByFrontend:", error);
+    res.status(500).json({ success: false, message: "Lỗi server khi hủy booking." });
+  }
 };
 
 module.exports = {
@@ -373,5 +417,7 @@ module.exports = {
     getUserBookings,
     getBookingDetails,
     cancelBooking,
-    updatePaymentStatus
+    cancelExpiredBooking,
+    updatePaymentStatus,
+    cancelBookingByFrontend,
 };

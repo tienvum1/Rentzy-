@@ -17,7 +17,7 @@ const AdminRouteGuard = ({ children }) => {
     console.log('  user.role:', user?.role);
 
     // Check if authenticated AND user exists AND user has role 'admin'
-    const isAdmin = isAuthenticated && user && 
+    const isAdmin = isAuthenticated  && 
                    user.role && user.role.includes('admin');
 
     if (isAdmin) {

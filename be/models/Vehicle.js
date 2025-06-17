@@ -46,8 +46,9 @@ const vehicleSchema = new mongoose.Schema(
     description :{
       type: String,
       required: true,
-    }
-,
+    },
+      
+
     // Địa chỉ 
     location: {
       type: String,

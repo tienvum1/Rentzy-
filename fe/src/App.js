@@ -11,6 +11,7 @@ import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import VerifyEmail from "./pages/verifyEmail/VerifyEmail";
 import ProfilePage from "./pages/profile/ProfilePage"; // IMPORT: New ProfilePage component
+import UserBookings from "./pages/profile/UserBookings"; // Import UserBookings
 import ForgotPassword from "./pages/login/ForgotPassword";
 import ResetPassword from "./pages/login/ResetPassword";
 import ChangePassword from "./pages/changePassword/ChangePassword";
@@ -18,7 +19,7 @@ import VehicleDetail from "./pages/vehicles/VehicleDetail"; // Import VehicleDet
 
 // order booking 
 import OrderConfirmation  from "./pages/payment/OrderConfirmation";
-import ReservationPayment  from "./pages/payment/ReservationPayment"
+import PaymentDeposit  from "./pages/paymentDeposit/PaymentDeposit"
 
 import ConsignForm from "./pages/consignForm/ConsignForm";
 
@@ -48,6 +49,7 @@ function App() {
             <Route path="/verify-email" element={<VerifyEmail />} />
 
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/my-bookings" element={<UserBookings />} /> {/* New route for user bookings */}
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile/change-password" element={<ChangePassword />}/>
@@ -55,7 +57,7 @@ function App() {
 
              {/* Add VehicleDetail route */}
              <Route path="/confirm/:bookingId" element={<OrderConfirmation />} />   
-             <Route path="/payment/:bookingId" element={<ReservationPayment />} /> 
+             <Route path="/payment-deposit/:bookingId" element={<PaymentDeposit />} /> 
 
             {/* Add route for OwnerPage */}
             <Route path="/consignForm" element={<ConsignForm />} />
@@ -64,11 +66,11 @@ function App() {
 
             {/* admin route */}
              {/* chỉ admin có quyền truy cập */}
-            <Route path="/admin" element={<AdminRouteGuard />}>
+            {/* <Route path="/admin" element={<AdminRouteGuard />}> */}
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="owner-requests" element={<OwnerRequestsPage />} />
                 <Route path="vehicle-approvals" element={<VehiclesRequestPage />} />
-            </Route>
+            {/* </Route> */}
 
 
        
