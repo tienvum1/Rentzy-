@@ -59,6 +59,7 @@ const MOMO_CONFIG = {
 // Hàm tạo thanh toán MoMo
 const createPayment = async (req, res) => {
     try {
+        console.log(' gọi thành công');
         const { amount, orderInfo, orderCode } = req.body; // orderCode ở đây là booking._id
         console.log("BACKEND_URL from env:", process.env.BACKEND_URL);
         console.log(req.body);
@@ -249,11 +250,15 @@ const checkPayment = async (req, res) => {
             if (booking) {
                 // Nếu giao dịch là DEPOSIT, cập nhật trạng thái booking thành DEPOSIT_PAID
                 if (transaction.type === 'DEPOSIT') {
-                    booking.status = 'DEPOSIT_PAID';
+                    if (booking.status === 'pending') { 
+                        booking.status = 'DEPOSIT_PAID';
+                    }
                 }
-                // Nếu giao dịch là RENTAL, cập nhật trạng thái booking thành CONFIRMED (hoặc in_progress)
+                // Nếu giao dịch là RENTAL, cập nhật trạng thái booking thành CONFIRMED
                 else if (transaction.type === 'RENTAL') {
-                    booking.status = 'CONFIRMED'; // Hoặc 'in_progress' tùy quy trình
+                    if (booking.status === 'DEPOSIT_PAID' || booking.status === 'CONFIRMED') {
+                        booking.status = 'CONFIRMED';
+                    }
                 }
                 await booking.save();
             }
@@ -266,7 +271,8 @@ const checkPayment = async (req, res) => {
             transaction.paymentMetadata.momoTransId = transId;
             await transaction.save();
 
-            // Không thay đổi trạng thái booking nếu thất bại, trừ khi bạn muốn hủy booking
+            // Không thay đổi trạng thái booking ở đây, để webhook xử lý hoặc người dùng retry
+            console.log('MoMo Check Payment: Payment failed for booking:', bookingId, 'Result Code:', resultCode, 'Message:', message);
             return res.redirect(`${frontendRedirectUrl}?resultCode=${resultCode}&message=${encodeURIComponent(message)}`);
         }
     } catch (error) {
@@ -334,8 +340,16 @@ const handleWebhook = async (req, res) => {
 
                 // Cập nhật trạng thái booking
                 const booking = await Booking.findById(bookingId);
-                if (booking && booking.status === 'pending') {
-                    booking.status = 'DEPOSIT_PAID';
+                if (booking) {
+                    if (transaction.type === 'DEPOSIT') {
+                        if (booking.status === 'pending') {
+                            booking.status = 'DEPOSIT_PAID';
+                        }
+                    } else if (transaction.type === 'RENTAL') {
+                        if (booking.status === 'DEPOSIT_PAID' || booking.status === 'CONFIRMED') {
+                            booking.status = 'CONFIRMED';
+                        }
+                    }
                     await booking.save();
                 }
                 console.log('MoMo IPN Webhook: Payment successful for booking:', bookingId);
@@ -351,20 +365,26 @@ const handleWebhook = async (req, res) => {
                 transaction.paymentMetadata.momoResultCode = resultCode;
                 await transaction.save();
 
-                // Có thể hủy booking nếu giao dịch duy nhất thất bại và booking đang pending
                 const booking = await Booking.findById(bookingId);
-                if (booking && booking.status === 'pending') {
-                    // Nếu không có giao dịch pending nào khác cho booking này, hủy booking
-                    const otherPendingTransactions = await Transaction.countDocuments({
-                        booking: bookingId,
-                        paymentMethod: 'MOMO',
-                        status: 'PENDING',
-                        _id: { $ne: transaction._id } // Loại trừ giao dịch hiện tại
-                    });
-                    if (otherPendingTransactions === 0) {
-                        booking.status = 'canceled'; // Hủy booking nếu không còn giao dịch pending nào
-                        await booking.save();
-                        console.log('MoMo IPN Webhook: Booking canceled due to payment failure:', bookingId);
+                if (booking) {
+                    if (transaction.type === 'DEPOSIT') {
+                        // Nếu giao dịch DEPOSIT thất bại và booking đang pending, và không còn giao dịch pending nào khác
+                        if (booking.status === 'pending') {
+                            const otherPendingTransactions = await Transaction.countDocuments({
+                                booking: bookingId,
+                                paymentMethod: 'MOMO',
+                                status: 'PENDING',
+                                _id: { $ne: transaction._id } // Loại trừ giao dịch hiện tại
+                            });
+                            if (otherPendingTransactions === 0) {
+                                booking.status = 'canceled';
+                                await booking.save();
+                                console.log('MoMo IPN Webhook: Booking canceled due to DEPOSIT payment failure:', bookingId);
+                            }
+                        }
+                    } else if (transaction.type === 'RENTAL') {
+                        // Nếu giao dịch RENTAL thất bại, không thay đổi trạng thái booking (vẫn là DEPOSIT_PAID)
+                        console.log('MoMo IPN Webhook: RENTAL payment failed, booking status remains as is:', bookingId);
                     }
                 }
             }
@@ -469,7 +489,8 @@ const verifyMoMoPayment = async (req, res) => {
 // Hàm tạo thanh toán phần còn lại (RENTAL)
 const createRentalPayment = async (req, res) => {
     try {
-        const { bookingId } = req.body;
+        const { bookingId , amount , } = req.body;
+        console.log("thanh toán " ,req.body)
 
         if (!bookingId) {
             return res.status(400).json({
@@ -495,16 +516,9 @@ const createRentalPayment = async (req, res) => {
             });
         }
 
-        // Tính toán số tiền còn lại cần thanh toán
-        const totalPaid = booking.transactions.reduce((sum, trans) => {
-            if (trans.status === 'COMPLETED') {
-                return sum + trans.amount;
-            }
-            return sum;
-        }, 0);
-
-        const amountToPay = booking.totalAmount - totalPaid;
-
+    
+        const amountToPay = booking.totalAmount - booking.reservationFee - booking.reservationFee; // số tiề cần phải thanh toán qua momo
+        console.log('số tiền cần phải thanh toán' , amountToPay)
         if (amountToPay <= 0) {
             return res.status(400).json({
                 success: false,
@@ -523,7 +537,7 @@ const createRentalPayment = async (req, res) => {
         // Tạo giao dịch loại RENTAL
         let transaction = new Transaction({
             booking: bookingId,
-            amount: amountToPay,
+            amount: amount,
             type: 'RENTAL',
             status: 'PENDING',
             paymentMethod: 'MOMO',

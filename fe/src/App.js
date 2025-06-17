@@ -16,6 +16,8 @@ import ForgotPassword from "./pages/login/ForgotPassword";
 import ResetPassword from "./pages/login/ResetPassword";
 import ChangePassword from "./pages/changePassword/ChangePassword";
 import VehicleDetail from "./pages/vehicles/VehicleDetail"; // Import VehicleDetail
+import BookingDetailsPage from "./pages/bookings/BookingDetailsPage"; // Import BookingDetailsPage
+import PaymentRemaining from './pages/paymentRemaining/PaymentRemaining';
 
 // order booking 
 import OrderConfirmation  from "./pages/payment/OrderConfirmation";
@@ -58,6 +60,8 @@ function App() {
              {/* Add VehicleDetail route */}
              <Route path="/confirm/:bookingId" element={<OrderConfirmation />} />   
              <Route path="/payment-deposit/:bookingId" element={<PaymentDeposit />} /> 
+             <Route path="/bookings/:id" element={<BookingDetailsPage />} /> {/* New route for Booking Details */}
+             <Route path="/payment-remaining/:id" element={<PaymentRemaining />} />
 
             {/* Add route for OwnerPage */}
             <Route path="/consignForm" element={<ConsignForm />} />

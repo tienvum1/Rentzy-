@@ -1,0 +1,284 @@
+.booking-details-container {
+  padding: 40px 20px;
+  max-width: 900px;
+  margin: 0 auto;
+  font-family: 'Roboto', sans-serif;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.booking-details-container h2 {
+  text-align: center;
+  margin-bottom: 40px;
+  color: #212529;
+  font-size: 2.5rem;
+  font-weight: 700;
+  position: relative;
+}
+
+.booking-details-container h2::after {
+  content: '';
+  width: 80px;
+  height: 4px;
+  background-color: #007bff;
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.booking-summary-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  padding: 25px;
+  margin-bottom: 30px;
+}
+
+.booking-summary-card h3 {
+  color: #007bff;
+  font-size: 1.8rem;
+  margin-top: 0;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.booking-summary-card h3 svg {
+  color: #007bff;
+  font-size: 1.5rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 15px;
+}
+
+.info-grid p {
+  margin: 0;
+  color: #495057;
+  font-size: 1rem;
+}
+
+.info-grid p strong {
+  color: #343a40;
+}
+
+.status-pending {
+  color: #ffc107;
+  font-weight: bold;
+}
+.status-deposit_paid {
+  color: #6a0dad;
+  font-weight: bold;
+}
+.status-confirmed {
+  color: #28a745;
+  font-weight: bold;
+}
+.status-in_progress {
+  color: #007bff;
+  font-weight: bold;
+}
+.status-completed {
+  color: #6c757d;
+  font-weight: bold;
+}
+.status-canceled,
+.status-rejected,
+.status-expired {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.vehicle-details-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  padding: 1rem;
+}
+
+.vehicle-image-container {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.booking-vehicle-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vehicle-text-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.vehicle-info-section {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.vehicle-info-section h4 {
+  color: #2c3e50;
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 0.5rem;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 0.75rem;
+  align-items: center;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.info-label {
+  min-width: 120px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.info-value {
+  color: #2c3e50;
+  font-weight: 200;
+}
+
+.info-value.price {
+  color: #28a745;
+  font-weight: 200;
+}
+
+.view-vehicle-details-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 1rem;
+  align-self: flex-start;
+}
+
+.view-vehicle-details-button:hover {
+  background-color: #0056b3;
+}
+
+.view-vehicle-details-button svg {
+  font-size: 1.1rem;
+}
+
+.no-image-placeholder-details {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  font-size: 0.9rem;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+}
+
+.paid-amount {
+  color: #28a745 !important;
+  font-weight: bold;
+}
+
+.remaining-amount {
+  color: #dc3545 !important;
+  font-weight: bold;
+}
+
+.pay-remaining-details-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 15px;
+  margin-top: 15px;
+  border: none;
+  border-radius: 6px;
+  background-color: #ffc107;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pay-remaining-details-button:hover {
+  background-color: #e0a800;
+}
+
+.transactions-list {
+  margin-top: 20px;
+}
+
+.transaction-item {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+
+.transaction-item p {
+  margin: 0 0 5px 0;
+  font-size: 0.95rem;
+  color: #495057;
+}
+
+.transaction-item p strong {
+  color: #343a40;
+}
+
+.back-button {
+  display: block;
+  width: fit-content;
+  padding: 10px 20px;
+  margin: 30px auto 0 auto;
+  border: none;
+  border-radius: 6px;
+  background-color: #6c757d;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
+
+@media (max-width: 768px) {
+  .vehicle-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vehicle-image-container {
+    height: 250px;
+  }
+} 

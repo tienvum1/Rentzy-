@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate, useLocation } from 'react-router-dom';
 import moment from 'moment';
+import { FaCalendarAlt, FaDollarSign, FaCar, FaUser, FaInfoCircle, FaCreditCard } from 'react-icons/fa';
 import './UserBookings.css'; // Assuming you'll create this CSS file
 
 const UserBookings = () => {
@@ -50,6 +51,29 @@ const UserBookings = () => {
     fetchBookings();
   }, [page, limit, statusFilter, navigate]);
 
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'PENDING':
+        return 'Đang chờ xử lý';
+      case 'CONFIRMED':
+        return 'Đã xác nhận';
+      case 'DEPOSIT_PAID':
+        return 'Đã thanh toán tiền giữ chỗ';
+      case 'IN_PROGRESS':
+        return 'Đang sử dụng';
+      case 'COMPLETED':
+        return 'Đã hoàn thành';
+      case 'CANCELED':
+        return 'Đã hủy';
+      case 'REJECTED':
+        return 'Đã từ chối';
+      case 'EXPIRED':
+        return 'Đã hết hạn';
+      default:
+        return status;
+    }
+  };
+
   if (loading) {
     return <div className="user-bookings-container">Đang tải danh sách đặt xe...</div>;
   }
@@ -74,9 +98,12 @@ const UserBookings = () => {
         >
           <option value="">Tất cả</option>
           <option value="PENDING">Đang chờ xử lý</option>
+          <option value="DEPOSIT_PAID">Đã thanh toán tiền giữ chỗ</option>
           <option value="CONFIRMED">Đã xác nhận</option>
+          <option value="IN_PROGRESS">Đang sử dụng</option>
           <option value="COMPLETED">Đã hoàn thành</option>
-          <option value="CANCELLED">Đã hủy</option>
+          <option value="CANCELED">Đã hủy</option>
+          <option value="REJECTED">Đã từ chối</option>
           <option value="EXPIRED">Đã hết hạn</option>
         </select>
       </div>
@@ -84,24 +111,74 @@ const UserBookings = () => {
       {bookings.length === 0 ? (
         <p>Bạn chưa có đơn đặt xe nào.</p>
       ) : (
-        <div className="bookings-list">
-          {bookings.map((booking) => (
-            <div key={booking._id} className="booking-card">
-              <div className="booking-header">
-                <h3>{booking.vehicle?.name || 'Xe không xác định'}</h3>
-                <span className={`booking-status ${booking.status.toLowerCase()}`}>{booking.status}</span>
-              </div>
-              <div className="booking-details">
-                <p><strong>Ngày nhận:</strong> {moment(booking.startDate).format('DD/MM/YYYY HH:mm')}</p>
-                <p><strong>Ngày trả:</strong> {moment(booking.endDate).format('DD/MM/YYYY HH:mm')}</p>
-                <p><strong>Tổng tiền:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalAmount)}</p>
-                <p><strong>Chủ xe:</strong> {booking.vehicle?.ownerId?.fullName || 'N/A'}</p>
-                {booking.vehicle?.images && booking.vehicle.images.length > 0 && (
-                  <img src={booking.vehicle.images[0]} alt={booking.vehicle.name} className="booking-vehicle-image" />
-                )}
-              </div>
-            </div>
-          ))}
+        <div className="bookings-table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Xe</th>
+                <th>Ngày nhận</th>
+                <th>Ngày trả</th>
+                <th>Tổng tiền</th>
+                <th>Đã thanh toán</th>
+                <th>Còn lại</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bookings.map((booking) => {
+                const totalPaid = booking.status === 'DEPOSIT_PAID' 
+                  ? 500000 // Fixed deposit amount for DEPOSIT_PAID status
+                  : booking.transactions.reduce((sum, trans) => {
+                      if (trans.status === 'COMPLETED' && (trans.type === 'DEPOSIT' || trans.type === 'RENTAL')) {
+                        return sum + trans.amount;
+                      }
+                      return sum;
+                    }, 0);
+
+                const remainingAmount = booking.totalAmount - totalPaid;
+
+                return (
+                  <tr key={booking._id}>
+                    <td>
+                      <div className="vehicle-cell-content">
+                        {booking.vehicle?.primaryImage ? (
+                          <img src={booking.vehicle.primaryImage} alt={`${booking.vehicle.brand} ${booking.vehicle.model}`} className="vehicle-thumbnail" />
+                        ) : booking.vehicle?.gallery && booking.vehicle.gallery.length > 0 ? (
+                          <img src={booking.vehicle.gallery[0]} alt={`${booking.vehicle.brand} ${booking.vehicle.model}`} className="vehicle-thumbnail" />
+                        ) : (
+                          <div className="no-image-thumbnail">No Image</div>
+                        )}
+                        <div className="vehicle-details-text">
+                          <p className="vehicle-name-in-table">{booking.vehicle?.brand} {booking.vehicle?.model || 'Xe không xác định'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{moment(booking.startDate).format('DD/MM/YYYY HH:mm')}</td>
+                    <td>{moment(booking.endDate).format('DD/MM/YYYY HH:mm')}</td>
+                    <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalAmount)}</td>
+                    <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaid)}</td>
+                    <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount)}</td>
+                    <td>
+                      <span className={`booking-status-table ${booking.status.toLowerCase()}`}>
+                        {getStatusText(booking.status)}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="actions-cell">
+                        <button 
+                          className="view-details-button-table"
+                          onClick={() => navigate(`/bookings/${booking._id}`)}
+                        >
+                          <FaInfoCircle /> Xem chi tiết
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 

@@ -189,7 +189,7 @@ const PaymentDeposit = () => {
         }
       );
       if (res.data.paymentUrl) {
-        window.location.href = res.data.paymentUrl; // Redirect to MoMo payment page
+        window.open(res.data.paymentUrl, '_blank'); // Redirect to MoMo payment page
       } else {
         toast.error("Không thể tạo liên kết thanh toán phần còn lại.");
         setIsPaymentInitiated(false);
@@ -294,8 +294,7 @@ const PaymentDeposit = () => {
               <div className="payment-success-message text-center">
                 <p>Thanh toán giữ chỗ thành công!</p>
                 <p>Mã đơn hàng của bạn: <strong>{booking._id}</strong></p>
-                <p>Đơn hàng của bạn đang chờ chủ xe xác nhận.</p>
-                <button onClick={() => navigate('/bookings')} className="confirm-button">Xem Đơn Hàng Của Tôi</button>
+                <button onClick={() => navigate(`/bookings/${bookingId}`)} className="confirm-button">Xem Đơn Hàng Của Tôi</button>
                 <button onClick={() => navigate('/')} className="back-to-home-button">Về Trang Chủ</button>
               </div>
             )}

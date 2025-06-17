@@ -80,7 +80,7 @@ const bookingSchema = new mongoose.Schema(
     // Trạng thái đơn thuê
     status: {
       type: String,
-      enum: ['pending', 'DEPOSIT_PAID', 'accepted', 'in_progress', 'completed', 'canceled', 'rejected'],
+      enum: ['pending', 'DEPOSIT_PAID', 'RENTAL', 'in_progress', 'completed', 'canceled', 'rejected'],
       default: 'pending',
     },
 

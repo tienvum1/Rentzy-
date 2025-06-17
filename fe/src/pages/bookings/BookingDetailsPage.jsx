@@ -1,0 +1,235 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import moment from 'moment';
+import './BookingDetailsPage.css'; // We will create this CSS file next
+import { FaCalendarAlt, FaDollarSign, FaCar, FaUser, FaMapMarkerAlt, FaInfoCircle, FaClipboardList, FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
+
+const BookingDetailsPage = () => {
+  const { id } = useParams(); // Get booking ID from URL
+  const navigate = useNavigate();
+  const [booking, setBooking] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [carId, setCarId] = useState(null);
+
+  useEffect(() => {
+    const fetchBookingDetails = async () => {
+      try {
+        const config = {
+          withCredentials: true,
+        };
+        const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${id}`, config);
+        setBooking(res.data.booking);
+        setCarId(res.data.carId);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching booking details:', err);
+        setError(err.response?.data?.message || 'Failed to fetch booking details');
+        setLoading(false);
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          toast.error("Vui lòng đăng nhập để xem chi tiết đơn hàng.");
+          navigate('/login');
+        } else if (err.response?.status === 404) {
+          toast.error("Không tìm thấy đơn hàng này.");
+        } else {
+          toast.error('Có lỗi xảy ra khi tải chi tiết đơn hàng.');
+        }
+      }
+    };
+
+    fetchBookingDetails();
+  }, [id, navigate]);
+
+  if (loading) {
+    return <div className="booking-details-container">Đang tải chi tiết đơn hàng...</div>;
+  }
+
+  if (error) {
+    return <div className="booking-details-container error-message">{error}</div>;
+  }
+
+  if (!booking) {
+    return <div className="booking-details-container">Không tìm thấy thông tin đơn hàng.</div>;
+  }
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'PENDING':
+        return 'Chờ xác nhận';
+      case 'CONFIRMED':
+        return 'Đã xác nhận';
+      case 'DEPOSIT_PAID':
+        return 'Đã thanh toán tiền giữ chỗ';
+      case 'RENTAL_PAID':
+        return 'Đã thanh toán đầy đủ';
+      case 'COMPLETED':
+        return 'Hoàn thành';
+      case 'CANCELLED':
+        return 'Đã hủy';
+      default:
+        return status;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'PENDING':
+        return '#FFA500';
+      case 'CONFIRMED':
+        return '#1E90FF';
+      case 'DEPOSIT_PAID':
+        return '#32CD32';
+      case 'RENTAL_PAID':
+        return '#32CD32';
+      case 'COMPLETED':
+        return '#4CAF50';
+      case 'CANCELLED':
+        return '#FF0000';
+      default:
+        return '#666';
+    }
+  };
+
+  // Tính toán số tiền đã thanh toán
+  const calculateTotalPaid = () => {
+    if (booking.status === 'DEPOSIT_PAID') {
+      return 500000; // Tiền giữ chỗ cố định
+    }
+    return booking.transactions.reduce((sum, transaction) => {
+      if (transaction.status === 'COMPLETED') {
+        return sum + transaction.amount;
+      }
+      return sum;
+    }, 0);
+  };
+
+  const totalPaidAmount = calculateTotalPaid();
+  const remainingAmountToPay = booking.totalAmount - totalPaidAmount;
+
+  return (
+    <div className="booking-details-container">
+      <h2>Chi tiết Đơn hàng #{booking._id}</h2>
+
+      <div className="booking-summary-card">
+        <h3><FaClipboardList /> Thông tin Đặt xe</h3>
+        <div className="info-grid">
+          <p><strong>Ngày nhận:</strong> {moment(booking.startDate).format('DD/MM/YYYY HH:mm')}</p>
+          <p><strong>Ngày trả:</strong> {moment(booking.endDate).format('DD/MM/YYYY HH:mm')}</p>
+          <p><strong>Tổng số ngày thuê:</strong> {booking.totalDays} ngày</p>
+          <p><strong>Trạng thái:</strong> <span className={`status-${booking.status.toLowerCase()}`}>{getStatusText(booking.status)}</span></p>
+          <p><strong>Địa điểm nhận xe:</strong> {booking.pickupLocation}</p>
+          <p><strong>Địa điểm trả xe:</strong> {booking.returnLocation}</p>
+          {booking.note && <p><strong>Ghi chú:</strong> {booking.note}</p>}
+        </div>
+      </div>
+
+      <div className="booking-summary-card">
+        <h3><FaCar /> Thông tin Xe</h3>
+        <div className="vehicle-details-grid">
+          <div className="vehicle-image-container">
+            {booking.vehicle?.primaryImage ? (
+              <img src={booking.vehicle.primaryImage} alt={`${booking.vehicle.brand} ${booking.vehicle.model}`} className="booking-vehicle-image" />
+            ) : booking.vehicle?.gallery && booking.vehicle.gallery.length > 0 ? (
+              <img src={booking.vehicle.gallery[0]} alt={`${booking.vehicle.brand} ${booking.vehicle.model}`} className="booking-vehicle-image" />
+            ) : (
+              <div className="no-image-placeholder-details">Không có ảnh</div>
+            )}
+          </div>
+          <div className="vehicle-text-details">
+            <div className="vehicle-info-section">
+              <h4>Thông tin cơ bản</h4>
+              <div className="info-row">
+                <span className="info-label">Tên xe:</span>
+                <span className="info-value">{booking.vehicle?.brand} {booking.vehicle?.model}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Biển số:</span>
+                <span className="info-value">{booking.vehicle?.licensePlate}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Giá thuê/ngày:</span>
+                <span className="info-value price">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.vehicle?.pricePerDay)}
+                </span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Tiền đặt cọc:</span>
+                <span className="info-value price">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(500000)}</span>
+              </div>
+            </div>
+
+            <div className="vehicle-info-section">
+              <h4>Thông tin chủ xe</h4>
+              <div className="info-row">
+                <span className="info-label">Họ tên:</span>
+                <span className="info-value">{booking.vehicle?.owner?.name || 'N/A'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Email:</span>
+                <span className="info-value">{booking.vehicle?.owner?.email || 'N/A'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Điện thoại:</span>
+                <span className="info-value">{booking.vehicle?.owner?.phone || 'N/A'}</span>
+              </div>
+            </div>
+
+            <button 
+              className="view-vehicle-details-button"
+              onClick={() => navigate(`/vehicles/${carId || booking.vehicle?._id}`)}
+            >
+              <FaInfoCircle /> Xem chi tiết xe
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="booking-summary-card">
+        <h3><FaDollarSign /> Tóm tắt Thanh toán</h3>
+        <div className="info-grid">
+          <p><strong>Tổng tiền đơn hàng:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalAmount)}</p>
+          <p><strong>Tiền giữ chỗ:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(500000)}</p>
+          <p className="paid-amount"><strong>Đã thanh toán:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaidAmount)}</p>
+          <p className="remaining-amount"><strong>Còn lại phải trả:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmountToPay)}</p>
+          
+          {booking.status === 'DEPOSIT_PAID' && remainingAmountToPay > 0 && (
+            <button 
+              className="pay-remaining-details-button"
+              onClick={() => navigate(`/payment-remaining/${booking._id}`)}
+            >
+              <FaCreditCard /> Thanh toán phần còn lại
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="booking-summary-card">
+        <h3><FaMoneyBillWave /> Lịch sử Giao dịch</h3>
+        {booking.transactions.length === 0 ? (
+          <p>Chưa có giao dịch nào cho đơn hàng này.</p>
+        ) : (
+          <div className="transactions-list">
+            {booking.transactions.map(transaction => (
+              <div key={transaction._id} className="transaction-item">
+                <p><strong>Mã GD:</strong> {transaction._id}</p>
+                <p><strong>Số tiền:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(transaction.amount)}</p>
+                <p><strong>Loại GD:</strong> {transaction.type === 'DEPOSIT' ? 'Tiền giữ chỗ' : 'Tiền thuê xe'}</p>
+                <p><strong>Trạng thái:</strong> <span className={`status-${transaction.status.toLowerCase()}`}>{transaction.status === 'COMPLETED' ? 'Hoàn thành' : transaction.status}</span></p>
+                <p><strong>PTTT:</strong> {transaction.paymentMethod}</p>
+                <p><strong>Thời gian:</strong> {moment(transaction.createdAt).format('DD/MM/YYYY HH:mm')}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button className="back-button" onClick={() => navigate(-1)}>
+        Quay lại
+      </button>
+    </div>
+  );
+};
+
+export default BookingDetailsPage;

@@ -169,7 +169,7 @@ const getVehicleBookedDates = async (req, res) => {
 // Lấy danh sách booking của user
 const getUserBookings = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const status = req.query.status; // Optional filter by status
@@ -180,7 +180,7 @@ const getUserBookings = async (req, res) => {
     }
 
     const bookings = await Booking.find(query)
-      .populate('vehicle', 'name images price ownerId')
+      .populate('vehicle', 'brand model primaryImage gallery pricePerDay owner')
       .populate('renter', 'fullName email phone')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -214,11 +214,11 @@ const getBookingDetails = async (req, res) => {
     const booking = await Booking.findById(req.params.id)
       .populate({
         path: 'renter',
-        select: 'name phone '
+        select: 'name phone'
       })
       .populate({
         path: 'vehicle',
-        select: ' model licensePlate primaryImage ',
+        select: 'brand model licensePlate primaryImage pricePerDay owner',
         populate: {
           path: 'owner',
           select: 'name phone email'
@@ -245,6 +245,8 @@ const getBookingDetails = async (req, res) => {
       });
     }
 
+    const car = await Car.findOne({ vehicle: booking.vehicle._id });
+
     // Format dates for response
     const formattedBooking = {
       ...booking.toObject(),
@@ -255,8 +257,9 @@ const getBookingDetails = async (req, res) => {
     };
 
     res.status(200).json({
-        success: true,
-        booking: formattedBooking
+      success: true,
+      booking: formattedBooking,
+      carId: car ? car._id : null
     });
   } catch (error) {
     console.error('Get booking details error:', error);
