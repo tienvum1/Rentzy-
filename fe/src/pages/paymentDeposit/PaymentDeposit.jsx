@@ -21,13 +21,15 @@ const PaymentDeposit = () => {
   const [paymentStatus, setPaymentStatus] = useState('PENDING');
   const [isPaymentInitiated, setIsPaymentInitiated] = useState(false);
   const [remainingAmountToPay, setRemainingAmountToPay] = useState(0);
-
+  
+  const HOLD_FEE = 500000; // Tiền giữ chỗ
+  const DELIVERY_FEE = 200000; // Phí giao xe 2 chiều
   // Calculate fees based on booking data
   const calculateFees = () => {
     if (!booking) return null;
     
     const totalCost = booking.totalCost; // Phí thuê xe cơ bản
-    const deliveryFee = booking.isDelivery ? 200000 : 0; // Phí giao xe nếu có
+    const deliveryFee = booking.deliveryFee || 0; // Lấy deliveryFee từ booking
     const discountAmount = booking.discountAmount || 0; // Tiền giảm giá
     const deposit = booking.deposit || 0; // Tiền cọc
     const holdFee = booking.reservationFee || 500000; // Tiền giữ chỗ
@@ -384,8 +386,8 @@ const PaymentDeposit = () => {
                 <span className="detail-value">{booking.vehicle?.brand} {booking.vehicle?.model}</span>
               </div>
               <div className="total-rental-fee-box">
-                <span>Tiền thuê xe đã trừ tiền giảm giá</span>
-                <span className="total-fee">{formatCurrency(fees.totalCost + fees.deliveryFee - fees.discountAmount)}</span>
+                <span>Tiền thuê xe </span>
+                <span className="total-fee">{formatCurrency(fees.totalCost )}</span>
               </div>
             </div>
 
@@ -404,10 +406,19 @@ const PaymentDeposit = () => {
                 <div className="step-content">
                   <p className="step-title">Thanh toán số tiền còn lại khi nhận xe</p>
                   <div className="sub-details">
-                    <p>Số tiền còn lại <span>{formatCurrency(fees.remainingAmount)}</span></p>
-                    <p>Hoàn trả tiền cọc <span>-{formatCurrency(fees.holdFee)}</span></p>
-                    <p>Số tiền thanh toán khi nhận xe <span>{formatCurrency(fees.remainingAmount)}</span></p>
-                    <p>Tiền cọc xe sẽ được thanh toán sau khi hoàn thành chuyến đi <span>{formatCurrency(fees.deposit)}</span></p>
+                    <p>Tiền thuê xe cơ bản <span>{formatCurrency(fees.totalCost)}</span></p>
+                    <p>Tiền cọc xe <span>{formatCurrency(fees.deposit)}</span></p>
+                    {fees.deliveryFee > 0 && (
+                      <p>Phí giao xe 2 chiều <span>{formatCurrency(fees.deliveryFee)}</span></p>
+                    )}
+                    {fees.discountAmount > 0 && (
+                      <p>Giảm giá <span>-{formatCurrency(fees.discountAmount)}</span></p>
+                    )}
+                    <p>Hoàn trả tiền giữ chỗ <span>-{formatCurrency(fees.holdFee)}</span></p>
+                    
+                    <div className="total-remaining">
+                      <p>Tổng số tiền còn lại cần thanh toán <span>{formatCurrency(fees.totalCost+fees.deposit + fees.deliveryFee - fees.discountAmount  - fees.holdFee)}</span></p>
+                    </div>
                   </div>
                 </div>
               </div>

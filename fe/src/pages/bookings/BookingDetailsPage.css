@@ -211,25 +211,89 @@
   font-weight: bold;
 }
 
+.payment-summary-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.payment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.payment-row:last-of-type {
+  border-bottom: none;
+}
+
+.payment-label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.payment-value {
+  font-weight: 600;
+  color: #212529;
+}
+
+.payment-row.discount .payment-value {
+  color: #28a745;
+}
+
+.payment-row.total {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 2px solid #dee2e6;
+}
+
+.payment-row.total .payment-label,
+.payment-row.total .payment-value {
+  font-weight: 700;
+  font-size: 1.1em;
+  color: #212529;
+}
+
+.payment-row.paid .payment-value {
+  color: #28a745;
+}
+
+.payment-row.remaining .payment-value {
+  color: #dc3545;
+  font-weight: 700;
+}
+
+.payment-action {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
 .pay-remaining-details-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  padding: 10px 15px;
-  margin-top: 15px;
-  border: none;
-  border-radius: 6px;
-  background-color: #ffc107;
-  color: #333;
-  font-size: 1rem;
-  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s;
 }
 
 .pay-remaining-details-button:hover {
-  background-color: #e0a800;
+  background-color: #0056b3;
+}
+
+.pay-remaining-details-button svg {
+  font-size: 1.2em;
 }
 
 .transactions-list {

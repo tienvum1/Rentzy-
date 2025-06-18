@@ -44,15 +44,42 @@ const PaymentRemaining = () => {
       };
       const response = await axios.post(
         `${process.env.REACT_APP_BACKEND_URL}/api/momo/rental-payment`,
-        { bookingId: id ,
-            amount: remainingAmount,
-            orderInfo: `Thanh toán tiền thuê xe cho đơn hàng ${booking._id}`,
-         },
+        { 
+          bookingId: id,
+          amount: remainingAmount - booking.reservationFee,
+          orderInfo: `Thanh toán tiền thuê xe cho đơn hàng ${booking._id}`
+        },
         config
       );
 
       if (response.data.paymentUrl) {
-        window.open(response.data.paymentUrl, '_blank');// Redirect to MoMo payment page
+        const paymentWindow = window.open(response.data.paymentUrl, '_blank');
+        
+        const checkPaymentStatus = async () => {
+          try {
+            const statusResponse = await axios.get(
+              `${process.env.REACT_APP_BACKEND_URL}/api/momo/check-rental-payment?bookingId=${id}`,
+              config
+            );
+            
+            if (statusResponse.data.status === 'COMPLETED') {
+              toast.success('Thanh toán thành công!');
+              navigate(`/bookings/${id}`);
+            } else if (statusResponse.data.status === 'FAILED') {
+              toast.error('Thanh toán thất bại. Vui lòng thử lại.');
+              paymentWindow.close();
+            }
+          } catch (error) {
+            console.error('Error checking payment status:', error);
+          }
+        };
+
+        const statusInterval = setInterval(checkPaymentStatus, 5000);
+
+        setTimeout(() => {
+          clearInterval(statusInterval);
+        }, 300000);
+
       } else {
         toast.error('Không thể tạo URL thanh toán');
       }
@@ -75,13 +102,19 @@ const PaymentRemaining = () => {
   }
 
   const totalPaidAmount = booking.transactions.reduce((sum, transaction) => {
-    if (transaction.status === 'COMPLETED') {
+    console.log('Transaction:', transaction);
+    if (transaction.status === 'COMPLETED' && transaction.type === 'DEPOSIT') {
+      console.log('Adding deposit amount:', transaction.amount);
       return sum + transaction.amount;
     }
     return sum;
   }, 0);
 
-  const remainingAmount = booking.totalAmount - totalPaidAmount - booking.reservationFee;
+  console.log('Total Paid Amount:', totalPaidAmount);
+  console.log('Booking Total Amount:', booking.totalAmount);
+  console.log('Remaining Amount:', booking.totalAmount - totalPaidAmount);
+
+  const remainingAmount = booking.totalAmount - totalPaidAmount;
 
   return (
     <div className="payment-container">
@@ -104,21 +137,43 @@ const PaymentRemaining = () => {
             </span>
           </div>
           <div className="detail-row">
-            <span className="label">Đã thanh toán:</span>
+            <span className="label">Phí thuê xe:</span>
+            <span className="value price">
+              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalCost)}
+            </span>
+          </div>
+          {booking.deliveryFee > 0 && (
+            <div className="detail-row">
+              <span className="label">Phí giao xe (2 chiều):</span>
+              <span className="value price">
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.deliveryFee)}
+              </span>
+            </div>
+          )}
+          {booking.discountAmount > 0 && (
+            <div className="detail-row">
+              <span className="label">Giảm giá:</span>
+              <span className="value price">
+                -{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.discountAmount)}
+              </span>
+            </div>
+          )}
+          <div className="detail-row">
+            <span className="label">Đã thanh toán (tiền cọc):</span>
             <span className="value price">
               {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaidAmount)}
             </span>
           </div>
           <div className="detail-row">
-            <span className="label">Tiền giữ chỗ :</span>
+            <span className="label">Hoàn trả tiền cọc:</span>
             <span className="value price">
-              - {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.reservationFee)}
+              -{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaidAmount)}
             </span>
           </div>
           <div className="detail-row total">
             <span className="label">Số tiền cần thanh toán:</span>
             <span className="value price">
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount)}
+              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount - totalPaidAmount)}
             </span>
           </div>
         </div>

@@ -23,6 +23,7 @@ const createBooking = async (req, res) => {
             reservationFee,
             promoCode,
             discountAmount,
+            deliveryFee
             
         } = req.body;
 
@@ -106,6 +107,7 @@ const createBooking = async (req, res) => {
             discountAmount,
             status: 'pending', // Trạng thái ban đầu là pending
             promoCode,
+            deliveryFee: deliveryFee || 0, // Thêm deliveryFee với giá trị mặc định là 0
         });
 
         await booking.save();
@@ -138,7 +140,7 @@ const getVehicleBookedDates = async (req, res) => {
         console.log("id của vehicle",car.vehicle._id);
         const bookings = await Booking.find({
             vehicle: car.vehicle._id,
-            status: { $in: ['pending', 'DEPOSIT_PAID', 'accepted', 'in_progress'] } // Chỉ lấy booking đang hoạt động
+            status: { $in: ['pending', 'RENTAL_PAID','DEPOSIT_PAID', 'accepted', 'in_progress'] } // Chỉ lấy booking đang hoạt động
         }).select('startDate endDate pickupTime returnTime');
 
         const bookedDates = bookings.map(booking => {
@@ -182,6 +184,10 @@ const getUserBookings = async (req, res) => {
     const bookings = await Booking.find(query)
       .populate('vehicle', 'brand model primaryImage gallery pricePerDay owner')
       .populate('renter', 'fullName email phone')
+      .populate({
+        path: 'transactions',
+        select: 'amount status type paymentMethod paymentMetadata createdAt'
+      })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
@@ -218,7 +224,7 @@ const getBookingDetails = async (req, res) => {
       })
       .populate({
         path: 'vehicle',
-        select: 'brand model licensePlate primaryImage pricePerDay owner',
+        select: 'brand model licensePlate primaryImage pricePerDay owner deposit',
         populate: {
           path: 'owner',
           select: 'name phone email'

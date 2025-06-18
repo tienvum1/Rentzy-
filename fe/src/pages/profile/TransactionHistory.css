@@ -1,4 +1,4 @@
-.user-bookings-container {
+.transaction-history-container {
   padding: 40px 20px;
   max-width: 1200px;
   margin: 0 auto;
@@ -6,10 +6,9 @@
   background-color: #f8f9fa;
   border-radius: 10px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-
 }
 
-.user-bookings-container h2 {
+.transaction-history-container h2 {
   text-align: center;
   margin-bottom: 40px;
   color: #212529;
@@ -18,7 +17,7 @@
   position: relative;
 }
 
-.user-bookings-container h2::after {
+.transaction-history-container h2::after {
   content: '';
   width: 80px;
   height: 4px;
@@ -68,28 +67,28 @@
   outline: none;
 }
 
-/* Table Styles */
-.bookings-table-container {
-  overflow-x: auto; /* Enable horizontal scrolling on small screens */
+.transactions-table-container {
+  overflow-x: auto;
   margin-top: 30px;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.bookings-table-container table {
+.transactions-table-container table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 800px; /* Ensure table doesn't get too narrow */
+  min-width: 1000px;
 }
 
-.bookings-table-container th, .bookings-table-container td {
+.transactions-table-container th,
+.transactions-table-container td {
   padding: 15px;
   text-align: left;
   border-bottom: 1px solid #dee2e6;
 }
 
-.bookings-table-container th {
+.transactions-table-container th {
   background-color: #007bff;
   color: white;
   font-weight: 600;
@@ -97,15 +96,14 @@
   text-transform: uppercase;
 }
 
-.bookings-table-container tr:last-child td {
+.transactions-table-container tr:last-child td {
   border-bottom: none;
 }
 
-.bookings-table-container tbody tr:hover {
-  background-color: #f2f2f2; /* Light hover effect */
+.transactions-table-container tbody tr:hover {
+  background-color: #f8f9fa;
 }
 
-/* Vehicle Cell Content */
 .vehicle-cell-content {
   display: flex;
   align-items: center;
@@ -145,14 +143,16 @@
   font-size: 0.95rem;
 }
 
-.owner-name-in-table {
+.booking-dates {
   margin: 0;
   font-size: 0.85rem;
   color: #6c757d;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-/* Booking Status Table */
-.booking-status-table {
+.transaction-status {
   padding: 5px 10px;
   border-radius: 20px;
   font-weight: 500;
@@ -161,82 +161,44 @@
   white-space: nowrap;
 }
 
-.booking-status-table.pending {
-  background-color: #ffc107; /* Amber */
+.transaction-status.pending {
+  background-color: #ffc107;
 }
 
-.booking-status-table.deposit_paid {
-  background-color: #6a0dad; /* Purple for deposit paid */
+.transaction-status.completed {
+  background-color: #28a745;
 }
 
-.booking-status-table.confirmed {
-  background-color: #28a745; /* Green */
+.transaction-status.failed {
+  background-color: #dc3545;
 }
 
-.booking-status-table.in_progress {
-  background-color: #007bff; /* Blue for in progress */
+.transaction-status.canceled {
+  background-color: #6c757d;
 }
 
-.booking-status-table.completed {
-  background-color: #6c757d; /* Gray for completed */
-}
-
-.booking-status-table.canceled,
-.booking-status-table.rejected,
-.booking-status-table.expired {
-  background-color: #dc3545; /* Red */
-}
-
-/* Actions Cell Buttons */
 .actions-cell {
   display: flex;
-  flex-direction: column;
   gap: 8px;
-  min-width: 120px; /* Ensure enough space for buttons */
 }
 
-.pay-remaining-button-table,
-.view-details-button-table,
-.view-booking-details-button-table {
+.view-details-button {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 5px;
   padding: 8px 12px;
   border: none;
   border-radius: 5px;
+  background-color: #007bff;
+  color: white;
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  white-space: nowrap;
 }
 
-.pay-remaining-button-table {
-  background-color: #ffc107;
-  color: #333;
-}
-
-.pay-remaining-button-table:hover {
-  background-color: #e0a800;
-}
-
-.view-details-button-table {
-  background-color: #007bff;
-  color: white;
-}
-
-.view-details-button-table:hover {
+.view-details-button:hover {
   background-color: #0056b3;
-}
-
-.view-booking-details-button-table {
-  background-color: #6c757d;
-  color: white;
-}
-
-.view-booking-details-button-table:hover {
-  background-color: #5a6268;
 }
 
 .pagination-controls {
@@ -285,7 +247,7 @@
   margin-top: 30px;
 }
 
-.user-bookings-container > p {
+.transaction-history-container > p {
   text-align: center;
   font-size: 1.2rem;
   color: #6c757d;
