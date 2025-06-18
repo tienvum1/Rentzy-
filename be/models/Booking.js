@@ -48,34 +48,36 @@ const bookingSchema = new mongoose.Schema(
     },
 
     // Tổng tiền thuê (VND)
+    // tổng tất cả tiền 
     totalAmount: {
       type: Number,
       required: true,
       min: 0,
     },
-    totalCost:{
+    // tiền thuê xe , vd : 500k/day => 5 days = 2tr5
+    totalCost: {
       type: Number,
-        required: true,
-        min: 0,
-      },
-      // Tiền đặt cọc
-      deposit: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
-        // Tiền giữ chỗ
-        reservationFee: {
-          type: Number,
-          required: true,
-          min: 0,
-        },
+      required: true,
+      min: 0,
+    },
+    // Tiền đặt cọc
+    deposit: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    // Tiền giữ chỗ
+    reservationFee: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
-        // Tiền giảm giá
-        discountAmount: {
-          type: Number,
-          min: 0,
-        },
+    // Tiền giảm giá
+    discountAmount: {
+      type: Number,
+      min: 0,
+    },
 
     // Trạng thái đơn thuê
     status: {
