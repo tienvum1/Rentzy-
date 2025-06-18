@@ -39,11 +39,15 @@ exports.getProfile = async (req, res) => {
         role: user.role,
         avatar_url: user.avatar_url,
         is_verified: user.is_verified,
+        is_phone_verified:user.is_phone_verified,
         phone: user.phone,
         cccd_number: user.cccd_number,
-        driver_license: user.driver_license,
+        driver_license_number: user.driver_license_number,
+        driver_license_full_name: user.driver_license_full_name,
+        driver_license_birth_date: user.driver_license_birth_date,
         driver_license_front_url: user.driver_license_front_url,
         driver_license_back_url: user.driver_license_back_url,
+        driver_license_verification_status: user.driver_license_verification_status,
         created_at: user.created_at,
         owner_request_status : user.owner_request_status
       },
@@ -605,4 +609,159 @@ exports.changePassword = async (req, res) => {
         console.error('Error changing password:', error);
         res.status(500).json({ message: 'Đã xảy ra lỗi khi đổi mật khẩu.' });
     }
+};
+
+// @desc    Create or update driver license info
+// @route   POST /api/user/create-driver-license
+// @access  Private
+exports.createDriverLicense = async (req, res) => {
+  const userId = req.user._id;
+  console.log("createDriverLicense req.body:", req.body);
+  console.log("createDriverLicense req.file:", req.file);
+
+  try {
+    // Validate required fields
+    const { driver_license_full_name, driver_license_birth_date, driver_license_number } = req.body;
+    
+    if (!driver_license_full_name || !driver_license_birth_date || !driver_license_number) {
+      return res.status(400).json({
+        message: "Vui lòng cung cấp đầy đủ thông tin GPLX.",
+        missing: {
+          fullName: !driver_license_full_name,
+          birthDate: !driver_license_birth_date,
+          licenseNumber: !driver_license_number
+        }
+      });
+    }
+
+    let user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Người dùng không tồn tại." });
+    }
+
+    let updateData = {
+      driver_license_full_name,
+      driver_license_birth_date,
+      driver_license_number
+    };
+
+    // Handle image upload logic
+    if (req.file) { // A new file was uploaded
+      const streamUpload = (buffer) => {
+        return new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              folder: "rentcar/driver_license",
+              public_id: `front_${userId}_${Date.now()}`,
+              resource_type: "auto"
+            },
+            (error, result) => {
+              if (result) resolve(result);
+              else reject(error);
+            }
+          );
+          stream.end(buffer);
+        });
+      };
+      const result = await streamUpload(req.file.buffer);
+      updateData.driver_license_front_url = result.secure_url;
+      console.log("Cloudinary upload result:", result);
+    } else if (!user.driver_license_front_url) { // No new file, and no existing image
+      return res.status(400).json({
+        message: "Vui lòng tải lên ảnh mặt trước GPLX."
+      });
+    }
+    // If no new file and user.driver_license_front_url exists, then updateData won't include driver_license_front_url,
+    // and Mongoose won't change it, thus retaining the old URL.
+
+    user = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Không tìm thấy người dùng."
+      });
+    }
+
+    res.json({
+      message: "Tạo thông tin GPLX thành công!",
+      user: {
+        _id: user._id,
+        driver_license_full_name: user.driver_license_full_name,
+        driver_license_birth_date: user.driver_license_birth_date,
+        driver_license_number: user.driver_license_number,
+        driver_license_front_url: user.driver_license_front_url
+      }
+    });
+
+  } catch (err) {
+    console.error("Create driver license error:", err);
+    
+    // Handle specific errors
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: "Dữ liệu không hợp lệ.", 
+        errors: Object.values(err.errors).map(e => e.message)
+      });
+    }
+
+    if (err.name === 'CloudinaryError') {
+      return res.status(500).json({ 
+        message: "Lỗi khi tải lên ảnh. Vui lòng thử lại." 
+      });
+    }
+
+    res.status(500).json({ 
+      message: "Lỗi server khi tạo thông tin GPLX." 
+    });
+  }
+};
+
+// @desc    Update driver license verification status by admin
+// @route   PUT /api/user/driver-license-status/:id
+// @access  Private/Admin
+exports.updateDriverLicenseVerificationStatus = async (req, res) => {
+  const { id } = req.params; // User ID from URL parameter
+  const { status } = req.body; // New status from request body
+
+  // Validate status input
+  const validStatuses = ['pending', 'verified', 'rejected'];
+  if (!status || !validStatuses.includes(status)) {
+    return res.status(400).json({ message: "Trạng thái xác thực không hợp lệ." });
+  }
+
+  try {
+    // Ensure only admins can access this route (handled by middleware, but good to double check concept)
+    if (req.user.role && !req.user.role.includes('admin')) {
+      return res.status(403).json({ message: "Bạn không có quyền thực hiện hành động này." });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { driver_license_verification_status: status },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "Người dùng không tồn tại." });
+    }
+
+    res.json({
+      message: `Cập nhật trạng thái xác thực GPLX thành công cho user ${user.email}.`,
+      user: {
+        _id: user._id,
+        email: user.email,
+        driver_license_verification_status: user.driver_license_verification_status,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating driver license verification status:", error);
+    res.status(500).json({ message: "Lỗi server khi cập nhật trạng thái xác thực GPLX." });
+  }
 };

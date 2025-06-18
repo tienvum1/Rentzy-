@@ -42,6 +42,12 @@ const vehicleSchema = new mongoose.Schema(
       uppercase: true,
       trim: true,
     },
+    // thêm mô tả xe
+    description :{
+      type: String,
+      required: true,
+    },
+      
 
     // Địa chỉ 
     location: {
@@ -116,6 +122,14 @@ const vehicleSchema = new mongoose.Schema(
       enum: ["available", "reserved", "rented", "maintenance", "blocked"],
       default: "available",
     },
+
+
+    // số lượt thuê xe thành công
+    // status = "completed" tăng trường rentalCount của xe lên 1.
+    rentalCount: {
+      type: Number,
+      default: 0,
+    }
   },
   { timestamps: true }
 );

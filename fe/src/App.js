@@ -4,15 +4,24 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
 import { AuthProvider } from "./context/AuthContext"; // Import AuthProvider
 import OwnerRouteGuard from './components/OwnerRouteGuard/OwnerRouteGuard'; // Import OwnerRouteGuard
+import AdminRouteGuard from './components/AdminRouteGuard/AdminRouteGuard'; // Import AdminRouteGuard
 
 import Homepage from "./pages/homepage/Homepage";
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import VerifyEmail from "./pages/verifyEmail/VerifyEmail";
 import ProfilePage from "./pages/profile/ProfilePage"; // IMPORT: New ProfilePage component
+import UserBookings from "./pages/profile/UserBookings"; // Import UserBookings
 import ForgotPassword from "./pages/login/ForgotPassword";
 import ResetPassword from "./pages/login/ResetPassword";
 import ChangePassword from "./pages/changePassword/ChangePassword";
+import VehicleDetail from "./pages/vehicles/VehicleDetail"; // Import VehicleDetail
+import BookingDetailsPage from "./pages/bookings/BookingDetailsPage"; // Import BookingDetailsPage
+import PaymentRemaining from './pages/paymentRemaining/PaymentRemaining';
+
+// order booking 
+import OrderConfirmation  from "./pages/payment/OrderConfirmation";
+import PaymentDeposit  from "./pages/paymentDeposit/PaymentDeposit"
 
 import ConsignForm from "./pages/consignForm/ConsignForm";
 
@@ -42,27 +51,53 @@ function App() {
             <Route path="/verify-email" element={<VerifyEmail />} />
 
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/my-bookings" element={<UserBookings />} /> {/* New route for user bookings */}
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile/change-password" element={<ChangePassword />}/>
+            <Route path="/vehicles/:id" element={<VehicleDetail />} /> {/* Add VehicleDetail route */}
+
+             {/* Add VehicleDetail route */}
+             <Route path="/confirm/:bookingId" element={<OrderConfirmation />} />   
+             <Route path="/payment-deposit/:bookingId" element={<PaymentDeposit />} /> 
+             <Route path="/bookings/:id" element={<BookingDetailsPage />} /> {/* New route for Booking Details */}
+             <Route path="/payment-remaining/:id" element={<PaymentRemaining />} />
+
             {/* Add route for OwnerPage */}
             <Route path="/consignForm" element={<ConsignForm />} />
             {/* Add a root route if needed */}
             <Route path="/" element={<Homepage />} />
 
             {/* admin route */}
-            <Route path="/adminDashboard" element={<AdminDashboard />} />
-            <Route path="/admin/owner-requests" element={<OwnerRequestsPage />} />
-            <Route path="/admin/vehicle-approvals" element={<VehiclesRequestPage />} />
+             {/* chỉ admin có quyền truy cập */}
+            {/* <Route path="/admin" element={<AdminRouteGuard />}> */}
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="owner-requests" element={<OwnerRequestsPage />} />
+                <Route path="vehicle-approvals" element={<VehiclesRequestPage />} />
+            {/* </Route> */}
 
 
        
             {/* Route Guard owner  managemnt route */}
+            {/*  Chỉ có user đăng kí chủ xe mới dăng nhập được  đăng nhập được */}
+
             <Route path="/ownerpage" element={<OwnerRouteGuard />}>
-  <Route path="overview" element={<OwnerPage />} />
-  <Route path="vehicle-management" element={<VehicleManagement />} />
-  <Route path="add-car" element={<AddCarForm />} />
-</Route>
+                  <Route path="overview" element={<OwnerPage />} />
+                 <Route path="vehicle-management" element={<VehicleManagement />} />
+                 <Route path="add-car" element={<AddCarForm />} />
+            </Route>
+
+ {/* 404 Route - Thêm route cho trang không tìm thấy */}
+ <Route 
+              path="*" 
+              element={
+                <div className="not-found">
+                  <h1>404 - Page Not Found</h1>
+                  <p>The page you are looking for does not exist.</p>
+                </div>
+              } 
+            />
+
           </Routes>
         </div>
       </AuthProvider>

@@ -170,35 +170,6 @@ const ConsignForm = () => {
               />
             </div>
 
-            {/* Remove driver license fields */}
-            {/*
-            <div className="form-group">
-              <label htmlFor="driver_license_front">Ảnh mặt trước Bằng lái xe *</label>
-              <input
-                type="file"
-                id="driver_license_front"
-                name="driver_license_front"
-                accept="image/*"
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="driver_license_back">Ảnh mặt sau Bằng lái xe *</label>
-              <input
-                type="file"
-                id="driver_license_back"
-                name="driver_license_back"
-                accept="image/*"
-                onChange={handleChange}
-                required
-              />
-            </div>
-            */}
-
-            {/* Remove income estimate row */}
-            {/* <div className="income-row"> ... </div> */}
 
             {error && <div className="form-error">{error}</div>}
             {success && <div className="form-success">{success}</div>}
