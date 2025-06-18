@@ -39,6 +39,9 @@ import VehiclesRequestPage from "./pages/admin/VehiclesRequestPage";
 import PaymentSuccess from './pages/payment/PaymentSuccess';
 import PaymentFailed from './pages/payment/PaymentFailed';
 
+// user
+import TransactionHistory from './pages/profile/TransactionHistory';
+
 function App() {
   return (
     <Router>
@@ -47,16 +50,18 @@ function App() {
         {/* Wrap the application with AuthProvider */}
         <div className="App">
           <Routes>
+             {/* Profile*/}
             <Route path="/homepage" element={<Homepage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
-
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/my-bookings" element={<UserBookings />} /> {/* New route for user bookings */}
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile/change-password" element={<ChangePassword />}/>
+            <Route path="/profile/transactions" element={<TransactionHistory />} />
+
             <Route path="/vehicles/:id" element={<VehicleDetail />} /> {/* Add VehicleDetail route */}
 
              {/* Add VehicleDetail route */}

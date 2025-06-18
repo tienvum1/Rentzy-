@@ -18,7 +18,7 @@ const ProfileSidebar = () => {
         { path: '/profile/my-bookings', label: 'Đơn thuê của tôi', icon: <FaSuitcaseRolling /> },
         { path: '/ownerpage/overview', label: 'Quản lí xe cho owner', icon: <FaClipboardCheck /> }, // Full path for owner dashboard overview
     
-        { path: '/profile/gifts', label: 'Quà tặng', icon: <FaGift /> },
+        { path: '/profile/transactions', label: 'Lịch sử giao dịch', icon: <FaGift /> },
         { path: '/profile/addresses', label: 'Địa chỉ của tôi', icon: <FaAddressBook /> },
         { path: '/profile/change-password', label: 'Đổi mật khẩu', icon: <FaLock /> }, // Full path for change password
         { path: '/profile/delete-account', label: 'Yêu cầu xoá tài khoản', icon: <FaTrash /> },

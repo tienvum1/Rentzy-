@@ -140,7 +140,7 @@ const getVehicleBookedDates = async (req, res) => {
         console.log("id của vehicle",car.vehicle._id);
         const bookings = await Booking.find({
             vehicle: car.vehicle._id,
-            status: { $in: ['pending', 'DEPOSIT_PAID', 'accepted', 'in_progress'] } // Chỉ lấy booking đang hoạt động
+            status: { $in: ['pending', 'RENTAL_PAID','DEPOSIT_PAID', 'accepted', 'in_progress'] } // Chỉ lấy booking đang hoạt động
         }).select('startDate endDate pickupTime returnTime');
 
         const bookedDates = bookings.map(booking => {
