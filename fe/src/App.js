@@ -17,7 +17,7 @@ import ChangePassword from "./pages/changePassword/ChangePassword";
 import ConsignForm from "./pages/consignForm/ConsignForm";
 
 // owner
-import OwnerPage from "./pages/owner/OwnerPage";
+import OwnerPage from "./pages/owner/ownerPage";
 import VehicleManagement from "./pages/vehiclemanagement/VehicleManagement";
 import AddCarForm  from "./pages/vehiclemanagement/AddCarForm";
 
