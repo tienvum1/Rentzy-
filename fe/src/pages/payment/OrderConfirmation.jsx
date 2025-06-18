@@ -184,7 +184,7 @@ const OrderConfirmation = () => {
         {isPaymentCompleted && (
             <div className="payment-success-message text-center">
                 <p>Mã đơn hàng của bạn: <strong>{booking._id}</strong></p>
-                <p>Cảm ơn bạn đã thanh toán thành công. Đơn hàng của bạn đang chờ chủ xe xác nhận.</p>
+                <p>Cảm ơn bạn đã thanh toán thành công</p>
             </div>
         )}
 

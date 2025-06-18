@@ -5,7 +5,8 @@ const {
     checkPayment, 
     handleWebhook,
     verifyMoMoPayment,
-    createRentalPayment
+    createRentalPayment,
+    checkRentalPayment
 } = require('../controller/paymentController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -33,5 +34,9 @@ router.post('/verify-payment', protect, verifyMoMoPayment);
 // @desc    Tạo yêu cầu thanh toán MoMo cho thuê
 // @access  Private
 router.post('/rental-payment', protect, createRentalPayment);
+
+//
+// Route for checking rental payment
+router.get('/check-rental-payment', checkRentalPayment);
 
 module.exports = router; 

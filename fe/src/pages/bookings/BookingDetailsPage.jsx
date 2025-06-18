@@ -5,6 +5,8 @@ import { toast } from 'react-toastify';
 import moment from 'moment';
 import './BookingDetailsPage.css'; // We will create this CSS file next
 import { FaCalendarAlt, FaDollarSign, FaCar, FaUser, FaMapMarkerAlt, FaInfoCircle, FaClipboardList, FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
+import Header from '../../components/Header/Header';
+import Footer from '../../components/footer/Footer';
 
 const BookingDetailsPage = () => {
   const { id } = useParams(); // Get booking ID from URL
@@ -92,23 +94,55 @@ const BookingDetailsPage = () => {
     }
   };
 
-  // Tính toán số tiền đã thanh toán
-  const calculateTotalPaid = () => {
-    if (booking.status === 'DEPOSIT_PAID') {
-      return 500000; // Tiền giữ chỗ cố định
-    }
-    return booking.transactions.reduce((sum, transaction) => {
+  // Tính toán số tiền đã thanh toán và còn lại
+  const calculatePaymentDetails = () => {
+    // Tính tổng số tiền đã thanh toán từ các giao dịch COMPLETED
+    const totalPaid = booking.transactions.reduce((sum, transaction) => {
       if (transaction.status === 'COMPLETED') {
         return sum + transaction.amount;
       }
       return sum;
     }, 0);
+
+    // Nếu đã thanh toán đầy đủ (RENTAL_PAID)
+    if (booking.status === 'RENTAL_PAID') {
+      return {
+        totalPaid: totalPaid,
+        remaining: 0,
+        showPaymentButton: false,
+        showReservationRefund: false
+      };
+    }
+
+    // Nếu chỉ thanh toán tiền giữ chỗ (DEPOSIT_PAID)
+    if (booking.status === 'DEPOSIT_PAID') {
+      // Số tiền còn lại phải trả = Tổng tiền - Số tiền đã thanh toán
+      const remaining = booking.totalAmount - totalPaid;
+      return {
+        totalPaid: totalPaid,
+        remaining: remaining,
+        showPaymentButton: remaining > 0,
+        showReservationRefund: true,
+        nextPaymentAmount: remaining
+      };
+    }
+
+    // Các trường hợp khác
+    const remaining = booking.totalAmount - totalPaid;
+    return {
+      totalPaid: totalPaid,
+      remaining: remaining,
+      showPaymentButton: booking.status === 'DEPOSIT_PAID' && remaining > 0,
+      showReservationRefund: true,
+      nextPaymentAmount: remaining
+    };
   };
 
-  const totalPaidAmount = calculateTotalPaid();
-  const remainingAmountToPay = booking.totalAmount - totalPaidAmount;
+  const { totalPaid, remaining, showPaymentButton, showReservationRefund, nextPaymentAmount } = calculatePaymentDetails();
 
   return (
+    <>
+    <Header/>
     <div className="booking-details-container">
       <h2>Chi tiết Đơn hàng #{booking._id}</h2>
 
@@ -156,7 +190,7 @@ const BookingDetailsPage = () => {
               </div>
               <div className="info-row">
                 <span className="info-label">Tiền đặt cọc:</span>
-                <span className="info-value price">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(500000)}</span>
+                <span className="info-value price">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.vehicle.deposit)}</span>
               </div>
             </div>
 
@@ -188,19 +222,60 @@ const BookingDetailsPage = () => {
 
       <div className="booking-summary-card">
         <h3><FaDollarSign /> Tóm tắt Thanh toán</h3>
-        <div className="info-grid">
-          <p><strong>Tổng tiền đơn hàng:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalAmount)}</p>
-          <p><strong>Tiền giữ chỗ:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(500000)}</p>
-          <p className="paid-amount"><strong>Đã thanh toán:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaidAmount)}</p>
-          <p className="remaining-amount"><strong>Còn lại phải trả:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmountToPay)}</p>
+        <div className="payment-summary-grid">
+          <div className="payment-row">
+            <span className="payment-label">Phí thuê xe:</span>
+            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalCost)}</span>
+          </div>
+          {booking.deliveryFee > 0 && (
+            <div className="payment-row">
+              <span className="payment-label">Phí giao xe (2 chiều):</span>
+              <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.deliveryFee)}</span>
+            </div>
+          )}
+          {booking.discountAmount > 0 && (
+            <div className="payment-row discount">
+              <span className="payment-label">Giảm giá:</span>
+              <span className="payment-value">-{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.discountAmount)}</span>
+            </div>
+          )}
+          <div className="payment-row">
+            <span className="payment-label">Tiền cọc xe:</span>
+            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.deposit)}</span>
+          </div>
+          <div className="payment-row">
+            <span className="payment-label">Tiền giữ chỗ:</span>
+            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.reservationFee)}</span>
+          </div>
+          <div className="payment-row total">
+            <span className="payment-label">Tổng tiền đơn hàng:</span>
+            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalAmount)}</span>
+          </div>
+          <div className="payment-row paid">
+              <span className="payment-label">Hoàn tiền giữ chỗ:</span>
+              <span className="payment-value">- {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.reservationFee)}</span>
+            </div>
+          <div className="payment-row paid">
+            <span className="payment-label">Đã thanh toán:</span>
+            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaid)}</span>
+          </div>
+     
+           
+  
+          <div className="payment-row remaining">
+            <span className="payment-label">Còn lại phải trả:</span>
+            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remaining)}</span>
+          </div>
           
-          {booking.status === 'DEPOSIT_PAID' && remainingAmountToPay > 0 && (
-            <button 
-              className="pay-remaining-details-button"
-              onClick={() => navigate(`/payment-remaining/${booking._id}`)}
-            >
-              <FaCreditCard /> Thanh toán phần còn lại
-            </button>
+          {showPaymentButton && (
+            <div className="payment-action">
+              <button 
+                className="pay-remaining-details-button"
+                onClick={() => navigate(`/payment-remaining/${booking._id}`)}
+              >
+                <FaCreditCard /> Thanh toán phần còn lại ({new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(nextPaymentAmount)})
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -229,7 +304,11 @@ const BookingDetailsPage = () => {
         Quay lại
       </button>
     </div>
+     <Footer/>
+     </>
+   
   );
+ 
 };
 
 export default BookingDetailsPage;

@@ -5,6 +5,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import moment from 'moment';
 import { FaCalendarAlt, FaDollarSign, FaCar, FaUser, FaInfoCircle, FaCreditCard } from 'react-icons/fa';
 import './UserBookings.css'; // Assuming you'll create this CSS file
+import Header from '../../components/Header/Header';
+
 
 const UserBookings = () => {
   const [bookings, setBookings] = useState([]);
@@ -59,6 +61,8 @@ const UserBookings = () => {
         return 'Đã xác nhận';
       case 'DEPOSIT_PAID':
         return 'Đã thanh toán tiền giữ chỗ';
+      case 'RENTAL_PAID':
+        return 'Đã thanh toán đầy đủ';
       case 'IN_PROGRESS':
         return 'Đang sử dụng';
       case 'COMPLETED':
@@ -83,6 +87,8 @@ const UserBookings = () => {
   }
 
   return (
+    <>
+    <Header/>
     <div className="user-bookings-container">
       <h2>Lịch sử đặt xe của bạn</h2>
 
@@ -93,12 +99,13 @@ const UserBookings = () => {
           value={statusFilter}
           onChange={(e) => {
             setStatusFilter(e.target.value);
-            setPage(1); // Reset to first page when filter changes
+            setPage(1);
           }}
         >
           <option value="">Tất cả</option>
           <option value="PENDING">Đang chờ xử lý</option>
           <option value="DEPOSIT_PAID">Đã thanh toán tiền giữ chỗ</option>
+          <option value="RENTAL_PAID">Đã thanh toán đầy đủ</option>
           <option value="CONFIRMED">Đã xác nhận</option>
           <option value="IN_PROGRESS">Đang sử dụng</option>
           <option value="COMPLETED">Đã hoàn thành</option>
@@ -127,16 +134,29 @@ const UserBookings = () => {
             </thead>
             <tbody>
               {bookings.map((booking) => {
-                const totalPaid = booking.status === 'DEPOSIT_PAID' 
-                  ? 500000 // Fixed deposit amount for DEPOSIT_PAID status
-                  : booking.transactions.reduce((sum, trans) => {
-                      if (trans.status === 'COMPLETED' && (trans.type === 'DEPOSIT' || trans.type === 'RENTAL')) {
-                        return sum + trans.amount;
-                      }
-                      return sum;
-                    }, 0);
+                // Debug logs
+                console.log('Booking ID:', booking._id);
+                console.log('Transactions:', booking.transactions);
+                console.log('Transaction statuses:', booking.transactions.map(t => t.status));
+                console.log('Transaction amounts:', booking.transactions.map(t => t.amount));
 
-                const remainingAmount = booking.totalAmount - totalPaid;
+                // Tính tổng số tiền đã thanh toán từ các giao dịch COMPLETED
+                const totalPaid = booking.transactions.reduce((sum, transaction) => {
+                  console.log('Checking transaction:', transaction);
+                  console.log('Transaction status:', transaction.status);
+                  console.log('Transaction amount:', transaction.amount);
+                  
+                  if (transaction.status === 'COMPLETED') {
+                    console.log('Found COMPLETED transaction, adding amount:', transaction.amount);
+                    return sum + transaction.amount;
+                  }
+                  return sum;
+                }, 0);
+
+                console.log('Total paid:', totalPaid);
+
+                // Nếu đã thanh toán đầy đủ (RENTAL_PAID), số tiền còn lại là 0
+                const remainingAmount = booking.status === 'RENTAL_PAID' ? 0 : booking.totalAmount - totalPaid;
 
                 return (
                   <tr key={booking._id}>
@@ -160,7 +180,7 @@ const UserBookings = () => {
                     <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaid)}</td>
                     <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount)}</td>
                     <td>
-                      <span className={`booking-status-table ${booking.status.toLowerCase()}`}>
+                      <span className={` ${booking.status.toLowerCase()}`}>
                         {getStatusText(booking.status)}
                       </span>
                     </td>
@@ -172,6 +192,14 @@ const UserBookings = () => {
                         >
                           <FaInfoCircle /> Xem chi tiết
                         </button>
+                        {booking.status === 'DEPOSIT_PAID' && remainingAmount > 0 && (
+                          <button 
+                            className="pay-remaining-button-table"
+                            onClick={() => navigate(`/payment-remaining/${booking._id}`)}
+                          >
+                            <FaCreditCard /> Thanh toán
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -200,6 +228,7 @@ const UserBookings = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

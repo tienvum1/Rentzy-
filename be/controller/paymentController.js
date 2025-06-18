@@ -489,8 +489,8 @@ const verifyMoMoPayment = async (req, res) => {
 // Hàm tạo thanh toán phần còn lại (RENTAL)
 const createRentalPayment = async (req, res) => {
     try {
-        const { bookingId , amount , } = req.body;
-        console.log("thanh toán " ,req.body)
+        const { bookingId } = req.body;
+        console.log("Payment request body:", req.body);
 
         if (!bookingId) {
             return res.status(400).json({
@@ -499,7 +499,8 @@ const createRentalPayment = async (req, res) => {
             });
         }
 
-        const booking = await Booking.findById(bookingId);
+        const booking = await Booking.findById(bookingId).populate('transactions');
+        console.log("Found booking:", booking);
 
         if (!booking) {
             return res.status(404).json({
@@ -516,9 +517,23 @@ const createRentalPayment = async (req, res) => {
             });
         }
 
-    
-        const amountToPay = booking.totalAmount - booking.reservationFee - booking.reservationFee; // số tiề cần phải thanh toán qua momo
-        console.log('số tiền cần phải thanh toán' , amountToPay)
+        // Tính toán số tiền cần thanh toán
+        console.log("All transactions:", booking.transactions);
+        const totalPaidAmount = booking.transactions.reduce((sum, transaction) => {
+            console.log("Processing transaction:", transaction);
+            if (transaction.status === 'COMPLETED' && transaction.type === 'DEPOSIT') {
+                console.log("Adding deposit amount:", transaction.amount);
+                return sum + transaction.amount;
+            }
+            return sum;
+        }, 0);
+
+        console.log("Total paid amount:", totalPaidAmount);
+        console.log("Booking total amount:", booking.totalAmount);
+
+        const amountToPay = booking.totalAmount - totalPaidAmount - totalPaidAmount;
+        console.log("Amount to pay:", amountToPay);
+
         if (amountToPay <= 0) {
             return res.status(400).json({
                 success: false,
@@ -530,14 +545,15 @@ const createRentalPayment = async (req, res) => {
         const requestId = MOMO_CONFIG.partnerCode + new Date().getTime();
         const uniqueMoMoOrderId = `${bookingId}-${requestId}-RENTAL`; // Thêm hậu tố RENTAL để phân biệt
         const orderInfo = `Thanh toán phần còn lại cho đơn hàng ${bookingId}`;
-        const redirectUrl = `${process.env.BACKEND_URL}/api/momo/check-payment`;
+        // redirectUrl: MoMo sẽ chuyển hướng trình duyệt về đây sau khi thanh toán xong
+        const redirectUrl = `${process.env.BACKEND_URL}/api/momo/check-rental-payment`;
         const ipnUrl = `${process.env.BACKEND_URL}/api/momo/webhook`;
         const extraData = "";
 
         // Tạo giao dịch loại RENTAL
         let transaction = new Transaction({
             booking: bookingId,
-            amount: amount,
+            amount: amountToPay,
             type: 'RENTAL',
             status: 'PENDING',
             paymentMethod: 'MOMO',
@@ -547,7 +563,7 @@ const createRentalPayment = async (req, res) => {
                 paymentStatus: 'PENDING',
                 momoRequestId: requestId,
                 momoOrderId: uniqueMoMoOrderId,
-                originalBookingStatus: booking.status // Lưu lại trạng thái gốc của booking
+                originalBookingStatus: booking.status
             }
         });
         await transaction.save();
@@ -603,10 +619,149 @@ const createRentalPayment = async (req, res) => {
     }
 };
 
+// Hàm kiểm tra thanh toán phần còn lại (RENTAL)
+const checkRentalPayment = async (req, res) => {
+    try {
+        const {
+            partnerCode,
+            orderId,
+            requestId,
+            amount,
+            orderInfo,
+            orderType,
+            transId,
+            resultCode,
+            message,
+            payType,
+            bookingId
+        } = req.query;
+
+        console.log("Received payment callback:", req.query);
+
+        // Nếu là callback từ MoMo
+        if (orderId) {
+            // Extract booking ID from orderId (format: bookingId-requestId-RENTAL)
+            const extractedBookingId = orderId.split('-')[0];
+            const booking = await Booking.findById(extractedBookingId);
+            if (!booking) {
+                return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?message=Booking not found`);
+            }
+
+            // Find the pending transaction
+            const transaction = await Transaction.findOne({
+                booking: extractedBookingId,
+                'paymentMetadata.momoOrderId': orderId,
+                status: 'PENDING'
+            });
+
+            if (!transaction) {
+                return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?message=Transaction not found`);
+            }
+
+            // Nếu resultCode = 0 (thanh toán thành công)
+            if (resultCode === '0') {
+                // Update transaction status
+                transaction.status = 'COMPLETED';
+                transaction.paymentMetadata.paymentStatus = 'COMPLETED';
+                transaction.paymentMetadata.momoTransId = transId;
+                await transaction.save();
+
+                // Update booking status to RENTAL_PAID
+                booking.status = 'RENTAL_PAID';
+                await booking.save();
+
+                // Redirect to booking details page with success message
+                const frontendRedirectUrl = `${process.env.FRONTEND_URL}/bookings/${extractedBookingId}`;
+                return res.redirect(`${frontendRedirectUrl}?resultCode=0&message=${encodeURIComponent('Thanh toán thành công')}`);
+            } else {
+                // Update transaction status to failed
+                transaction.status = 'FAILED';
+                transaction.paymentMetadata.paymentStatus = 'FAILED';
+                await transaction.save();
+                
+                return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?message=${message}`);
+            }
+        }
+        // Nếu chỉ có bookingId (từ API call trực tiếp)
+        else if (bookingId) {
+            const booking = await Booking.findById(bookingId);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Booking not found'
+                });
+            }
+
+            // Find the latest pending transaction
+            const transaction = await Transaction.findOne({
+                booking: bookingId,
+                status: 'PENDING'
+            }).sort({ createdAt: -1 });
+
+            if (!transaction) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No pending transaction found'
+                });
+            }
+
+            // Gọi API check-payment để xác minh giao dịch
+            try {
+                const checkPaymentResponse = await axios.get(
+                    `${process.env.BACKEND_URL}/api/momo/check-payment?bookingId=${bookingId}&orderId=${transaction.paymentMetadata.momoOrderId}`,
+                    {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (!checkPaymentResponse.data.success) {
+                    throw new Error(checkPaymentResponse.data.message || 'Payment verification failed');
+                }
+
+                // Update transaction status
+                transaction.status = 'COMPLETED';
+                transaction.paymentMetadata.paymentStatus = 'COMPLETED';
+                await transaction.save();
+
+                // Update booking status to RENTAL_PAID
+                booking.status = 'RENTAL_PAID';
+                await booking.save();
+
+                return res.json({
+                    success: true,
+                    message: 'Payment verified successfully',
+                    bookingId: bookingId,
+                    transactionId: transaction._id
+                });
+
+            } catch (checkError) {
+                console.error('Error checking payment status:', checkError);
+                return res.status(400).json({
+                    success: false,
+                    message: 'Payment verification failed',
+                    error: checkError.message
+                });
+            }
+        } else {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required parameters'
+            });
+        }
+
+    } catch (error) {
+        console.error('Rental payment verification error:', error);
+        return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?message=${encodeURIComponent(error.message)}`);
+    }
+};
+
 module.exports = {
     createPayment,
     checkPayment,
     handleWebhook,
     verifyMoMoPayment,
     createRentalPayment,
+    checkRentalPayment,
 };

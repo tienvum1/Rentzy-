@@ -76,11 +76,18 @@ const bookingSchema = new mongoose.Schema(
           type: Number,
           min: 0,
         },
+        // tiền giao xe
+        deliveryFee:{
+          type: Number,
+          min: 0,
+          default : 0
+        },
+        
 
     // Trạng thái đơn thuê
     status: {
       type: String,
-      enum: ['pending', 'DEPOSIT_PAID', 'RENTAL', 'in_progress', 'completed', 'canceled', 'rejected'],
+      enum: ['pending', 'DEPOSIT_PAID', 'RENTAL', 'RENTAL_PAID', 'in_progress', 'completed', 'canceled', 'rejected'],
       default: 'pending',
     },
 

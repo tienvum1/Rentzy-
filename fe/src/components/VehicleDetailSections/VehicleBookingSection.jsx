@@ -266,7 +266,8 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         discountAmount: discountAmount,
         deposit: vehicle.deposit,
         reservationFee: holdFee,
-        isDelivery: pickupLocation !== vehicle.location
+        isDelivery: pickupLocation !== vehicle.location,
+        deliveryFee: pickupLocation !== vehicle.location ? 200000 : 0 // Thêm deliveryFee
       }, {
         headers: {
             Authorization: `Bearer ${token}`

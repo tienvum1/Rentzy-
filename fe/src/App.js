@@ -36,6 +36,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import OwnerRequestsPage from "./pages/admin/OwnerRequestsPage";
 import VehiclesRequestPage from "./pages/admin/VehiclesRequestPage";
 
+import PaymentSuccess from './pages/payment/PaymentSuccess';
+import PaymentFailed from './pages/payment/PaymentFailed';
 
 function App() {
   return (
@@ -62,6 +64,10 @@ function App() {
              <Route path="/payment-deposit/:bookingId" element={<PaymentDeposit />} /> 
              <Route path="/bookings/:id" element={<BookingDetailsPage />} /> {/* New route for Booking Details */}
              <Route path="/payment-remaining/:id" element={<PaymentRemaining />} />
+             <Route path="/payment/success" element={<PaymentSuccess />} />
+             <Route path="/payment/failed" element={<PaymentFailed />} />
+
+          
 
             {/* Add route for OwnerPage */}
             <Route path="/consignForm" element={<ConsignForm />} />
