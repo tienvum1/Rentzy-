@@ -55,34 +55,33 @@ const bookingSchema = new mongoose.Schema(
     },
     totalCost:{
       type: Number,
-        required: true,
-        min: 0,
-      },
-      // Tiền đặt cọc
-      deposit: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
-        // Tiền giữ chỗ
-        reservationFee: {
-          type: Number,
-          required: true,
-          min: 0,
-        },
+      required: true,
+      min: 0,
+    },
+    // Tiền đặt cọc
+    deposit: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    // Tiền giữ chỗ
+    reservationFee: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
-        // Tiền giảm giá
-        discountAmount: {
-          type: Number,
-          min: 0,
-        },
-        // tiền giao xe
-        deliveryFee:{
-          type: Number,
-          min: 0,
-          default : 0
-        },
-        
+    // Tiền giảm giá
+    discountAmount: {
+      type: Number,
+      min: 0,
+    },
+    // tiền giao xe
+    deliveryFee:{
+      type: Number,
+      min: 0,
+      default : 0
+    },
 
     // Trạng thái đơn thuê
     status: {
@@ -91,6 +90,19 @@ const bookingSchema = new mongoose.Schema(
       default: 'pending',
     },
 
+    // Trạng thái giao xe
+    deliveryStatus: {
+      type: String,
+      enum: ['PENDING', 'DELIVERED', 'RECEIVED'],
+      default: 'PENDING'
+    },
+
+    // Trạng thái trả xe
+    returnStatus: {
+      type: String,
+      enum: ['PENDING', 'RETURNED', 'COLLECTED'],
+      default: 'PENDING'
+    },
     // Địa chỉ nhận xe
     pickupLocation: {
       type: String,
@@ -102,6 +114,15 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+     // Hình ảnh xe trước khi thuê
+     preRentalImages: [{
+      type: String,
+    }],
+
+    // Hình ảnh xe sau khi thuê
+    postRentalImages: [{
+      type: String,
+    }],
 
     // Ghi chú từ người thuê
     note: {
@@ -120,16 +141,6 @@ const bookingSchema = new mongoose.Schema(
     review: {
       type: String,
     },
-
-    // Hình ảnh xe trước khi thuê
-    preRentalImages: [{
-      type: String,
-    }],
-
-    // Hình ảnh xe sau khi thuê
-    postRentalImages: [{
-      type: String,
-    }],
 
     // Lý do hủy (nếu có)
     cancellationReason: {
@@ -156,7 +167,7 @@ const bookingSchema = new mongoose.Schema(
     transactions: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Transaction'
-    }],
+    }]
   },
   { timestamps: true }
 );

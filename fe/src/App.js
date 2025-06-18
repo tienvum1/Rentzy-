@@ -29,7 +29,8 @@ import ConsignForm from "./pages/consignForm/ConsignForm";
 import OwnerPage from "./pages/owner/OwnerPage";
 import VehicleManagement from "./pages/vehiclemanagement/VehicleManagement";
 import AddCarForm  from "./pages/vehiclemanagement/AddCarForm";
-
+import BookingManagement from "./pages/owner/BookingManagement";
+import BookingDetailOwner from "./pages/owner/BookingDetailOwner";
 
 // admin 
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -96,8 +97,10 @@ function App() {
                   <Route path="overview" element={<OwnerPage />} />
                  <Route path="vehicle-management" element={<VehicleManagement />} />
                  <Route path="add-car" element={<AddCarForm />} />
+                 <Route path="booking-management" element={<BookingManagement />} />
+                 <Route path="booking/:id" element={<BookingDetailOwner />} />
             </Route>
-
+           
  {/* 404 Route - Thêm route cho trang không tìm thấy */}
  <Route 
               path="*" 

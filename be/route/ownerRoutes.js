@@ -40,5 +40,7 @@ router.put(
     checkAdmin, // Ensure user is admin
     ownerController.reviewOwnerRequest
 );
+router.get('/owner-bookings', protect,ownerController.getOwnerBookings);
+router.get('/getBookingById/:id',protect,ownerController.getBookingById)
 
 module.exports = router;

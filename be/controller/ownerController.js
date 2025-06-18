@@ -1,5 +1,8 @@
 const User = require("../models/User");
 const cloudinary = require("../utils/cloudinary");
+const Vehicle = require('../models/Vehicle');
+const Booking = require('../models/Booking');
+const mongoose = require('mongoose');
 
 exports.becomeOwner = async (req, res) => {
   try {
@@ -171,5 +174,225 @@ exports.reviewOwnerRequest = async (req, res) => {
   } catch (error) {
     console.error("Error in reviewOwnerRequest:", error);
     res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
+
+// Get all bookings for owner's vehicles
+exports.getOwnerBookings = async (req, res) => {
+  try {
+    const status = req.query.status;
+    const ownerId = req.user._id;
+
+    // Find all vehicles owned by the owner
+    const vehicles = await Vehicle.find({ owner: ownerId });
+    const vehicleIds = vehicles.map(vehicle => vehicle._id);
+
+    // Build query for bookings
+    const query = { vehicle: { $in: vehicleIds } };
+    if (status) {
+      query.status = status;
+    }
+
+    // Find bookings with populated data
+    const bookings = await Booking.find(query)
+      .populate({
+        path: 'vehicle',
+        select: 'brand model licensePlate primaryImage owner',
+        populate: {
+          path: 'owner',
+          select: 'name email phone'
+        }
+      })
+      .populate({
+        path: 'renter',
+        select: 'name email phone address'
+      })
+      .populate({
+        path: 'transactions',
+        select: 'amount status paymentMethod createdAt',
+        populate: {
+          path: 'paymentMethod',
+          select: 'name type'
+        }
+      })
+      .select(`
+        _id
+        renter
+        vehicle
+        startDate
+        endDate
+        pickupTime
+        returnTime
+        totalDays
+        totalAmount
+        totalCost
+        deposit
+        reservationFee
+        discountAmount
+        deliveryFee
+        status
+        pickupLocation
+        returnLocation
+        note
+        preRentalImages
+        postRentalImages
+        promoCode
+        transactions
+        createdAt
+        updatedAt
+      `)
+      .sort({ createdAt: -1 });
+
+    // Format the response
+    const formattedBookings = bookings.map(booking => ({
+      _id: booking._id,
+      renter: booking.renter,
+      vehicle: booking.vehicle,
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      pickupTime: booking.pickupTime,
+      returnTime: booking.returnTime,
+      totalDays: booking.totalDays,
+      totalAmount: booking.totalAmount,
+      totalCost: booking.totalCost,
+      deposit: booking.deposit,
+      reservationFee: booking.reservationFee,
+      discountAmount: booking.discountAmount,
+      deliveryFee: booking.deliveryFee,
+      status: booking.status,
+      pickupLocation: booking.pickupLocation,
+      returnLocation: booking.returnLocation,
+      note: booking.note,
+      preRentalImages: booking.preRentalImages || [],
+      postRentalImages: booking.postRentalImages || [],
+      promoCode: booking.promoCode,
+      transactions: booking.transactions,
+      createdAt: booking.createdAt,
+      updatedAt: booking.updatedAt
+    }));
+
+    res.status(200).json({
+      success: true,
+      bookings: formattedBookings
+    });
+  } catch (error) {
+    console.error('Error in getOwnerBookings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+
+// Get booking details by ID
+exports.getBookingById = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    console.log('Booking ID:', bookingId);
+    const ownerId = req.user._id;
+
+    // Kiểm tra tính hợp lệ của ID
+    if (!bookingId || !mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'ID đơn đặt xe không hợp lệ' 
+      });
+    }
+
+    // Tìm booking và kiểm tra quyền truy cập
+    const booking = await Booking.findById(bookingId)
+      .populate({
+        path: 'vehicle',
+        select: 'name brand model year licensePlate images owner',
+        populate: {
+          path: 'owner',
+          select: 'name email phone'
+        }
+      })
+      .populate({
+        path: 'renter',
+        select: 'name email phone avatar driver_license_birth_date driver_license_front_url driver_license_full_name driver_license_number'
+      })
+      .populate({
+        path: 'transactions',
+        match: { status: 'COMPLETED' },
+        select: 'amount paymentMethod status createdAt updatedAt'
+      });
+
+    if (!booking) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Không tìm thấy đơn đặt xe' 
+      });
+    }
+
+    // Kiểm tra xem chủ xe có quyền xem booking này không
+    if (!booking.vehicle || !booking.vehicle.owner || booking.vehicle.owner._id.toString() !== ownerId.toString()) {
+      return res.status(403).json({ 
+        success: false,
+        message: 'Bạn không có quyền xem đơn đặt xe này' 
+      });
+    }
+
+    // Format lại dữ liệu trả về
+    const formattedBooking = {
+      _id: booking._id,
+      renter: {
+        _id: booking.renter?._id,
+        fullName: booking.renter?.name,
+        email: booking.renter?.email,
+        phone: booking.renter?.phone,
+        avatar: booking.renter?.avatar,
+        driver_license_birth_date: booking.renter?.driver_license_birth_date,
+        driver_license_front_url: booking.renter?.driver_license_front_url,
+        driver_license_full_name: booking.renter?.driver_license_full_name,
+        driver_license_number: booking.renter?.driver_license_number
+      },
+      vehicle: {
+        _id: booking.vehicle?._id,
+        name: booking.vehicle?.name,
+        brand: booking.vehicle?.brand,
+        model: booking.vehicle?.model,
+        year: booking.vehicle?.year,
+        licensePlate: booking.vehicle?.licensePlate,
+        images: booking.vehicle?.images
+      },
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      pickupTime: booking.pickupTime,
+      returnTime: booking.returnTime,
+      totalDays: booking.totalDays,
+      totalAmount: booking.totalAmount,
+      totalCost: booking.totalCost,
+      deposit: booking.deposit,
+      reservationFee: booking.reservationFee,
+      discountAmount: booking.discountAmount,
+      deliveryFee: booking.deliveryFee,
+      status: booking.status,
+      pickupLocation: booking.pickupLocation,
+      returnLocation: booking.returnLocation,
+      note: booking.note,
+      preRentalImages: booking.preRentalImages || [],
+      postRentalImages: booking.postRentalImages || [],
+      promoCode: booking.promoCode,
+      transactions: booking.transactions || [],
+      createdAt: booking.createdAt,
+      updatedAt: booking.updatedAt
+    };
+
+    res.json({
+      success: true,
+      booking: formattedBooking
+    });
+  } catch (error) {
+    console.error('Error in getBookingById:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Lỗi server',
+      error: error.message 
+    });
   }
 };

@@ -420,6 +420,135 @@ const cancelBookingByFrontend = async (req, res) => {
   }
 };
 
+
+// Update delivery status
+exports.updateDeliveryStatus = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy thông tin đặt xe'
+      });
+    }
+
+    // Check if the user is authorized to update this booking
+    const vehicle = await Vehicle.findById(booking.vehicle);
+    if (!vehicle) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy thông tin xe'
+      });
+    }
+
+    if (vehicle.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bạn không có quyền cập nhật trạng thái đặt xe này'
+      });
+    }
+
+    // Check if the booking is in the correct status
+    if (booking.status !== 'RENTAL_PAID') {
+      return res.status(400).json({
+        success: false,
+        message: 'Trạng thái đặt xe không hợp lệ để cập nhật giao xe'
+      });
+    }
+
+    if (booking.deliveryStatus !== 'PENDING') {
+      return res.status(400).json({
+        success: false,
+        message: 'Trạng thái giao xe không hợp lệ'
+      });
+    }
+
+    // Update delivery status and booking status
+    booking.deliveryStatus = 'DELIVERED';
+    booking.status = 'IN_PROGRESS';
+    booking.deliveryTime = new Date();
+    booking.deliveryPerson = req.user._id;
+
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Đã cập nhật trạng thái giao xe thành công',
+      booking
+    });
+  } catch (error) {
+    console.error('Error in updateDeliveryStatus:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi cập nhật trạng thái giao xe'
+    });
+  }
+};
+
+// Update collection status
+exports.updateCollectionStatus = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy thông tin đặt xe'
+      });
+    }
+
+    // Check if the user is authorized to update this booking
+    const vehicle = await Vehicle.findById(booking.vehicle);
+    if (!vehicle) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy thông tin xe'
+      });
+    }
+
+    if (vehicle.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bạn không có quyền cập nhật trạng thái đặt xe này'
+      });
+    }
+
+    // Check if the booking is in the correct status
+    if (booking.status !== 'IN_PROGRESS') {
+      return res.status(400).json({
+        success: false,
+        message: 'Trạng thái đặt xe không hợp lệ để cập nhật nhận xe'
+      });
+    }
+
+    if (booking.returnStatus !== 'RETURNED') {
+      return res.status(400).json({
+        success: false,
+        message: 'Trạng thái trả xe không hợp lệ'
+      });
+    }
+
+    // Update collection status and booking status
+    booking.collectionStatus = 'COLLECTED';
+    booking.status = 'COMPLETED';
+    booking.collectionTime = new Date();
+    booking.collectionPerson = req.user._id;
+
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Đã cập nhật trạng thái nhận xe thành công',
+      booking
+    });
+  } catch (error) {
+    console.error('Error in updateCollectionStatus:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi cập nhật trạng thái nhận xe'
+    });
+  }
+};
+
 module.exports = {
     createBooking,
     getVehicleBookedDates,
@@ -429,4 +558,5 @@ module.exports = {
     cancelExpiredBooking,
     updatePaymentStatus,
     cancelBookingByFrontend,
+
 };
