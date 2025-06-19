@@ -146,6 +146,7 @@ const getVehicleBookedDates = async (req, res) => {
     const bookedDates = bookings.map(booking => {
       const startDateTime = new Date(booking.startDate);
       const endDateTime = new Date(booking.endDate);
+      endDateTime.setHours(endDateTime.getHours() + 1);
 
       return {
         startDateTime: startDateTime.toISOString(),
