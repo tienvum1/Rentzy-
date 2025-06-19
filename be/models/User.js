@@ -25,12 +25,11 @@ const userSchema = new mongoose.Schema({
   cccd_back_url: String,
   is_identity_verified_for_owner: { type: Boolean, default: false }, // Identity verification status for owner role (via CCCD)
 
- 
-
   driver_license_number: String,
   driver_license_front_url: String,
-  driver_license_back_url: String,
-  is_license_verified_for_renter: { type: Boolean, default: false }, // Driver license verification status for renter role
+  driver_license_full_name: String, // Họ tên trên GPLX
+  driver_license_birth_date: Date,
+  driver_license_verification_status: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
 
   created_at: { type: Date, default: Date.now },
 

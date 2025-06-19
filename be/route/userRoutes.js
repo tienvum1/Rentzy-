@@ -14,6 +14,9 @@ router.put('/update-profile', protect, upload.fields([
   { name: 'driver_license_back', maxCount: 1 }
 ]), userController.updateProfile);
 
+// New route for creating driver license info
+router.post('/create-driver-license', protect, upload.single('driver_license_front'), userController.createDriverLicense);
+
 // New routes for email update and verification
 router.put('/update-email', protect, userController.updateEmail);
 router.post('/verify-email-otp', protect, userController.verifyEmailOtp);
@@ -24,5 +27,8 @@ router.put('/update-phone', protect, userController.updatePhone); // Link to a f
 
 // New route for changing password
 router.put('/change-password', protect, userController.changePassword); // Link to a future changePassword controller function
+
+// Admin route to update driver license verification status
+router.put('/driver-license-status/:id', protect, userController.updateDriverLicenseVerificationStatus);
 
 module.exports = router;

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const motorbikeSchema = new mongoose.Schema({
 
   vehicle_id: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Vehicle',
     required: true
   },

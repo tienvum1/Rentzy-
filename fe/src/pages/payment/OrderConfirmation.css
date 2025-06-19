@@ -1,0 +1,297 @@
+/* fe/src/pages/orderconfirmation/OrderConfirmation.css */
+
+.order-confirmation-container {
+  min-height: 100vh;
+  background-color: #f3f4f6; /* bg-gray-100 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 2.5rem; /* py-10 */
+  padding-bottom: 2.5rem; /* py-10 */
+}
+
+.order-card {
+  background-color: #ffffff; /* bg-white */
+  padding: 2rem; /* p-8 */
+  border-radius: 0.5rem; /* rounded-lg */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+  width: 100%; /* w-full */
+  max-width: 42rem; /* max-w-2xl */
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  color: #047857; /* text-green-600 */
+  margin-bottom: 1.5rem; /* mb-6 */
+  cursor: pointer;
+}
+
+.back-link svg {
+  margin-right: 0.5rem; /* mr-2 */
+}
+
+.back-link span {
+  font-weight: 600; /* font-semibold */
+}
+
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem; /* mb-8 */
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.step-icon {
+  width: 2rem; /* w-8 */
+  height: 2rem; /* h-8 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px; /* rounded-full */
+}
+
+.step-icon.active {
+  background-color: #10b981; /* bg-green-500 */
+  color: #ffffff; /* text-white */
+}
+
+.step-icon.current {
+  border: 2px solid #10b981; /* border-2 border-green-500 */
+  color: #10b981; /* text-green-500 */
+}
+
+.step-icon.inactive {
+  border: 2px solid #d1d5db; /* border-2 border-gray-300 */
+  color: #9ca3af; /* text-gray-400 */
+}
+
+.step-text {
+  font-size: 0.875rem; /* text-sm */
+  text-align: center;
+  margin-top: 0.25rem; /* mt-1 */
+}
+
+.progress-divider {
+  flex: 1; /* flex-1 */
+  border-top: 2px dashed #d1d5db; /* border-t-2 border-dashed border-gray-300 */
+  margin-left: 0.5rem; /* mx-2 */
+  margin-right: 0.5rem; /* mx-2 */
+}
+
+.section-title {
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 700; /* font-bold */
+  margin-bottom: 1.5rem; /* mb-6 */
+}
+
+.text-center {
+  text-align: center;
+}
+
+.info-text {
+  color: #4b5563; /* text-gray-600 */
+  text-align: center;
+  margin-bottom: 1.5rem; /* mb-6 */
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem; /* gap-4 */
+  margin-bottom: 2rem; /* mb-8 */
+}
+
+@media (min-width: 768px) {
+  .input-grid {
+    grid-template-columns: repeat(2, 1fr); /* md:grid-cols-2 */
+  }
+}
+
+.input-field {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d1d5db; /* border border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  padding: 0.75rem; /* p-3 */
+}
+
+.input-field svg {
+  color: #9ca3af; /* text-gray-400 */
+  margin-right: 0.75rem; /* mr-3 */
+}
+
+.input-field input {
+  flex: 1; /* flex-1 */
+  outline: none;
+}
+
+.order-details-section {
+  margin-bottom: 2rem; /* mb-8 */
+}
+
+.order-detail-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem; /* space-y-4, mb-4 for items */
+}
+
+.order-detail-item svg {
+  color: #047857; /* text-green-600 */
+  margin-right: 0.75rem; /* mr-3 */
+}
+
+.order-detail-item div {
+  flex: 1;
+}
+
+.detail-label {
+  font-weight: 600; /* font-semibold */
+}
+
+.detail-value {
+  color: #374151; /* text-gray-700 */
+}
+
+.summary-section {
+  border-top: 1px solid #d1d5db; /* border-t border-gray-300 */
+  padding-top: 1rem; /* pt-4 */
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem; /* mb-2 */
+}
+
+.summary-label {
+  color: #374151; /* text-gray-700 */
+}
+
+.summary-label .info-icon {
+  color: #9ca3af; /* text-gray-500 */
+  font-size: 0.75rem; /* text-xs */
+}
+
+.summary-value {
+  font-weight: 600; /* font-semibold */
+}
+
+.summary-value.discount {
+  color: #ef4444; /* text-red-500 */
+}
+
+.total-summary {
+  font-weight: 700; /* font-bold */
+  font-size: 1.125rem; /* text-lg */
+  border-top: 1px solid #d1d5db; /* border-t border-gray-300 */
+  padding-top: 0.5rem; /* pt-2 */
+  display: flex;
+  justify-content: space-between;
+}
+
+.payment-steps-section {
+  margin-bottom: 2rem; /* mb-8 */
+}
+
+.payment-step {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1.5rem; /* space-y-6, mb-6 for items */
+}
+
+.payment-step-number {
+  width: 1.5rem; /* w-6 */
+  height: 1.5rem; /* h-6 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px; /* rounded-full */
+  background-color: #10b981; /* bg-green-500 */
+  color: #ffffff; /* text-white */
+  font-size: 0.875rem; /* text-sm */
+  margin-right: 0.75rem; /* mr-3 */
+}
+
+.payment-step-number.inactive {
+  background-color: #d1d5db; /* bg-gray-300 */
+}
+
+.payment-step-content {
+  flex: 1;
+}
+
+.payment-step-title {
+  font-weight: 600; /* font-semibold */
+}
+
+.payment-step-description {
+  color: #374151; /* text-gray-700 */
+  font-size: 0.875rem; /* text-sm */
+}
+
+.payment-amount {
+  margin-left: auto; /* ml-auto */
+  font-weight: 600; /* font-semibold */
+  text-align: right;
+}
+
+.payment-sub-details {
+  margin-left: auto;
+  text-align: right;
+}
+
+.payment-sub-details p {
+  color: #374151; /* text-gray-700 */
+  font-size: 0.875rem; /* text-sm */
+}
+
+.payment-sub-details p span {
+  margin-left: 2.5rem; /* ml-10 */
+}
+
+.vat-checkbox-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem; /* mb-8 */
+}
+
+.vat-checkbox-container input[type="checkbox"] {
+  margin-right: 0.5rem; /* mr-2 */
+}
+
+.vat-checkbox-container label {
+  color: #374151; /* text-gray-700 */
+}
+
+.confirm-button {
+  width: 100%; /* w-full */
+  background-color: #10b981; /* bg-green-500 */
+  color: #ffffff; /* text-white */
+  padding-top: 0.75rem; /* py-3 */
+  padding-bottom: 0.75rem; /* py-3 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-weight: 600; /* font-semibold */
+  font-size: 1.125rem; /* text-lg */
+  border: none;
+  cursor: pointer;
+}
+
+.terms-text {
+  text-align: center;
+  color: #6b7280; /* text-gray-500 */
+  font-size: 0.875rem; /* text-sm */
+  margin-top: 1rem; /* mt-4 */
+}
+
+.terms-text a {
+  color: #047857; /* text-green-600 */
+  text-decoration: underline;
+} 
