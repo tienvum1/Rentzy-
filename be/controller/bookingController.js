@@ -26,6 +26,8 @@ const createBooking = async (req, res) => {
             deliveryFee
             
         } = req.body;
+        console.log(startDate);
+        console.log(endDate)
 
         // Validate required fields
         if (!vehicleId || !startDate || !endDate || !pickupLocation || !returnLocation || !pickupTime || !returnTime) {
@@ -140,18 +142,19 @@ const getVehicleBookedDates = async (req, res) => {
         console.log("id của vehicle",car.vehicle._id);
         const bookings = await Booking.find({
             vehicle: car.vehicle._id,
-            status: { $in: ['pending', 'RENTAL_PAID','DEPOSIT_PAID', 'accepted', 'in_progress'] } // Chỉ lấy booking đang hoạt động
+            status: { $in: ['pending', 'RENTAL_PAID','DEPOSIT_PAID', 'in_progress'] } // Chỉ lấy booking đang hoạt động
         }).select('startDate endDate pickupTime returnTime');
 
         const bookedDates = bookings.map(booking => {
             const startDateTime = new Date(booking.startDate);
             const endDateTime = new Date(booking.endDate);
+            endDateTime.setHours(endDateTime.getHours() + 1);
 
             return {
                 startDateTime: startDateTime.toISOString(),
                 endDateTime: endDateTime.toISOString(),
                 pickupTime: booking.pickupTime,
-                returnTime: booking.returnTime
+                returnTime: booking.returnTime 
             };
         });
 
@@ -340,7 +343,7 @@ const cancelExpiredBooking = async (bookingId) => {
 
         if (booking.status === 'pending') {
             const createdAt = new Date(booking.createdAt).getTime();
-            const paymentTimeLimit = 10 * 60 * 1000; // 10 minutes in milliseconds
+            const paymentTimeLimit = 60 * 1000; // 1 minute in milliseconds
             const expirationTime = createdAt + paymentTimeLimit;
             const now = Date.now();
 

@@ -21,9 +21,9 @@ const PaymentDeposit = () => {
   const [paymentStatus, setPaymentStatus] = useState('PENDING');
   const [isPaymentInitiated, setIsPaymentInitiated] = useState(false);
   const [remainingAmountToPay, setRemainingAmountToPay] = useState(0);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [expirationTime, setExpirationTime] = useState(null);
   
-  const HOLD_FEE = 500000; // Tiền giữ chỗ
-  const DELIVERY_FEE = 200000; // Phí giao xe 2 chiều
   // Calculate fees based on booking data
   const calculateFees = () => {
     if (!booking) return null;
@@ -50,6 +50,62 @@ const PaymentDeposit = () => {
   };
 
   const fees = calculateFees();
+
+  const handleCancelExpiredBooking = React.useCallback(async () => {
+    if (!booking || isCancelling) return;
+    
+    try {
+      setIsCancelling(true);
+      console.log('Calling cancel API for booking:', bookingId);
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${bookingId}/cancel-expired`,
+        {},
+        { withCredentials: true }
+      );
+      
+      if (response.data.success) {
+        toast.success('Đơn đặt xe đã được hủy do hết thời gian thanh toán.');
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Error cancelling expired booking:', error);
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hủy đơn đặt xe.');
+    } finally {
+      setIsCancelling(false);
+    }
+  }, [booking, bookingId, isCancelling, navigate]);
+
+  // Check expiration time every second
+  React.useEffect(() => {
+    if (!expirationTime || !booking) return;
+
+    const checkExpiration = () => {
+      const now = Date.now();
+      console.log('Checking expiration:', { now, expirationTime, isTimeUp });
+      
+      if (now >= expirationTime && !isTimeUp) {
+        console.log('Time expired, calling cancel API');
+        setIsTimeUp(true);
+        handleCancelExpiredBooking();
+      } else if (now < expirationTime) {
+        const timeLeft = Math.floor((expirationTime - now) / 1000);
+        setCountdown(timeLeft);
+      }
+    };
+
+    // Check immediately
+    checkExpiration();
+
+    // Then check every second
+    const timer = setInterval(checkExpiration, 1000);
+
+    return () => {
+      console.log('Cleaning up expiration check');
+      clearInterval(timer);
+    };
+  }, [expirationTime, booking, isTimeUp, handleCancelExpiredBooking]);
 
   React.useEffect(() => {
     const fetchBookingDetails = async () => {
@@ -117,22 +173,24 @@ const PaymentDeposit = () => {
 
         // Start countdown only if booking is pending deposit payment
         if (fetchedBooking.status === 'pending') {
-            setIsPaymentInitiated(true); // Indicate that payment is expected
+            setIsPaymentInitiated(true);
             const createdAt = new Date(fetchedBooking.createdAt).getTime();
-            const tenMinutes = 10 * 60 * 1000; // 10 minutes in milliseconds
-            const expirationTime = createdAt + tenMinutes;
+            const oneMinute = 60 * 1000; // 1 minute in milliseconds
+            const expTime = createdAt + oneMinute;
+            console.log('Setting expiration time:', { createdAt, expTime });
+            setExpirationTime(expTime);
+            
             const now = Date.now();
-            const timeLeft = Math.max(0, Math.floor((expirationTime - now) / 1000));
-            setCountdown(timeLeft);
-
-            if (timeLeft <= 0) {
+            if (now >= expTime) {
+                console.log('Booking already expired');
                 setIsTimeUp(true);
+                handleCancelExpiredBooking();
             }
         } else {
-            // If not pending, stop countdown and remove initiation flag
             setCountdown(0);
             setIsTimeUp(false);
             setIsPaymentInitiated(false);
+            setExpirationTime(null);
         }
 
       } catch (err) {
@@ -147,7 +205,7 @@ const PaymentDeposit = () => {
     };
 
     fetchBookingDetails();
-  }, [bookingId, navigate, location.search]);
+  }, [bookingId, navigate, location.search, handleCancelExpiredBooking]);
 
   const handleInitialPayment = async () => {
     if (!booking) return;
@@ -349,7 +407,13 @@ const PaymentDeposit = () => {
               <div className="payment-expired-message text-center">
                 <p>Thời gian thanh toán đã hết hạn.</p>
                 <p>Đơn đặt xe của bạn đã bị hủy.</p>
-                <button onClick={() => navigate('/')} className="confirm-button">Về Trang Chủ</button>
+                <button 
+                  onClick={() => navigate('/')} 
+                  className="confirm-button"
+                  disabled={isCancelling}
+                >
+                  {isCancelling ? 'Đang xử lý...' : 'Về Trang Chủ'}
+                </button>
               </div>
             )}
 

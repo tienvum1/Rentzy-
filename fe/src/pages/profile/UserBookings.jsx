@@ -3,11 +3,10 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
-import { FaInfoCircle, FaCreditCard, FaCalendarAlt } from 'react-icons/fa';
+import { FaInfoCircle, FaCreditCard, FaCalendarAlt, FaEye } from 'react-icons/fa';
 import Header from '../../components/Header/Header';
 import ProfileSidebar from './ProfileSidebar';
-import './UserBookings.css';
-
+import './UserBooking.css'
 const UserBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -119,8 +118,8 @@ const UserBookings = () => {
   return (
     <>
       <Header />
+ 
       <div className="user-bookings-container">
-        <ProfileSidebar />
         <div className="bookings-content">
           <h2>Lịch sử đặt xe của bạn</h2>
 
@@ -169,22 +168,11 @@ const UserBookings = () => {
                       <tr key={booking._id}>
                         <td>
                           <div className="vehicle-cell-content">
-                            {booking.vehicle?.primaryImage ? (
-                              <img 
-                                src={booking.vehicle.primaryImage} 
-                                alt={`${booking.vehicle.brand} ${booking.vehicle.model}`} 
-                                className="vehicle-thumbnail" 
-                              />
-                            ) : (
-                              <div className="no-image-thumbnail">No Image</div>
-                            )}
                             <div className="vehicle-details-text">
                               <p className="vehicle-name-in-table">
-                                {booking.vehicle?.brand} {booking.vehicle?.model || 'Xe không xác định'}
+                              {booking.vehicle?.model || 'Xe không xác định'}
                               </p>
-                              <p className="booking-dates">
-                                <FaCalendarAlt /> {moment(booking.startDate).format('DD/MM/YYYY')} - {moment(booking.endDate).format('DD/MM/YYYY')}
-                              </p>
+                             
                             </div>
                           </div>
                         </td>
@@ -204,7 +192,7 @@ const UserBookings = () => {
                               className="view-details-button"
                               onClick={() => navigate(`/bookings/${booking._id}`)}
                             >
-                              <FaInfoCircle /> Xem chi tiết
+                              <FaEye /> Xem chi tiết
                             </button>
                             {booking.status === 'DEPOSIT_PAID' && remainingAmount > 0 && (
                               <button 

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import 'moment/locale/vi';
-import { FaArrowLeft, FaTruck, FaHandshake, FaCalendarAlt, FaUser, FaMapMarkerAlt, FaMoneyBillWave, FaCar, FaCheck } from 'react-icons/fa';
+import { FaArrowLeft, FaTruck, FaHandshake, FaCalendarAlt, FaUser, FaMapMarkerAlt, FaMoneyBillWave, FaCar, FaCheck, FaCamera, FaTimes } from 'react-icons/fa';
 import Header from '../../components/Header/Header';
 import SidebarOwner from '../../components/SidebarOwner/SidebarOwner';
 import './BookingDetailOwner.css';
@@ -19,6 +19,8 @@ const BookingDetailOwner = () => {
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deliveryImages, setDeliveryImages] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchBookingDetails();
@@ -48,19 +50,70 @@ const BookingDetailOwner = () => {
     }
   };
 
+  const handleImageUpload = (event) => {
+    const files = Array.from(event.target.files);
+    const newImages = files.map(file => ({
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+    setDeliveryImages(prev => [...prev, ...newImages]);
+  };
+
+  const removeImage = (index) => {
+    setDeliveryImages(prev => {
+      const newImages = [...prev];
+      URL.revokeObjectURL(newImages[index].preview);
+      newImages.splice(index, 1);
+      return newImages;
+    });
+  };
+
   const handleDeliverVehicle = async () => {
+    if (deliveryImages.length === 0) {
+      toast.error('Vui lòng tải lên ít nhất một ảnh xe trước khi giao');
+      return;
+    }
+
     try {
+      setIsUploading(true);
+      
+      // Upload images first
+      const formData = new FormData();
+      deliveryImages.forEach((image, index) => {
+        formData.append('images', image.file);
+      });
+
+      const uploadResponse = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/upload/delivery-images/${id}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          withCredentials: true
+        }
+      );
+
+      if (!uploadResponse.data.success) {
+        throw new Error('Không thể tải lên ảnh');
+      }
+
+      // Then update delivery status
       const response = await axios.put(
         `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${id}/deliver`,
         {},
         { withCredentials: true }
       );
+
       if (response.data.success) {
         toast.success('Đã cập nhật trạng thái giao xe');
+        setDeliveryImages([]);
         fetchBookingDetails();
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Không thể cập nhật trạng thái giao xe');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -195,20 +248,66 @@ const BookingDetailOwner = () => {
               </div>
               <div className="booking-actions">
                 {booking.status === 'RENTAL_PAID' && booking.deliveryStatus === 'PENDING' && (
-                  <button 
-                    className="deliver-button"
-                    onClick={handleDeliverVehicle}
-                  >
-                    <FaTruck /> Xác nhận đã giao xe
-                  </button>
+                  <div className="delivery-confirmation">
+                    <h4>Xác nhận giao xe</h4>
+                    <p>Vui lòng tải lên ảnh xe trước khi giao và xác nhận khi bạn đã giao xe cho khách hàng.</p>
+                    
+                    <div className="image-upload-section">
+                      <div className="image-preview-grid">
+                        {deliveryImages.map((image, index) => (
+                          <div key={index} className="image-preview-item">
+                            <img src={image.preview} alt={`Ảnh xe ${index + 1}`} />
+                            <button 
+                              className="remove-image-btn"
+                              onClick={() => removeImage(index)}
+                            >
+                              <FaTimes />
+                            </button>
+                          </div>
+                        ))}
+                        {deliveryImages.length < 5 && (
+                          <label className="upload-button">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={handleImageUpload}
+                              style={{ display: 'none' }}
+                            />
+                            <FaCamera />
+                            <span>Tải ảnh lên</span>
+                          </label>
+                        )}
+                      </div>
+                      <p className="upload-hint">Tải lên tối đa 5 ảnh xe trước khi giao</p>
+                    </div>
+
+                    <button 
+                      className="deliver-button"
+                      onClick={handleDeliverVehicle}
+                      disabled={isUploading || deliveryImages.length === 0}
+                    >
+                      {isUploading ? (
+                        'Đang xử lý...'
+                      ) : (
+                        <>
+                          <FaTruck /> Xác nhận đã giao xe
+                        </>
+                      )}
+                    </button>
+                  </div>
                 )}
                 {booking.status === 'IN_PROGRESS' && booking.returnStatus === 'RETURNED' && (
-                  <button 
-                    className="collect-button"
-                    onClick={handleCollectVehicle}
-                  >
-                    <FaHandshake /> Xác nhận đã nhận xe
-                  </button>
+                  <div className="delivery-confirmation">
+                    <h4>Xác nhận nhận xe</h4>
+                    <p>Vui lòng xác nhận khi bạn đã nhận lại xe từ khách hàng. Hành động này sẽ hoàn tất đơn đặt xe.</p>
+                    <button 
+                      className="deliver-button"
+                      onClick={handleCollectVehicle}
+                    >
+                      <FaHandshake /> Xác nhận đã nhận xe
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
