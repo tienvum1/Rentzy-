@@ -4,9 +4,11 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import './BookingDetailsPage.css'; // We will create this CSS file next
-import { FaCalendarAlt, FaDollarSign, FaCar, FaUser, FaMapMarkerAlt, FaInfoCircle, FaClipboardList, FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
+import { FaCalendarAlt, FaDollarSign, FaCar, FaUser, FaMapMarkerAlt, FaInfoCircle, FaClipboardList, FaMoneyBillWave, FaCreditCard, FaTimesCircle } from 'react-icons/fa';
 import Header from '../../components/Header/Header';
 import Footer from '../../components/footer/Footer';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 const BookingDetailsPage = () => {
   const { id } = useParams(); // Get booking ID from URL
@@ -110,12 +112,13 @@ const BookingDetailsPage = () => {
         totalPaid: totalPaid,
         remaining: 0,
         showPaymentButton: false,
-        showReservationRefund: false
+        showReservationRefund: false,
+        reservationRefund: 0
       };
     }
 
     // Nếu chỉ thanh toán tiền giữ chỗ (DEPOSIT_PAID)
-    if (booking.status === 'DEPOSIT_PAID') {
+    if (booking.status === 'DEPOSIT_PAID' || booking.status === 'deposit_paid') {
       // Số tiền còn lại phải trả = Tổng tiền - Số tiền đã thanh toán
       const remaining = booking.totalAmount - totalPaid;
       return {
@@ -123,7 +126,21 @@ const BookingDetailsPage = () => {
         remaining: remaining,
         showPaymentButton: remaining > 0,
         showReservationRefund: true,
-        nextPaymentAmount: remaining
+        nextPaymentAmount: remaining,
+        reservationRefund: booking.reservationFee || 0 // Hoàn tiền giữ chỗ đúng bằng reservationFee
+      };
+    }
+
+    // Nếu chưa thanh toán (PENDING)
+    if (booking.status === 'pending') {
+      const remaining = booking.totalAmount - totalPaid;
+      return {
+        totalPaid: totalPaid,
+        remaining: remaining,
+        showPaymentButton: false,
+        showReservationRefund: false,
+        nextPaymentAmount: remaining,
+        reservationRefund: 0 // Không hoàn tiền giữ chỗ
       };
     }
 
@@ -134,11 +151,42 @@ const BookingDetailsPage = () => {
       remaining: remaining,
       showPaymentButton: booking.status === 'DEPOSIT_PAID' && remaining > 0,
       showReservationRefund: true,
-      nextPaymentAmount: remaining
+      nextPaymentAmount: remaining,
+      reservationRefund: booking.reservationFee || 0
     };
   };
 
-  const { totalPaid, remaining, showPaymentButton, showReservationRefund, nextPaymentAmount } = calculatePaymentDetails();
+  const { totalPaid, remaining, showPaymentButton, showReservationRefund, nextPaymentAmount, reservationRefund } = calculatePaymentDetails();
+
+  // Hàm huỷ đặt xe
+  const handleCancelBooking = async () => {
+    confirmAlert({
+      title: 'Xác nhận huỷ đơn',
+      message: 'Bạn có chắc chắn muốn huỷ đơn đặt xe này không?',
+      buttons: [
+        {
+          label: 'Đồng ý',
+          onClick: async () => {
+            try {
+              const config = { withCredentials: true };
+              const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}/cancel-with-refund`, {}, config);
+              toast.success(res.data.message || 'Huỷ đơn thành công!');
+              // Reload lại trang hoặc chuyển hướng
+              setTimeout(() => {
+                navigate('/profile/my-bookings');
+              }, 1500);
+            } catch (err) {
+              toast.error(err.response?.data?.message || 'Huỷ đơn thất bại!');
+            }
+          }
+        },
+        {
+          label: 'Huỷ',
+          onClick: () => {}
+        }
+      ]
+    });
+  };
 
   return (
     <>
@@ -253,18 +301,18 @@ const BookingDetailsPage = () => {
           </div>
           <div className="payment-row paid">
               <span className="payment-label">Hoàn tiền giữ chỗ:</span>
-              <span className="payment-value">- {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.reservationFee)}</span>
+              <span className="payment-value">- {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(reservationRefund)}</span>
             </div>
           <div className="payment-row paid">
             <span className="payment-label">Đã thanh toán:</span>
-            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaid)}</span>
+            <span className="payment-value">-{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaid)}</span>
           </div>
      
            
   
           <div className="payment-row remaining">
             <span className="payment-label">Còn lại phải trả:</span>
-            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remaining)}</span>
+            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remaining - totalPaid)}</span>
           </div>
           
           {showPaymentButton && (
@@ -273,10 +321,16 @@ const BookingDetailsPage = () => {
                 className="pay-remaining-details-button"
                 onClick={() => navigate(`/payment-remaining/${booking._id}`)}
               >
-                <FaCreditCard /> Thanh toán phần còn lại ({new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(nextPaymentAmount)})
+                <FaCreditCard /> Thanh toán phần còn lại ({new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remaining - totalPaid)})
               </button>
             </div>
           )}
+            <div className="payment-row remaining">
+           
+            <span className="payment-value"> Hạn thanh toán : {moment(booking.endDate).format('DD/MM/YYYY HH:mm')}</span>
+           
+          </div>
+          
         </div>
       </div>
 
@@ -300,9 +354,20 @@ const BookingDetailsPage = () => {
         )}
       </div>
 
-      <button className="back-button" onClick={() => navigate(-1)}>
-        Quay lại
-      </button>
+      <div className="booking-details-actions">
+        <button className="back-button" onClick={() => navigate(-1)}>
+          Quay lại
+        </button>
+        {booking.status !== 'canceled' && booking.status !== 'completed' && (
+          <button
+            className="cancel-booking-button"
+            onClick={handleCancelBooking}
+          >
+            <FaTimesCircle style={{ marginRight: 8, fontSize: 18 }} />
+            Huỷ đặt xe
+          </button>
+        )}
+      </div>
     </div>
      <Footer/>
      </>

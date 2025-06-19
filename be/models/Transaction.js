@@ -22,7 +22,7 @@ const transactionSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['PAYOS', 'CASH', 'BANK_TRANSFER', 'MOMO'],
+        enum: ['PAYOS', 'CASH', 'BANK_TRANSFER', 'MOMO', 'WALLET'],
         required: true
     },
     paymentMetadata: {

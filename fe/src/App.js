@@ -26,7 +26,7 @@ import PaymentDeposit  from "./pages/paymentDeposit/PaymentDeposit"
 import ConsignForm from "./pages/consignForm/ConsignForm";
 
 // owner
-import OwnerPage from "./pages/owner/ownerPage";
+import OwnerPage from "./pages/owner/OwnerPage";
 import VehicleManagement from "./pages/vehiclemanagement/VehicleManagement";
 import AddCarForm  from "./pages/vehiclemanagement/AddCarForm";
 
@@ -41,6 +41,7 @@ import PaymentFailed from './pages/payment/PaymentFailed';
 
 // user
 import TransactionHistory from './pages/profile/TransactionHistory';
+import WalletInfo from './pages/profile/WalletInfo';
 
 function App() {
   return (
@@ -61,6 +62,7 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile/change-password" element={<ChangePassword />}/>
             <Route path="/profile/transactions" element={<TransactionHistory />} />
+            <Route path="/profile/wallet" element={<WalletInfo />} />
 
             <Route path="/vehicles/:id" element={<VehicleDetail />} /> {/* Add VehicleDetail route */}
 

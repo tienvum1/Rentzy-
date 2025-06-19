@@ -7,6 +7,8 @@ const path = require("path");
 const cloudinary = require("../utils/cloudinary");
 const fs = require("fs");
 const twilio = require('twilio');
+const Wallet = require('../models/Wallet');
+const Transaction = require('../models/Transaction');
 dotenv.config();
 
 exports.getProfile = async (req, res) => {
@@ -763,5 +765,37 @@ exports.updateDriverLicenseVerificationStatus = async (req, res) => {
   } catch (error) {
     console.error("Error updating driver license verification status:", error);
     res.status(500).json({ message: "Lỗi server khi cập nhật trạng thái xác thực GPLX." });
+  }
+};
+
+// Lấy thông tin ví và lịch sử giao dịch của user
+exports.getWalletAndTransactions = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    // Lấy ví của user
+    const wallet = await Wallet.findOne({ user: userId });
+    if (!wallet) {
+      return res.status(404).json({ message: 'Không tìm thấy ví.' });
+    }
+    // Lấy các transaction liên quan đến user (theo booking của user hoặc theo ví nếu có)
+    // Ở đây lấy tất cả transaction liên quan đến user (có thể mở rộng filter theo ví nếu cần)
+    const transactions = await Transaction.find({})
+      .populate({
+        path: 'booking',
+        select: 'vehicle startDate endDate totalAmount status',
+        populate: {
+          path: 'vehicle',
+          select: 'brand model primaryImage'
+        }
+      })
+      .sort({ createdAt: -1 });
+    // Lọc transaction liên quan đến user
+    const userTransactions = transactions.filter(tran => {
+      return tran.booking && tran.booking.renter && tran.booking.renter.toString() === userId.toString();
+    });
+    res.json({ wallet, transactions: userTransactions });
+  } catch (error) {
+    console.error('Error fetching wallet and transactions:', error);
+    res.status(500).json({ message: 'Lỗi server khi lấy thông tin ví.' });
   }
 };

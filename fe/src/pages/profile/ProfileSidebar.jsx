@@ -1,6 +1,6 @@
 import React from 'react';
 // Add icons import back
-import { FaUser, FaHeart, FaCar, FaSuitcaseRolling, FaClipboardCheck, FaGift, FaAddressBook, FaLock, FaTrash } from 'react-icons/fa';
+import { FaUser, FaHeart, FaCar, FaSuitcaseRolling, FaClipboardCheck, FaGift, FaWallet, FaLock, FaTrash } from 'react-icons/fa';
 import './ProfileSidebar.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 // Remove import menu items from the new file
@@ -19,7 +19,7 @@ const ProfileSidebar = () => {
         { path: '/ownerpage/overview', label: 'Quản lí xe cho owner', icon: <FaClipboardCheck /> }, // Full path for owner dashboard overview
     
         { path: '/profile/transactions', label: 'Lịch sử giao dịch', icon: <FaGift /> },
-        { path: '/profile/addresses', label: 'Địa chỉ của tôi', icon: <FaAddressBook /> },
+        { path: '/profile/wallet', label: 'Ví của tôi', icon: <FaWallet /> },
         { path: '/profile/change-password', label: 'Đổi mật khẩu', icon: <FaLock /> }, // Full path for change password
         { path: '/profile/delete-account', label: 'Yêu cầu xoá tài khoản', icon: <FaTrash /> },
         // Add other profile sub-pages here as needed with their full paths

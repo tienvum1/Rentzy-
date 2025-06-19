@@ -11,92 +11,68 @@ const TransactionHistory = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
+  const [error, setError] = useState(null);
 
   const navigate = useNavigate();
 
-  const fetchTransactions = async () => {
-    try {
-      const config = {
-        withCredentials: true,
-      };
-
-      let url = `${process.env.REACT_APP_BACKEND_URL}/api/transactions/my-transactions`;
-      const params = new URLSearchParams();
-
-      if (statusFilter) {
-        params.append('status', statusFilter);
-      }
-
-      const response = await axios.get(`${url}?${params.toString()}`, config);
-      setTransactions(response.data.transactions);
-    } catch (err) {
-      console.error('Error fetching transactions:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchTransactions = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const config = { withCredentials: true };
+        let url = `${process.env.REACT_APP_BACKEND_URL}/api/transactions/my-transactions`;
+        if (statusFilter) {
+          url += `?status=${statusFilter}`;
+        }
+        const response = await axios.get(url, config);
+        setTransactions(response.data.transactions);
+      } catch (err) {
+        setError('Không thể tải lịch sử giao dịch.');
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchTransactions();
   }, [statusFilter]);
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'PENDING':
-        return 'Đang chờ xử lý';
-      case 'COMPLETED':
-        return 'Hoàn thành';
-      case 'FAILED':
-        return 'Thất bại';
-      case 'CANCELED':
-        return 'Đã hủy';
-      default:
-        return status;
+      case 'PENDING': return 'Đang chờ xử lý';
+      case 'COMPLETED': return 'Hoàn thành';
+      case 'FAILED': return 'Thất bại';
+      case 'CANCELED': return 'Đã hủy';
+      default: return status;
     }
   };
 
   const getStatusClass = (status) => {
     switch (status) {
-      case 'PENDING':
-        return 'pending';
-      case 'COMPLETED':
-        return 'completed';
-      case 'FAILED':
-        return 'failed';
-      case 'CANCELED':
-        return 'canceled';
-      default:
-        return '';
+      case 'PENDING': return 'pending';
+      case 'COMPLETED': return 'completed';
+      case 'FAILED': return 'failed';
+      case 'CANCELED': return 'canceled';
+      default: return '';
     }
   };
 
   const getTransactionTypeText = (type) => {
     switch (type) {
-      case 'DEPOSIT':
-        return 'Tiền giữ chỗ';
-      case 'RENTAL':
-        return 'Tiền thuê xe';
-      case 'REFUND':
-        return 'Hoàn tiền';
-      default:
-        return type;
+      case 'DEPOSIT': return 'Tiền giữ chỗ';
+      case 'RENTAL': return 'Tiền thuê xe';
+      case 'REFUND': return 'Hoàn tiền';
+      default: return type;
     }
   };
 
-  if (loading) {
-    return <div className="transaction-history-container">Đang tải...</div>;
-  }
-
   return (
-    <>  <Header />
-    <div className="profile-page">
-  
-      <div className="profile-container">
+    <>
+      <Header />
+      <div className="profile-page-container">
         <ProfileSidebar />
-        <div className="profile-content">
+        <main className="profile-main-content">
           <div className="transaction-history-container">
             <h2>Lịch sử giao dịch</h2>
-
             <div className="filter-controls">
               <label htmlFor="statusFilter">Lọc theo trạng thái:</label>
               <select
@@ -111,8 +87,11 @@ const TransactionHistory = () => {
                 <option value="CANCELED">Đã hủy</option>
               </select>
             </div>
-
-            {transactions.length === 0 ? (
+            {loading ? (
+              <div className="wallet-loading">Đang tải...</div>
+            ) : error ? (
+              <div className="wallet-error">{error}</div>
+            ) : transactions.length === 0 ? (
               <p>Bạn chưa có giao dịch nào.</p>
             ) : (
               <div className="transactions-table-container">
@@ -137,22 +116,12 @@ const TransactionHistory = () => {
                         <td>
                           {transaction.booking?.vehicle ? (
                             <div className="vehicle-cell-content">
-                              {transaction.booking.vehicle.primaryImage ? (
-                                <img 
-                                  src={transaction.booking.vehicle.primaryImage} 
-                                  alt={`${transaction.booking.vehicle.brand} ${transaction.booking.vehicle.model}`} 
-                                  className="vehicle-thumbnail" 
-                                />
-                              ) : (
-                                <div className="no-image-thumbnail">No Image</div>
-                              )}
+                             
                               <div className="vehicle-details-text">
                                 <p className="vehicle-name-in-table">
-                                  {transaction.booking.vehicle.brand} {transaction.booking.vehicle.model}
+                              {transaction.booking.vehicle.model}
                                 </p>
-                                <p className="booking-dates">
-                                  <FaCalendarAlt /> {moment(transaction.booking.startDate).format('DD/MM/YYYY')} - {moment(transaction.booking.endDate).format('DD/MM/YYYY')}
-                                </p>
+                              
                               </div>
                             </div>
                           ) : (
@@ -168,14 +137,16 @@ const TransactionHistory = () => {
                         </td>
                         <td>{moment(transaction.createdAt).format('DD/MM/YYYY HH:mm')}</td>
                         <td>
-                          <div className="actions-cell">
-                            <button 
-                              className="view-details-button"
-                              onClick={() => navigate(`/bookings/${transaction.booking._id}`)}
-                            >
-                              <FaInfoCircle /> Xem chi tiết
-                            </button>
-                          </div>
+                          {transaction.booking?._id && (
+                            <div className="actions-cell">
+                              <button
+                                className="view-details-button"
+                                onClick={() => navigate(`/bookings/${transaction.booking._id}`)}
+                              >
+                                <FaInfoCircle /> Xem chi tiết
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -184,9 +155,8 @@ const TransactionHistory = () => {
               </div>
             )}
           </div>
-        </div>
+        </main>
       </div>
-    </div>
     </>
   );
 };

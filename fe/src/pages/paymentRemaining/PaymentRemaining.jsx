@@ -137,31 +137,9 @@ const PaymentRemaining = () => {
             </span>
           </div>
           <div className="detail-row">
-            <span className="label">Phí thuê xe:</span>
-            <span className="value price">
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalCost)}
-            </span>
-          </div>
-          {booking.deliveryFee > 0 && (
-            <div className="detail-row">
-              <span className="label">Phí giao xe (2 chiều):</span>
-              <span className="value price">
-                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.deliveryFee)}
-              </span>
-            </div>
-          )}
-          {booking.discountAmount > 0 && (
-            <div className="detail-row">
-              <span className="label">Giảm giá:</span>
-              <span className="value price">
-                -{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.discountAmount)}
-              </span>
-            </div>
-          )}
-          <div className="detail-row">
             <span className="label">Đã thanh toán (tiền cọc):</span>
             <span className="value price">
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaidAmount)}
+              -{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaidAmount)}
             </span>
           </div>
           <div className="detail-row">

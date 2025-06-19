@@ -4,6 +4,7 @@ const Vehicle = require('../models/Vehicle');
 const Car = require('../models/Car');
 const Transaction = require('../models/Transaction');
 const User = require('../models/User');
+const Wallet = require('../models/Wallet');
 
 // Tạo booking mới
 const createBooking = async (req, res) => {
@@ -460,6 +461,146 @@ const getAllBookingOfSpecificUser = async (req, res) => {
   }
 }
 
+
+// Hàm tính số tiền hoàn giữ chỗ (chỉ ngày thường)
+function getReservationRefund(booking) {
+  const now = new Date();
+  const startDate = new Date(booking.startDate);
+  const diffDays = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
+  const reservationFee = booking.reservationFee || 0;
+console.log("startDate" ,startDate);
+console.log(" tiền đã giữ chỗ" ,reservationFee);
+console.log("diffDays" ,diffDays);
+
+
+
+
+  if (diffDays > 10) return reservationFee; // 100%
+  if (diffDays > 5) return reservationFee * 0.3; // 30%
+  return 0;
+}
+
+// Hàm tính số tiền hoàn lại tổng cộng
+function getTotalRefund(booking) {
+  // Nếu đã thanh toán toàn bộ (RENTAL_PAID): hoàn lại toàn bộ số tiền đã thanh toán (reservationFee + phần còn lại),
+  // nhưng reservationFee hoàn theo chính sách, phần còn lại hoàn 100%
+  if (booking.status === 'RENTAL_PAID') {
+    // Tổng số tiền đã thanh toán
+    const totalPaid = booking.transactions.reduce((sum, t) => t.status === 'COMPLETED' ? sum + t.amount : sum, 0);
+    // Tiền giữ chỗ hoàn theo chính sách
+    const reservationRefund = getReservationRefund(booking);
+    // Phần còn lại hoàn 100%
+    const remainingRefund = totalPaid - (booking.reservationFee || 0);
+    return {
+      reservationRefund,
+      remainingRefund,
+      totalRefund: reservationRefund + remainingRefund
+    };
+  }
+  // Nếu chỉ thanh toán tiền giữ chỗ (DEPOSIT_PAID): chỉ hoàn reservationFee theo chính sách
+  if (booking.status === 'DEPOSIT_PAID') {
+    const reservationRefund = getReservationRefund(booking);
+    return {
+      reservationRefund,
+      remainingRefund: 0,
+      totalRefund: reservationRefund
+    };  
+   
+  }
+  
+  
+  // Nếu chưa thanh toán hoặc trạng thái khác: không hoàn
+  return {
+    reservationRefund: 0,
+    remainingRefund: 0,
+    totalRefund: 0
+  };
+}
+
+// API: Hủy đơn và hoàn tiền giữ chỗ theo chính sách (chỉ ngày thường)
+const cancelBookingWithRefund = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findById(id).populate('transactions');
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+    }
+
+    // Chỉ cho phép người thuê hoặc admin hủy
+    if (
+      booking.renter.toString() !== req.user._id.toString() &&
+      !req.user.role.includes('admin')
+    ) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền hủy đơn này.' });
+    }
+
+    // Chỉ cho phép hủy nếu chưa bắt đầu chuyến đi
+    if (new Date(booking.startDate) <= new Date()) {
+      return res.status(400).json({ success: false, message: 'Không thể hủy đơn đã bắt đầu.' });
+    }
+
+    // Tính số tiền hoàn lại
+    const { reservationRefund, remainingRefund, totalRefund } = getTotalRefund(booking);
+
+    // Cập nhật trạng thái booking
+    booking.status = 'canceled';
+    booking.cancellationReason = req.body.reason || 'User canceled';
+    booking.cancelledAt = new Date();
+    booking.cancelledBy = 'renter';
+    await booking.save();
+
+    // Nếu có hoàn tiền giữ chỗ, tạo transaction hoàn tiền giữ chỗ
+    if (reservationRefund > 0) {
+      const refundTransaction = new Transaction({
+        booking: booking._id,
+        amount: reservationRefund,
+        type: 'REFUND',
+        status: 'COMPLETED',
+        paymentMethod: 'WALLET',
+        paymentMetadata: { reason: 'Refund reservation fee on cancel' }
+      });
+      await refundTransaction.save();
+      booking.transactions.push(refundTransaction._id);
+      await booking.save();
+    }
+    // Nếu có hoàn phần còn lại, tạo transaction hoàn phần còn lại
+    if (remainingRefund > 0) {
+      const refundTransaction = new Transaction({
+        booking: booking._id,
+        amount: remainingRefund,
+        type: 'REFUND',
+        status: 'COMPLETED',
+        paymentMethod: 'WALLET',
+        paymentMetadata: { reason: 'Refund remaining payment on cancel' }
+      });
+      await refundTransaction.save();
+      booking.transactions.push(refundTransaction._id);
+      await booking.save();
+    }
+
+    // Cộng tiền hoàn vào ví user (renter)
+    if (totalRefund > 0) {
+      const wallet = await Wallet.findOne({ user: booking.renter });
+      if (wallet) {
+        wallet.balance += totalRefund;
+        await wallet.save();
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Đơn đã hủy. Số tiền hoàn giữ chỗ: ${reservationRefund.toLocaleString('vi-VN')} VND, hoàn phần còn lại: ${remainingRefund.toLocaleString('vi-VN')} VND, tổng hoàn: ${totalRefund.toLocaleString('vi-VN')} VND`,
+      reservationRefund,
+      remainingRefund,
+      totalRefund
+    });
+  } catch (error) {
+    console.error('Cancel booking with refund error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi hủy đơn và hoàn tiền.' });
+  }
+};
+
 module.exports = {
   createBooking,
   getVehicleBookedDates,
@@ -469,5 +610,6 @@ module.exports = {
   cancelExpiredBooking,
   updatePaymentStatus,
   cancelBookingByFrontend,
-  getAllBookingOfSpecificUser
+  getAllBookingOfSpecificUser,
+  cancelBookingWithRefund
 };
