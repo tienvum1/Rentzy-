@@ -35,6 +35,7 @@ import AddCarForm  from "./pages/vehiclemanagement/AddCarForm";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import OwnerRequestsPage from "./pages/admin/OwnerRequestsPage";
 import VehiclesRequestPage from "./pages/admin/VehiclesRequestPage";
+import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
 
 import PaymentSuccess from './pages/payment/PaymentSuccess';
 import PaymentFailed from './pages/payment/PaymentFailed';
@@ -87,6 +88,7 @@ function App() {
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="owner-requests" element={<OwnerRequestsPage />} />
                 <Route path="vehicle-approvals" element={<VehiclesRequestPage />} />
+                <Route path="withdrawals" element={<AdminWithdrawals />} />
             {/* </Route> */}
 
 

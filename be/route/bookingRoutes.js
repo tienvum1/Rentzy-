@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, verifyRenterRequirements } = require('../middleware/authMiddleware');
-const { getVehicleBookedDates, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, cancelBookingWithRefund } = require('../controller/bookingController');
+const { getVehicleBookedDates, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, cancelBookingWithRefund, getExpectedRefund } = require('../controller/bookingController');
 
 // Public routes
 router.get('/vehicle/:vehicleId/dates', getVehicleBookedDates);
@@ -11,6 +11,7 @@ router.get('/vehicle/:vehicleId/dates', getVehicleBookedDates);
 router.get('/my-bookings', protect, getUserBookings);
 router.post('/createBooking', protect, verifyRenterRequirements, createBooking);
 router.get('/:id', protect, getBookingDetails);
+router.get('/:id/expected-refund', protect, getExpectedRefund); // API lấy thông tin hoàn tiền dự kiến
 router.post('/:id/cancel-expired', protect, cancelBookingByFrontend);
 // huỷ đơn thue
 router.post('/:id/cancel-with-refund', protect, cancelBookingWithRefund);
