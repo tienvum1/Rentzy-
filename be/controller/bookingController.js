@@ -450,7 +450,8 @@ const getAllBookingOfSpecificUser = async (req, res) => {
       deposit: booking.deposit,
       reservationFee: booking.reservationFee,
       pickupLocation: booking.pickupLocation,
-      returnLocation: booking.returnLocation
+      returnLocation: booking.returnLocation,
+
     }));
 
     return res.status(200).json(result);
@@ -459,6 +460,88 @@ const getAllBookingOfSpecificUser = async (req, res) => {
     return res.status(500).json({ message: 'Failed to fetch bookings' });
   }
 }
+
+// Get all bookings of a specific user with filters from client
+const getFilteredBookingsOfUser = async (req, res) => {
+  try {
+    const userId = '6840f01c4fb8acce3d4394c2'
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Extract filters from query parameters
+    const { model, type, status, startDate, endDate } = req.body;
+    console.log('startDate', startDate);
+    console.log('endDate', endDate);
+
+    // Build booking query
+    let bookingQuery = { renter: userId };
+    if (status) bookingQuery.status = status;
+
+    // Date range filter
+    if (startDate && endDate) {
+      bookingQuery.startDate = { $gte: new Date(startDate) };
+      bookingQuery.endDate = { $lte: new Date(endDate) };
+    }
+
+    // Build vehicle filter for population
+    let vehicleMatch = {};
+    if (model) vehicleMatch.model = model;
+    if (type) vehicleMatch.type = type;
+
+    // Find bookings and populate vehicle with filter
+    const bookings = await Booking.find(bookingQuery)
+      .populate({
+        path: 'vehicle',
+        match: vehicleMatch,
+        select: 'model type licensePlate'
+      })
+      .select('startDate endDate totalAmount status deposit reservationFee pickupLocation returnLocation vehicle');
+
+    // Filter out bookings where vehicle doesn't match (populate returns null if not matched)
+    const filtered = bookings.filter(b => b.vehicle);
+
+    const result = filtered.map(booking => ({
+      vehicle: {
+        model: booking.vehicle.model,
+        type: booking.vehicle.type,
+        licensePlate: booking.vehicle.licensePlate
+      },
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      totalAmount: booking.totalAmount,
+      status: booking.status,
+      deposit: booking.deposit,
+      reservationFee: booking.reservationFee,
+      pickupLocation: booking.pickupLocation,
+      returnLocation: booking.returnLocation,
+    }));
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('Error fetching filtered bookings:', error);
+    return res.status(500).json({ message: 'Failed to fetch bookings' });
+  }
+};
+
+// Lấy tất cả các model xe (dùng cho filter)
+const getAllModelOfVehicle = async (req, res) => {
+  try {
+    // Lấy danh sách các model duy nhất từ collection Vehicle
+    const models = await Vehicle.distinct('model');
+    res.status(200).json({
+      success: true,
+      models
+    });
+  } catch (error) {
+    console.error('Error fetching vehicle models:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi lấy danh sách model xe',
+      error: error.message
+    });
+  }
+};
 
 module.exports = {
   createBooking,
@@ -469,5 +552,7 @@ module.exports = {
   cancelExpiredBooking,
   updatePaymentStatus,
   cancelBookingByFrontend,
-  getAllBookingOfSpecificUser
+  getAllBookingOfSpecificUser,
+  getFilteredBookingsOfUser,
+  getAllModelOfVehicle,
 };

@@ -41,6 +41,7 @@ import PaymentFailed from './pages/payment/PaymentFailed';
 
 // user
 import TransactionHistory from './pages/profile/TransactionHistory';
+import ManageBooking from "./components/user/ManageBooking";
 
 function App() {
   return (
@@ -56,7 +57,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/profile/my-bookings" element={<UserBookings />} /> {/* New route for user bookings */}
+            <Route path="/profile/my-bookings" element={<ManageBooking />} /> {/* New route for user bookings */}
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile/change-password" element={<ChangePassword />}/>
