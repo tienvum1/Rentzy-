@@ -1,68 +1,120 @@
 const User = require('../models/User');
-const mongoose = require('mongoose'); // Import mongoose if needed in these controllers
+const Vehicle = require('../models/Vehicle');
 
-// Get all pending owner requests
-exports.getPendingOwnerRequests = async (req, res) => {
+// Lấy danh sách yêu cầu làm chủ xe
+const getOwnerRequests = async (req, res) => {
     try {
-        // Assuming admin check middleware is applied to this route
-        // Only fetch users with pending owner requests and select relevant fields
-        const pendingRequests = await User.find({ owner_request_status: 'pending' }).select('name email phone cccd_number cccd_front_url cccd_back_url owner_request_submitted_at'); // Corrected select fields
-
-        res.status(200).json({ success: true, data: pendingRequests });
+        const pendingOwners = await User.find({ owner_request_status: 'pending' }).select('-password');
+        res.status(200).json({ success: true, data: pendingOwners });
     } catch (error) {
-         console.error('Error in getPendingOwnerRequests:', error);
-         res.status(500).json({ success: false, message: 'Internal server error.' });
+        console.error("Error fetching owner requests:", error);
+        res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
     }
 };
 
-// Review (Approve/Reject) an owner request
-exports.reviewOwnerRequest = async (req, res) => {
-    try {
-        // Assuming admin check middleware is applied to this route
-        const { userId } = req.params;
-        const { status, rejectionReason } = req.body; // status should be 'approved' or 'rejected'
+// Cập nhật trạng thái yêu cầu làm chủ xe
+const updateOwnerRequestStatus = async (req, res) => {
+    const { userId } = req.params;
+    const { status } = req.body; 
 
-        if (!['approved', 'rejected'].includes(status)) {
-            return res.status(400).json({ success: false, message: 'Invalid status provided.' });
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.owner_request_status = status;
+        if (status === 'approved') {
+            user.role = 'owner';
+        }
+        
+        await user.save({ validateBeforeSave: false });
+
+        res.status(200).json({ success: true, message: `Yêu cầu của chủ xe đã được ${status === 'approved' ? 'chấp thuận' : 'từ chối'}.` });
+    } catch (error) {
+        console.error(`Error updating owner request status for user ${userId}:`, error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+// Lấy danh sách xe chờ duyệt
+const getVehicleApprovalRequests = async (req, res) => {
+    try {
+        const pendingVehicles = await Vehicle.find({ status: 'pending' }).populate('owner_id', 'name email');
+        res.status(200).json(pendingVehicles);
+    } catch (error) {
+        console.error("Error fetching vehicle approval requests:", error);
+        res.status(500).json({ message: 'Lỗi máy chủ nội bộ' });
+    }
+};
+
+// Cập nhật trạng thái duyệt xe
+const updateVehicleApprovalStatus = async (req, res) => {
+    const { vehicleId } = req.params;
+    const { status } = req.body; 
+
+    try {
+        const vehicle = await Vehicle.findById(vehicleId);
+        if (!vehicle) {
+            return res.status(404).json({ message: 'Vehicle not found' });
+        }
+
+        vehicle.status = status;
+        await vehicle.save();
+
+        res.status(200).json({ message: `Vehicle ${status}` });
+    } catch (error) {
+        console.error(`Error updating vehicle status for vehicle ${vehicleId}:`, error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+// Lấy danh sách yêu cầu xác thực GPLX
+const getDriverLicenseRequests = async (req, res) => {
+    try {
+        const pendingLicenses = await User.find({ 
+            driver_license_verification_status: 'pending',
+            driver_license_number: { $ne: null, $ne: '' } 
+        }).select('-password');
+        res.status(200).json(pendingLicenses);
+    } catch (error) {
+        console.error("Error fetching driver license requests:", error);
+        res.status(500).json({ message: 'Lỗi máy chủ nội bộ' });
+    }
+};
+
+// Cập nhật trạng thái xác thực GPLX
+const updateDriverLicenseStatus = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { status } = req.body; 
+
+        if (!['verified', 'rejected'].includes(status)) {
+            return res.status(400).json({ message: 'Trạng thái không hợp lệ.' });
         }
 
         const user = await User.findById(userId);
 
         if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found.' });
+            return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
         }
 
-        // Prevent reviewing already reviewed requests (optional, depends on flow)
-        if (user.owner_request_status !== 'pending') {
-             return res.status(400).json({ success: false, message: 'Yêu cầu này đã được xử lý.' });
-        }
+        user.driver_license_verification_status = status;
+        await user.save({ validateBeforeSave: false });
 
-        user.owner_request_status = status;
-        user.owner_request_reviewed_by = req.user._id; // Assuming admin user is in req.user
-        user.owner_request_reviewed_at = new Date();
-        user.owner_request_rejection_reason = status === 'rejected' ? rejectionReason : null;
-
-
-        if (status === 'approved') {
-            // Set identity verified for owner
-            user.is_identity_verified_for_owner = true;
-            // Add 'owner' role if not already present
-            if (!user.role.includes('owner')) {
-                user.role.push('owner');
-            }
-        } else if (status === 'rejected') {
-             // Optionally reset verified status if rejected
-            user.is_identity_verified_for_owner = false;
-            // Optionally remove 'owner' role if it was somehow added before final approval (less likely with this flow)
-            // user.role = user.role.filter(role => role !== 'owner');
-        }
-
-        await user.save();
-
-        res.status(200).json({ success: true, message: `Yêu cầu đã được ${status === 'approved' ? 'chấp nhận' : 'từ chối'}.` });
-
+        res.status(200).json({ message: `Giấy phép lái xe đã được ${status === 'verified' ? 'chấp thuận' : 'từ chối'}.` });
     } catch (error) {
-         console.error('Error in reviewOwnerRequest:', error);
-         res.status(500).json({ success: false, message: 'Internal server error.' });
+        console.error("Error updating driver license status:", error);
+        res.status(500).json({ message: 'Lỗi máy chủ nội bộ' });
     }
+};
+
+// Chỉ export một đối tượng duy nhất
+module.exports = {
+    getOwnerRequests,
+    updateOwnerRequestStatus,
+    getVehicleApprovalRequests,
+    updateVehicleApprovalStatus,
+    getDriverLicenseRequests,
+    updateDriverLicenseStatus
 };

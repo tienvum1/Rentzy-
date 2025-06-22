@@ -36,6 +36,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import OwnerRequestsPage from "./pages/admin/OwnerRequestsPage";
 import VehiclesRequestPage from "./pages/admin/VehiclesRequestPage";
 import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
+import DriverLicenseRequestsPage from "./pages/admin/DriverLicenseRequestsPage";
 
 import PaymentSuccess from './pages/payment/PaymentSuccess';
 import PaymentFailed from './pages/payment/PaymentFailed';
@@ -60,6 +61,8 @@ function App() {
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/my-bookings" element={<ManageBooking />} /> {/* New route for user bookings */}
+            <Route path="/profile/favorites" element={<ProfilePage />} />
+            <Route path="/profile/my-bookings" element={<UserBookings />} /> {/* New route for user bookings */}
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile/change-password" element={<ChangePassword />}/>
@@ -85,12 +88,14 @@ function App() {
 
             {/* admin route */}
              {/* chỉ admin có quyền truy cập */}
-            {/* <Route path="/admin" element={<AdminRouteGuard />}> */}
+            <Route path="/admin" element={<AdminRouteGuard />}>
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="owner-requests" element={<OwnerRequestsPage />} />
                 <Route path="vehicle-approvals" element={<VehiclesRequestPage />} />
                 <Route path="withdrawals" element={<AdminWithdrawals />} />
             {/* </Route> */}
+                <Route path="driver-license-requests" element={<DriverLicenseRequestsPage />} />
+            </Route>
 
 
        

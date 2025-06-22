@@ -62,7 +62,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
   const [showDateTimeModal, setShowDateTimeModal] = useState(false);
 
   // Thêm useAuth và useNavigate
-  const { isAuthenticated, token } = useAuth();
+  const { user, isAuthenticated, token } = useAuth();
   const navigate = useNavigate();
 
   // Fetch các ngày đã được đặt của xe
@@ -223,20 +223,32 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
     }
   };
 
+  // Cập nhật hàm onBookNow để bao gồm kiểm tra
+  const handleBookNow = () => {
+    if (!isAuthenticated) {
+      toast.error('Bạn cần đăng nhập để đặt xe.');
+      navigate('/login');
+      return;
+    }
+    if (!user || !user.is_phone_verified) {
+      toast.error('Vui lòng xác thực số điện thoại trong hồ sơ của bạn trước khi đặt xe.');
+      navigate('/profile');
+      return;
+    }
+    // Nếu đã xác thực, gọi hàm onBookNow gốc
+    if (onBookNow) {
+      onBookNow();
+    }
+  };
+
   // Cập nhật hàm handleSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (isSubmitting) return;
-    
+
     if (bookingDetails.finalAmount <= 0) {
       toast.error('Tổng số tiền phải lớn hơn 0.');
-      return;
-    }
-
-    if (!isAuthenticated) {
-      toast.error('Bạn cần đăng nhập để đặt xe.');
-      navigate('/login');
       return;
     }
 
@@ -546,7 +558,10 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
           {isSubmitting ? 'Đang xử lý...' : 'Đặt xe ngay'}
         </button>
         <div className="terms-agreement">
-          Bằng việc chuyển giữ chỗ và thuê xe, bạn đồng ý với khoản sử dụng và Chính sách bảo mật
+          <p className="booking-section__note">
+            Bằng việc chuyển giữ chỗ và thuê xe, bạn đồng ý với{' '}
+            <a href="/terms">khoản sử dụng</a> và <a href="/policy">Chính sách bảo mật</a> của chúng tôi.
+          </p>
         </div>
       </div>
     </div>

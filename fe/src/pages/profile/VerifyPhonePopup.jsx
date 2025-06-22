@@ -1,46 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './UpdateEmailPopup.css'; // Reusing the same CSS file for general styles
 import { FaTimes } from 'react-icons/fa'; // Close icon
+import axios from 'axios';
 
-const VerifyPhonePopup = ({ open, onClose, onVerifyOtp, onResendOtp }) => {
+const VerifyPhonePopup = ({ open, onClose, onVerifyOtp, userPhone, errorMessage, setErrorMessage }) => {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [resendLoading, setResendLoading] = useState(false); // State for resend button loading
+  const [message, setMessage] = useState('');
+  const [cooldown, setCooldown] = useState(0);
 
-  // Reset state when popup opens/closes
-  useState(() => {
-      if(open) {
-          setOtp(''); // Clear OTP when opening
-          setMessage(null);
-          setLoading(false);
-          setResendLoading(false);
-      }
-  }, [open]);
+  useEffect(() => {
+    let timer;
+    if (cooldown > 0) {
+      timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
-  const handleOtpChange = (e) => {
-    setOtp(e.target.value);
-  };
+  useEffect(() => {
+    if (open) {
+      setOtp('');
+      setMessage('');
+      setErrorMessage('');
+      setCooldown(0);
+    }
+  }, [open, setErrorMessage]);
 
   const handleVerifyClick = async () => {
     if (!otp.trim()) {
-      setMessage({ type: 'error', text: 'Vui lòng nhập mã xác minh.' });
+      setErrorMessage('Vui lòng nhập mã OTP.');
       return;
     }
-
     setLoading(true);
-    setMessage(null);
-    await onVerifyOtp(otp);
+    setErrorMessage('');
+    await onVerifyOtp(otp); // This will be passed from Profile.jsx
     setLoading(false);
-    // message and closing will be handled by parent via onVerifyOtp callback
   };
 
   const handleResendClick = async () => {
-      setResendLoading(true);
-      setMessage(null); // Clear previous messages
-      await onResendOtp();
-      setResendLoading(false);
-      // message will be handled by parent via onResendOtp callback (e.g., show success message)
+    if (cooldown > 0) return;
+    setCooldown(60); // Start cooldown immediately for instant feedback
+    setMessage('');
+    setErrorMessage('');
+    try {
+      await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999'}/api/user/resend-phone-otp`,
+        { phone: userPhone }, // Send the current phone number with the correct key 'phone'
+        {
+          withCredentials: true,
+        }
+      );
+      setMessage('Mã OTP mới đã được gửi thành công.');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Lỗi khi gửi lại mã OTP.');
+      setCooldown(0); // Reset cooldown on error so user can try again
+    }
   };
 
   if (!open) return null;
@@ -52,20 +66,27 @@ const VerifyPhonePopup = ({ open, onClose, onVerifyOtp, onResendOtp }) => {
           <FaTimes />
         </button>
         <h3>Xác minh số điện thoại</h3> {/* Title */}
-        {message && <p className={`popup-message ${message.type}`}>{message.text}</p>}
+        <p>Chúng tôi đã gửi mã OTP đến số: <strong>{userPhone}</strong></p>
+        {errorMessage && <p className="popup-message error">{errorMessage}</p>}
+        {message && <p className="popup-message success">{message}</p>}
         <input
           type="text"
-          placeholder="Nhập mã xác minh"
+          placeholder="Nhập mã OTP"
           value={otp}
-          onChange={handleOtpChange}
+          onChange={(e) => {
+            setOtp(e.target.value);
+            if (errorMessage) setErrorMessage('');
+          }}
           className="popup-input"
         />
         <button onClick={handleVerifyClick} disabled={loading} className="popup-update-btn"> {/* Reusing popup-update-btn class */}
           {loading ? 'Đang xác minh...' : 'Xác minh'}
         </button>
-        <button onClick={handleResendClick} disabled={resendLoading} className="popup-resend-btn"> {/* Reusing popup-resend-btn class */}
-            {resendLoading ? 'Đang gửi lại...' : 'Không nhận được mã? Gửi lại mã.'}
-        </button>
+        <div className="popup-resend-container">
+          <button onClick={handleResendClick} disabled={cooldown > 0} className="popup-resend-link">
+            {cooldown > 0 ? `Gửi lại sau (${cooldown}s)` : 'Gửi lại mã OTP'}
+          </button>
+        </div>
       </div>
     </div>
   );

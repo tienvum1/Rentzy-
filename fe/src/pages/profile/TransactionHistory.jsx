@@ -3,8 +3,6 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { FaInfoCircle, FaCalendarAlt, FaWallet, FaEye } from 'react-icons/fa';
-import Header from '../../components/Header/Header';
-import ProfileSidebar from './ProfileSidebar';
 import './TransactionHistory.css';
 
 const TransactionHistory = () => {
@@ -168,135 +166,115 @@ const TransactionHistory = () => {
     }
   };
 
-
-
   return (
-    <>
-      <Header />
-      <div className="profile-page-container">
-        <ProfileSidebar />
-        <main className="profile-main-content">
-          <div className="transaction-history-container">
-            <div className="transaction-header">
-              <h2>Lịch sử giao dịch ví</h2>
-              {wallet && (
-                <div className="wallet-summary">
-                  <FaWallet className="wallet-icon" />
-                  <span className="wallet-balance">
-                    Số dư: {wallet.balance.toLocaleString('vi-VN')} {wallet.currency}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="filter-controls">
-              <div className="filter-group">
-                <label htmlFor="statusFilter">Trạng thái:</label>
-                <select
-                  id="statusFilter"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="">Tất cả</option>
-                  <option value="PENDING">Đang chờ xử lý</option>
-                  <option value="COMPLETED">Hoàn thành</option>
-                  <option value="FAILED">Thất bại</option>
-                  <option value="CANCELED">Đã hủy</option>
-                  <option value="REFUNDED">Đã hoàn tiền</option>
-                </select>
-              </div>
-
-              <div className="filter-group">
-                <label htmlFor="typeFilter">Loại giao dịch:</label>
-                <select
-                  id="typeFilter"
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                >
-                  <option value="">Tất cả</option>
-                  <option value="WALLET_DEPOSIT">Nạp tiền</option>
-                  <option value="WALLET_WITHDRAW">Rút tiền</option>
-                  <option value="RENTAL">Thuê xe</option>
-                  <option value="DEPOSIT">Tiền cọc</option>
-                  <option value="REFUND">Hoàn tiền</option>
-                  <option value="PAYMENT">Thanh toán</option>
-                  <option value="CANCELLATION">Hủy đơn</option>
-                </select>
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="loading-container">
-                <div className="loading-spinner"></div>
-                <p>Đang tải lịch sử giao dịch...</p>
-              </div>
-            ) : error ? (
-              <div className="error-container">
-                <div className="error-icon">⚠️</div>
-                <p>{error}</p>
-              </div>
-            ) : !transactions || transactions.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">📊</div>
-                <h3>Chưa có giao dịch nào</h3>
-                <p>Bạn chưa có giao dịch nào trong ví.</p>
-              </div>
-            ) : (
-              <div className="transactions-table-container">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Loại giao dịch</th>
-                      <th>Số tiền</th>
-                      <th>Phương thức</th>
-                      <th>Trạng thái</th>
-                      <th>Thời gian</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.map((transaction) => (
-                      <tr key={transaction._id}>
-                        <td>
-                          <div className="transaction-type-cell">
-                            <span className="transaction-icon">
-                              {getTransactionIcon(transaction.type)}
-                            </span>
-                            <span className="transaction-type-text">
-                              {getTransactionTypeText(transaction.type)}
-                            </span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className={`amount ${getAmountColor(transaction)}`}>
-                            {getAmountSign(transaction)}
-                            {new Intl.NumberFormat('vi-VN', { 
-                              style: 'currency', 
-                              currency: 'VND' 
-                            }).format(transaction.amount)}
-                          </span>
-                        </td>
-                        <td>{getPaymentMethodText(transaction.paymentMethod)}</td>
-                        <td>
-                          <span className={`transaction-status ${getStatusClass(transaction.status)}`}>
-                            {getStatusText(transaction.status)}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="time-cell">
-                            <FaCalendarAlt className="time-icon" />
-                            <span>{moment(transaction.createdAt).format('DD/MM/YYYY HH:mm')}</span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+    <main className="profile-main-content">
+      <div className="transaction-history-container">
+        <h2>Lịch sử giao dịch</h2>
+        <div className="filter-controls">
+          <div className="filter-group">
+            <label htmlFor="statusFilter">Lọc theo trạng thái:</label>
+            <select
+              id="statusFilter"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">Tất cả</option>
+              <option value="PENDING">Đang chờ xử lý</option>
+              <option value="COMPLETED">Hoàn thành</option>
+              <option value="FAILED">Thất bại</option>
+              <option value="CANCELED">Đã hủy</option>
+              <option value="REFUNDED">Đã hoàn tiền</option>
+            </select>
           </div>
-        </main>
+          <div className="filter-group">
+            <label htmlFor="typeFilter">Lọc theo loại:</label>
+            <select
+              id="typeFilter"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
+              <option value="">Tất cả</option>
+              <option value="WALLET_DEPOSIT">Nạp tiền</option>
+              <option value="WALLET_WITHDRAW">Rút tiền</option>
+              <option value="RENTAL">Tiền thuê xe</option>
+              <option value="REFUND">Hoàn tiền</option>
+              <option value="DEPOSIT">Tiền cọc</option>
+              <option value="PAYMENT">Thanh toán</option>
+            </select>
+          </div>
+        </div>
+        {loading ? (
+          <div className="wallet-loading">Đang tải...</div>
+        ) : error ? (
+          <div className="wallet-error">{error}</div>
+        ) : transactions.length === 0 ? (
+          <div className="no-transactions-message">
+            <FaInfoCircle size={24} />
+            <p>Bạn chưa có giao dịch nào.</p>
+          </div>
+        ) : (
+          <div className="transactions-table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Loại giao dịch</th>
+                  <th>Số tiền</th>
+                  <th>Trạng thái</th>
+                  <th>Thời gian</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((transaction) => (
+                  <tr key={transaction._id}>
+                    <td>
+                      <div className="transaction-type-cell">
+                        <span className="transaction-icon">{getTransactionIcon(transaction.type)}</span>
+                        <div className='transaction-type-text-container'>
+                          <span className="transaction-type-text">{getTransactionTypeText(transaction.type)}</span>
+                          <span className="transaction-id-text">
+                            MGD: {transaction.transactionCode}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`transaction-amount ${getAmountColor(transaction)}`}>
+                        {getAmountSign(transaction)}
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(transaction.amount)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`transaction-status ${getStatusClass(transaction.status)}`}>
+                        {getStatusText(transaction.status)}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="transaction-date">
+                        <FaCalendarAlt />
+                        {moment(transaction.createdAt).format('DD/MM/YYYY HH:mm')}
+                      </div>
+                    </td>
+                    <td>
+                      {transaction.booking?._id && (
+                        <div className="actions-cell">
+                          <button
+                            className="view-details-button"
+                            onClick={() => handleViewBooking(transaction.booking._id)}
+                          >
+                            <FaEye /> Xem chi tiết
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-    </>
+    </main>
   );
 };
 

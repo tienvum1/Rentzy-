@@ -3,7 +3,7 @@ const router = express.Router();
 const userController = require("../controller/userController");
 const { protect } = require("../middleware/authMiddleware");
 const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage() }); // Lưu file vào RAM, không lưu ổ cứng
+const upload = multer({ dest: 'uploads/' }); // Thay đổi: Lưu file tạm thời vào thư mục 'uploads/'
 
 router.get("/profile", protect, userController.getProfile);
 router.post('/forgot-password', userController.forgotPassword);
@@ -15,7 +15,7 @@ router.put('/update-profile', protect, upload.fields([
 ]), userController.updateProfile);
 
 // New route for creating driver license info
-router.post('/create-driver-license', protect, upload.single('driver_license_front'), userController.createDriverLicense);
+router.post('/create-driver-license', protect, upload.single('driver_license_image'), userController.createDriverLicense);
 
 // New routes for email update and verification
 router.put('/update-email', protect, userController.updateEmail);
@@ -30,5 +30,11 @@ router.put('/change-password', protect, userController.changePassword); // Link 
 
 // Admin route to update driver license verification status
 router.put('/driver-license-status/:id', protect, userController.updateDriverLicenseVerificationStatus);
+
+// New route for verifying phone OTP
+router.post('/verify-phone-otp', protect, userController.verifyPhoneOtp);
+
+// New route for resending phone OTP
+router.post('/resend-phone-otp', protect, userController.resendPhoneOtp);
 
 module.exports = router;

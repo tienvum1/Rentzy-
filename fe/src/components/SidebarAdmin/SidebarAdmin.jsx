@@ -32,10 +32,17 @@ const SidebarAdmin = () => {
                     {/* <MdDirectionsCar className="menu-icon" /> */} Duyệt xe
                 </li>
 
+                {/* Mục điều hướng Duyệt GPLX */}
+                <li onClick={() => handleMenuItemClick('/admin/driver-license-requests')}>
+                    {/* <MdAssignmentInd className="menu-icon" /> */} Duyệt GPLX
+                </li>
+                
                 {/* Mục điều hướng Quản lý rút tiền */}
                 <li onClick={() => handleMenuItemClick('/admin/withdrawals')}>
                     💰 Quản lý rút tiền
                 </li>
+
+                
 
                 {/* Thêm các mục admin khác nếu cần */}
                 {/* <li>...</li> */}

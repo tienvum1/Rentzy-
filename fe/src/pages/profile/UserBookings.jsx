@@ -4,8 +4,6 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { FaInfoCircle, FaCreditCard, FaCalendarAlt } from 'react-icons/fa';
-import Header from '../../components/Header/Header';
-import ProfileSidebar from './ProfileSidebar';
 import './UserBookings.css';
 
 const UserBookings = () => {
@@ -94,138 +92,126 @@ const UserBookings = () => {
 
   if (loading) {
     return (
-      <>
-        <Header />
-        <div className="user-bookings-container">
-          <ProfileSidebar />
-          <div className="loading-message">Đang tải danh sách đặt xe...</div>
-        </div>
-      </>
+      <div className="user-bookings-container">
+        <div className="loading-message">Đang tải danh sách đặt xe...</div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <>
-        <Header />
-        <div className="user-bookings-container">
-          <ProfileSidebar />
-          <div className="error-message">{error}</div>
-        </div>
-      </>
+      <div className="user-bookings-container">
+        <div className="error-message">{error}</div>
+      </div>
     );
   }
 
   return (
-    <>
-      <Header />
-      <div className="user-bookings-container">
-        <ProfileSidebar />
-        <div className="bookings-content">
-          <h2>Lịch sử đặt xe của bạn</h2>
+    <div className="user-bookings-container">
+      <div className="bookings-content">
+        <h2>Lịch sử đặt xe của bạn</h2>
 
-          <div className="filter-controls">
-            <label htmlFor="statusFilter">Lọc theo trạng thái:</label>
-            <select
-              id="statusFilter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">Tất cả</option>
-              <option value="PENDING">Đang chờ xử lý</option>
-              <option value="DEPOSIT_PAID">Đã thanh toán tiền giữ chỗ</option>
-              <option value="RENTAL_PAID">Đã thanh toán đầy đủ</option>
-              <option value="CONFIRMED">Đã xác nhận</option>
-              <option value="IN_PROGRESS">Đang sử dụng</option>
-              <option value="COMPLETED">Đã hoàn thành</option>
-              <option value="CANCELED">Đã hủy</option>
-              <option value="REJECTED">Đã từ chối</option>
-              <option value="EXPIRED">Đã hết hạn</option>
-            </select>
-          </div>
-
-          {bookings.length === 0 ? (
-            <p className="no-bookings-message">Bạn chưa có đơn đặt xe nào.</p>
-          ) : (
-            <div className="bookings-table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Xe</th>
-                    <th>Ngày nhận</th>
-                    <th>Ngày trả</th>
-                    <th>Tổng tiền</th>
-                    <th>Đã thanh toán</th>
-                    <th>Còn lại</th>
-                    <th>Trạng thái</th>
-                    <th>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bookings.map((booking) => {
-                    const { totalPaid, remainingAmount } = calculatePaymentDetails(booking);
-                    
-                    return (
-                      <tr key={booking._id}>
-                        <td>
-                          <div className="vehicle-cell-content">
-                            {booking.vehicle?.primaryImage ? (
-                              <img 
-                                src={booking.vehicle.primaryImage} 
-                                alt={`${booking.vehicle.brand} ${booking.vehicle.model}`} 
-                                className="vehicle-thumbnail" 
-                              />
-                            ) : (
-                              <div className="no-image-thumbnail">No Image</div>
-                            )}
-                            <div className="vehicle-details-text">
-                              <p className="vehicle-name-in-table">
-                                {booking.vehicle?.brand} {booking.vehicle?.model || 'Xe không xác định'}
-                              </p>
-                              <p className="booking-dates">
-                                <FaCalendarAlt /> {moment(booking.startDate).format('DD/MM/YYYY')} - {moment(booking.endDate).format('DD/MM/YYYY')}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td>{moment(booking.startDate).format('DD/MM/YYYY HH:mm')}</td>
-                        <td>{moment(booking.endDate).format('DD/MM/YYYY HH:mm')}</td>
-                        <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalAmount)}</td>
-                        <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaid)}</td>
-                        <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount)}</td>
-                        <td>
-                          <span className={`status-badge ${getStatusClass(booking.status)}`}>
-                            {getStatusText(booking.status)}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="actions-cell">
-                            <button 
-                              className="view-details-button"
-                              onClick={() => navigate(`/bookings/${booking._id}`)}
-                            >
-                              <FaInfoCircle /> Xem chi tiết
-                            </button>
-                            {booking.status === 'DEPOSIT_PAID' && remainingAmount > 0 && (
-                              <button 
-                                className="pay-remaining-button"
-                                onClick={() => navigate(`/payment-remaining/${booking._id}`)}
-                              >
-                                <FaCreditCard /> Thanh toán
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+        <div className="filter-controls">
+          <label htmlFor="statusFilter">Lọc theo trạng thái:</label>
+          <select
+            id="statusFilter"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">Tất cả</option>
+            <option value="PENDING">Đang chờ xử lý</option>
+            <option value="DEPOSIT_PAID">Đã thanh toán tiền giữ chỗ</option>
+            <option value="RENTAL_PAID">Đã thanh toán đầy đủ</option>
+            <option value="CONFIRMED">Đã xác nhận</option>
+            <option value="IN_PROGRESS">Đang sử dụng</option>
+            <option value="COMPLETED">Đã hoàn thành</option>
+            <option value="CANCELED">Đã hủy</option>
+            <option value="REJECTED">Đã từ chối</option>
+            <option value="EXPIRED">Đã hết hạn</option>
+          </select>
         </div>
+
+        {bookings.length === 0 ? (
+          <p className="no-bookings-message">Bạn chưa có đơn đặt xe nào.</p>
+        ) : (
+          <div className="bookings-table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Xe</th>
+                  <th>Ngày nhận</th>
+                  <th>Ngày trả</th>
+                  <th>Tổng tiền</th>
+                  <th>Đã thanh toán</th>
+                  <th>Còn lại</th>
+                  <th>Trạng thái</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bookings.map((booking) => {
+                  const { totalPaid, remainingAmount } = calculatePaymentDetails(booking);
+                  
+                  return (
+                    <tr key={booking._id}>
+                      <td>
+                        <div className="vehicle-cell-content">
+                          {booking.vehicle?.primaryImage ? (
+                            <img 
+                              src={booking.vehicle.primaryImage} 
+                              alt={`${booking.vehicle.brand} ${booking.vehicle.model}`} 
+                              className="vehicle-thumbnail" 
+                            />
+                          ) : (
+                            <div className="no-image-thumbnail">No Image</div>
+                          )}
+                          <div className="vehicle-details-text">
+                            <p className="vehicle-name-in-table">
+                              {booking.vehicle?.brand} {booking.vehicle?.model || 'Xe không xác định'}
+                            </p>
+                            <p className="booking-dates">
+                              <FaCalendarAlt /> {moment(booking.startDate).format('DD/MM/YYYY')} - {moment(booking.endDate).format('DD/MM/YYYY')}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{moment(booking.startDate).format('DD/MM/YYYY HH:mm')}</td>
+                      <td>{moment(booking.endDate).format('DD/MM/YYYY HH:mm')}</td>
+                      <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalAmount)}</td>
+                      <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaid)}</td>
+                      <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount)}</td>
+                      <td>
+                        <span className={`status-badge ${getStatusClass(booking.status)}`}>
+                          {getStatusText(booking.status)}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="actions-cell">
+                          <button 
+                            className="view-details-button"
+                            onClick={() => navigate(`/bookings/${booking._id}`)}
+                          >
+                            <FaInfoCircle /> Xem chi tiết
+                          </button>
+                          {booking.status === 'DEPOSIT_PAID' && remainingAmount > 0 && (
+                            <button 
+                              className="pay-remaining-button"
+                              onClick={() => navigate(`/payment-remaining/${booking._id}`)}
+                            >
+                              <FaCreditCard /> Thanh toán
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 

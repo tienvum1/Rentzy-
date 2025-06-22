@@ -908,5 +908,7 @@ module.exports = {
   cancelExpiredBooking,
   updatePaymentStatus,
   cancelBookingByFrontend,
-  getAllBookingOfSpecificUser
+  getAllBookingOfSpecificUser,
+  cancelBookingWithRefund,
+  getExpectedRefund
 };
