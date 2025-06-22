@@ -1,9 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './WalletInfo.css';
-import { FaMoneyBillWave, FaUniversity, FaUser, FaCheckCircle } from 'react-icons/fa';
-import Header from '../../components/Header/Header';
-import ProfileSidebar from './ProfileSidebar';
 
 const WalletInfo = () => {
   const [wallet, setWallet] = useState(null);
@@ -165,94 +163,285 @@ const WalletInfo = () => {
   };
 
   return (
-    <>
-      <Header />
-      <div className="profile-page-container">
-        <ProfileSidebar />
-        <main className="profile-main-content">
-          <h2>Thông tin ví của tôi</h2>
-          <div className="wallet-info-box">
-            {loading ? (
-              <div className="wallet-loading">Đang tải ví...</div>
-            ) : error ? (
-              <div className="wallet-error">{error}</div>
-            ) : wallet ? (
-              <>
-                <div className="wallet-balance-row">
-                  <span className="wallet-balance-label">Số dư:</span>
-                  <span className="wallet-balance-value">{wallet.balance.toLocaleString('vi-VN')} {wallet.currency}</span>
+    <div className="profile-main-content">
+      <div className="wallet-header">
+        <h2>Ví điện tử của tôi</h2>
+        <p className="wallet-subtitle">Quản lý số dư và thực hiện giao dịch</p>
+      </div>
+
+      {/* Global Success Message */}
+      {globalSuccessMessage && (
+        <div className="alert alert-success global-success">
+          <span className="alert-icon">✅</span>
+          <div>{globalSuccessMessage}</div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="wallet-loading-container">
+          <div className="loading-spinner"></div>
+          <p>Đang tải thông tin ví...</p>
+        </div>
+      ) : error ? (
+        <div className="wallet-error-container">
+          <div className="error-icon">⚠️</div>
+          <h3>Không thể tải thông tin ví</h3>
+          <p>{error}</p>
+        </div>
+      ) : wallet ? (
+        <div className="wallet-dashboard">
+          {/* Main Balance Card */}
+          <div className="balance-card">
+            <div className="balance-header">
+              <div className="balance-icon">💰</div>
+              <div className="balance-info">
+                <h3>Số dư hiện tại</h3>
+                <div className="balance-amount">
+                  {wallet.balance.toLocaleString('vi-VN')} {wallet.currency}
                 </div>
-                <div className="wallet-row"><strong>Trạng thái:</strong> {wallet.status === 'active' ? 'Đang hoạt động' : wallet.status}</div>
-                <div className="wallet-row"><strong>Ngày tạo ví:</strong> {new Date(wallet.createdAt).toLocaleString('vi-VN')}</div>
-                <div className="wallet-row"><strong>Ngày cập nhật:</strong> {new Date(wallet.updatedAt).toLocaleString('vi-VN')}</div>
-                <button className="withdraw-btn" onClick={() => setShowWithdrawForm(true)}>
-                  Rút tiền
-                </button>
-              </>
-            ) : (
-              <div className="wallet-error">Không tìm thấy ví.</div>
-            )}
+              </div>
+            </div>
+            <div className="balance-actions">
+              <button 
+                className="deposit-btn primary"
+                onClick={() => setShowDepositForm(true)}
+              >
+                <span className="btn-icon">💳</span>
+                Nạp tiền
+              </button>
+              <button 
+                className="withdraw-btn secondary"
+                onClick={() => setShowWithdrawForm(true)}
+              >
+                <span className="btn-icon">📤</span>
+                Rút tiền
+              </button>
+            </div>
           </div>
-          {showWithdrawForm && (
-            <div className="withdraw-modal">
-              <div className="withdraw-form-box">
-                <h3>Yêu cầu rút tiền</h3>
-                <form onSubmit={handleWithdraw}>
-                  <div className="form-group">
-                    <label>Chủ tài khoản</label>
-                    <input
-                      type="text"
-                      value={bankInfo.accountName}
-                      onChange={e => setBankInfo({ ...bankInfo, accountName: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Số tài khoản</label>
-                    <input
-                      type="text"
-                      value={bankInfo.accountNumber}
-                      onChange={e => setBankInfo({ ...bankInfo, accountNumber: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Tên ngân hàng</label>
-                    <input
-                      type="text"
-                      value={bankInfo.bankName}
-                      onChange={e => setBankInfo({ ...bankInfo, bankName: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Số tiền muốn rút</label>
+
+          {/* Wallet Details */}
+          <div className="wallet-details-grid">
+            <div className="detail-card">
+              <div className="detail-icon">📊</div>
+              <div className="detail-content">
+                <h4>Trạng thái</h4>
+                <p className={wallet.status === 'active' ? 'status-active' : 'status-inactive'}>
+                  {wallet.status === 'active' ? 'Đang hoạt động' : wallet.status}
+                </p>
+              </div>
+            </div>
+
+            <div className="detail-card">
+              <div className="detail-icon">📅</div>
+              <div className="detail-content">
+                <h4>Ngày tạo ví</h4>
+                <p>{new Date(wallet.createdAt).toLocaleDateString('vi-VN')}</p>
+              </div>
+            </div>
+
+            <div className="detail-card">
+              <div className="detail-icon">🔄</div>
+              <div className="detail-content">
+                <h4>Cập nhật lần cuối</h4>
+                <p>{new Date(wallet.updatedAt).toLocaleDateString('vi-VN')}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="wallet-error-container">
+          <div className="error-icon">❌</div>
+          <h3>Không tìm thấy ví</h3>
+          <p>Vui lòng liên hệ hỗ trợ để được trợ giúp.</p>
+        </div>
+      )}
+
+      {/* Deposit Modal */}
+      {showDepositForm && (
+        <div className="modal-overlay" onClick={() => setShowDepositForm(false)}>
+          <div className="withdraw-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Nạp tiền vào ví</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setShowDepositForm(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleDeposit} className="withdraw-form">
+              <div className="form-group">
+                <label>Số tiền muốn nạp</label>
+                <div className="amount-input-wrapper">
+                  <input
+                    type="number"
+                    min={10000}
+                    value={depositAmount}
+                    onChange={e => setDepositAmount(e.target.value)}
+                    placeholder="Nhập số tiền"
+                    required
+                  />
+                  <span className="currency-symbol">VND</span>
+                </div>
+                <small className="amount-limit">
+                  Tối thiểu: 10,000 VND
+                </small>
+              </div>
+
+              {depositError && (
+                <div className="alert alert-error">
+                  <span className="alert-icon">⚠️</span>
+                  {depositError}
+                </div>
+              )}
+              
+              {depositSuccess && (
+                <div className="alert alert-success">
+                  <span className="alert-icon">✅</span>
+                  {depositSuccess}
+                </div>
+              )}
+
+              <div className="form-actions">
+                <button 
+                  type="button" 
+                  className="btn-secondary"
+                  onClick={() => setShowDepositForm(false)}
+                >
+                  Hủy
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-primary"
+                  disabled={depositLoading}
+                >
+                  {depositLoading ? (
+                    <>
+                      <span className="loading-spinner-small"></span>
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    'Xác nhận nạp tiền'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Withdraw Modal */}
+      {showWithdrawForm && (
+        <div className="modal-overlay" onClick={() => setShowWithdrawForm(false)}>
+          <div className="withdraw-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Yêu cầu rút tiền</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setShowWithdrawForm(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleWithdraw} className="withdraw-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Chủ tài khoản</label>
+                  <input
+                    type="text"
+                    value={bankInfo.accountName}
+                    onChange={e => setBankInfo({ ...bankInfo, accountName: e.target.value })}
+                    placeholder="Nhập tên chủ tài khoản"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Số tài khoản</label>
+                  <input
+                    type="text"
+                    value={bankInfo.accountNumber}
+                    onChange={e => setBankInfo({ ...bankInfo, accountNumber: e.target.value })}
+                    placeholder="Nhập số tài khoản"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Tên ngân hàng</label>
+                  <input
+                    type="text"
+                    value={bankInfo.bankName}
+                    onChange={e => setBankInfo({ ...bankInfo, bankName: e.target.value })}
+                    placeholder="Nhập tên ngân hàng"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Số tiền muốn rút</label>
+                  <div className="amount-input-wrapper">
                     <input
                       type="number"
                       min={10000}
-                      max={wallet.balance}
+                      max={wallet?.balance || 0}
                       value={withdrawAmount}
                       onChange={e => setWithdrawAmount(e.target.value)}
+                      placeholder="Nhập số tiền"
                       required
                     />
+                    <span className="currency-symbol">VND</span>
                   </div>
-                  {withdrawError && <div className="withdraw-error">{withdrawError}</div>}
-                  {withdrawSuccess && <div className="withdraw-success">{withdrawSuccess}</div>}
-                  <div className="withdraw-actions">
-                    <button type="submit" className="submit-btn" disabled={withdrawLoading}>
-                      {withdrawLoading ? 'Đang gửi...' : 'Xác nhận rút tiền'}
-                    </button>
-                    <button type="button" className="cancel-btn" onClick={() => setShowWithdrawForm(false)}>
-                      Hủy
-                    </button>
-                  </div>
-                </form>
+                  <small className="amount-limit">
+                    Tối thiểu: 10,000 VND | Tối đa: {wallet?.balance?.toLocaleString('vi-VN')} VND
+                  </small>
+                </div>
               </div>
-            </div>
-          )}
-        </main>
-      </div>
-    </>
+
+              {withdrawError && (
+                <div className="alert alert-error">
+                  <span className="alert-icon">⚠️</span>
+                  {withdrawError}
+                </div>
+              )}
+              
+              {withdrawSuccess && (
+                <div className="alert alert-success">
+                  <span className="alert-icon">✅</span>
+                  <div style={{ whiteSpace: 'pre-line' }}>{withdrawSuccess}</div>
+                </div>
+              )}
+
+              <div className="form-actions">
+                <button 
+                  type="button" 
+                  className="btn-secondary"
+                  onClick={() => setShowWithdrawForm(false)}
+                >
+                  Hủy
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-primary"
+                  disabled={withdrawLoading}
+                >
+                  {withdrawLoading ? (
+                    <>
+                      <span className="loading-spinner-small"></span>
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    'Xác nhận rút tiền'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
