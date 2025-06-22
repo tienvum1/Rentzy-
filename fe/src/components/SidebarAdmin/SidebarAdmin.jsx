@@ -32,11 +32,6 @@ const SidebarAdmin = () => {
                     {/* <MdDirectionsCar className="menu-icon" /> */} Duyệt xe
                 </li>
 
-                {/* Mục điều hướng Duyệt GPLX */}
-                <li onClick={() => handleMenuItemClick('/admin/driver-license-requests')}>
-                    {/* <MdAssignmentInd className="menu-icon" /> */} Duyệt GPLX
-                </li>
-
                 {/* Thêm các mục admin khác nếu cần */}
                 {/* <li>...</li> */}
             </ul>

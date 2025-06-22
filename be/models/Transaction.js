@@ -4,7 +4,12 @@ const transactionSchema = new mongoose.Schema({
     booking: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Booking',
-        required: true
+
+    },
+    wallet: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Wallet',
+
     },
     amount: {
         type: Number,
@@ -12,7 +17,7 @@ const transactionSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['DEPOSIT', 'RENTAL', 'REFUND'],
+        enum: ['DEPOSIT', 'RENTAL', 'REFUND', 'WALLET_DEPOSIT', 'WALLET_WITHDRAW'],
         required: true
     },
     status: {

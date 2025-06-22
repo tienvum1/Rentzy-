@@ -7,7 +7,7 @@ import DriverLicenseVerification from './DriverLicenseVerification'
 import FavoritesPage from './FavoritesPage';
 import VehicleManagement from '../vehiclemanagement/VehicleManagement';
 import UserBookings from './UserBookings';
-import OwnerPage from '../../pages/owner/OwnerPage';
+import OwnerPage from '../owner/OwnerPage';
 import TransactionHistory from './TransactionHistory';
 import WalletInfo from './WalletInfo';
 import ChangePassword from '../../pages/changePassword/ChangePassword';

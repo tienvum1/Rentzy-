@@ -1,5 +1,5 @@
 import React from 'react';
-import VehicleCard from '../../components/VehicleCard/VehicleCard';
+import VehicleCard from '../../components/VehicleCard/VehicleCard.jsx';
 import { useAuth } from '../../context/AuthContext';
 
 const FavoritesPage = () => {

@@ -210,31 +210,25 @@
 
 .transaction-icon {
   font-size: 1.2rem;
-  width: 24px;
-  text-align: center;
 }
 
 .transaction-type-text {
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: #333;
 }
 
 /* Amount styling */
 .amount {
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 1rem;
 }
 
 .amount.positive {
-  color: #10b981;
+  color: #27ae60;
 }
 
 .amount.negative {
-  color: #ef4444;
-}
-
-.amount.neutral {
-  color: #6b7280;
+  color: #e74c3c;
 }
 
 /* Status styling */
@@ -296,32 +290,71 @@
 }
 
 .view-details-button {
-  padding: 6px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   border: none;
+  padding: 6px 12px;
   border-radius: 6px;
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   gap: 4px;
   text-decoration: none;
-  white-space: nowrap;
-  background: #3b82f6;
-  color: white;
 }
 
 .view-details-button:hover {
-  background: #2563eb;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.view-transaction-button {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.view-transaction-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+}
+
+.cancel-booking-button {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cancel-booking-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
 }
 
 .transaction-id {
-  font-size: 0.8rem;
-  color: #6b7280;
-  font-family: monospace;
-  background: #f3f4f6;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #666;
+  background: #f5f5f5;
   padding: 4px 8px;
   border-radius: 4px;
 }

@@ -21,6 +21,8 @@ const PaymentDeposit = () => {
   const [paymentStatus, setPaymentStatus] = useState('PENDING');
   const [isPaymentInitiated, setIsPaymentInitiated] = useState(false);
   const [remainingAmountToPay, setRemainingAmountToPay] = useState(0);
+  const [wallet, setWallet] = useState(null);
+  const [walletLoading, setWalletLoading] = useState(true);
   
   const HOLD_FEE = 500000; // Tiền giữ chỗ
   const DELIVERY_FEE = 200000; // Phí giao xe 2 chiều
@@ -50,6 +52,21 @@ const PaymentDeposit = () => {
   };
 
   const fees = calculateFees();
+
+  // Fetch wallet information
+  useEffect(() => {
+    const fetchWallet = async () => {
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/wallet/info`, { withCredentials: true });
+        setWallet(res.data.wallet);
+      } catch (err) {
+        console.error('Error fetching wallet:', err);
+      } finally {
+        setWalletLoading(false);
+      }
+    };
+    fetchWallet();
+  }, []);
 
   React.useEffect(() => {
     const fetchBookingDetails = async () => {
@@ -154,7 +171,7 @@ const PaymentDeposit = () => {
     setIsPaymentInitiated(true);
     try {
       const res = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/momo/create`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/payment/wallet/deposit`,
         {
           amount: booking.reservationFee,
           orderInfo: `Thanh toán tiền giữ chỗ cho đơn hàng ${booking._id}`,
@@ -164,15 +181,24 @@ const PaymentDeposit = () => {
           withCredentials: true,
         }
       );
-      if (res.data.paymentUrl) {
-        window.location.href = res.data.paymentUrl; // Redirect to MoMo payment page
+      
+      if (res.data.success) {
+        toast.success('Thanh toán tiền cọc thành công!');
+        // Refresh booking data
+        const updatedRes = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}`,
+          { withCredentials: true }
+        );
+        setBooking(updatedRes.data.booking);
+        setPaymentStatus('COMPLETED');
+        setIsPaymentInitiated(false);
       } else {
-        toast.error("Không thể tạo liên kết thanh toán.");
+        toast.error(res.data.message || "Thanh toán thất bại.");
         setIsPaymentInitiated(false);
       }
     } catch (error) {
       console.error("Payment initiation failed:", error.response?.data || error.message);
-      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi yêu cầu thanh toán tiền giữ chỗ.");
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi thanh toán tiền cọc.");
       setIsPaymentInitiated(false);
     }
   };
@@ -182,23 +208,33 @@ const PaymentDeposit = () => {
     setIsPaymentInitiated(true);
     try {
       const res = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/momo/rental-payment`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/payment/wallet/rental`,
         {
           bookingId: booking._id,
+          amount: remainingAmountToPay,
         },
         {
           withCredentials: true,
         }
       );
-      if (res.data.paymentUrl) {
-        window.open(res.data.paymentUrl, '_blank'); // Redirect to MoMo payment page
+      
+      if (res.data.success) {
+        toast.success('Thanh toán phần còn lại thành công!');
+        // Refresh booking data
+        const updatedRes = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}`,
+          { withCredentials: true }
+        );
+        setBooking(updatedRes.data.booking);
+        setPaymentStatus('COMPLETED');
+        setIsPaymentInitiated(false);
       } else {
-        toast.error("Không thể tạo liên kết thanh toán phần còn lại.");
+        toast.error(res.data.message || "Thanh toán thất bại.");
         setIsPaymentInitiated(false);
       }
     } catch (error) {
       console.error("Remaining payment initiation failed:", error.response?.data || error.message);
-      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi yêu cầu thanh toán phần còn lại.");
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi thanh toán phần còn lại.");
       setIsPaymentInitiated(false);
     }
   };
@@ -331,15 +367,27 @@ const PaymentDeposit = () => {
                 <p className="time-left-label">Thời gian giữ chỗ còn lại</p>
                 <div className="countdown-timer">{formatTime(countdown)}</div>
                 <p className="order-code-label">Mã đặt xe của bạn <span className="order-code">{booking._id}</span></p>
-                <div className="momo-payment-section">
-                  <h3 className="section-subtitle">Thanh toán bằng MoMo</h3>
-                  <p className="momo-instruction">Nhấn nút bên dưới để thanh toán giữ chỗ qua cổng MoMo.</p>
+                <div className="wallet-payment-section">
+                  <h3 className="section-subtitle">Thanh toán bằng ví điện tử</h3>
+                  {!walletLoading && wallet && (
+                    <div className="wallet-info">
+                      <p className="wallet-balance">
+                        Số dư ví: <strong>{wallet.balance.toLocaleString('vi-VN')} VND</strong>
+                      </p>
+                      {wallet.balance < fees.holdFee && (
+                        <p className="wallet-insufficient">
+                          ⚠️ Số dư không đủ. Vui lòng <a href="/profile/wallet" className="navigate-wallet">nạp thêm tiền</a> vào ví.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <p className="wallet-instruction">Nhấn nút bên dưới để thanh toán giữ chỗ bằng tiền trong ví.</p>
                   <button 
-                    className="momo-pay-button" 
+                    className="wallet-pay-button" 
                     onClick={handleInitialPayment} 
-                    disabled={isPaying || isTimeUp}
+                    disabled={isPaying || isTimeUp || (wallet && wallet.balance < fees.holdFee)}
                   >
-                    {isPaying ? 'Đang xử lý...' : isTimeUp ? 'Đã hết thời gian thanh toán' : 'Thanh toán qua MoMo'}
+                    {isPaying ? 'Đang xử lý...' : isTimeUp ? 'Đã hết thời gian thanh toán' : 'Thanh toán bằng ví'}
                   </button>
                 </div>
               </div>
