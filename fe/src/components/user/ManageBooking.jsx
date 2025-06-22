@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 const ManageBooking = () => {
   // list of bookings
   const [bookings, setBookings] = useState([]);
-
   // filter for bookings
   const [filter, setFilter] = useState({
     model: "",
@@ -12,9 +11,9 @@ const ManageBooking = () => {
     status: "",
     type: "",
   });
-
   // all models :
   const [models, setModels] = useState([]);
+
 
   // Handle filter change
   const handleFilterChange = (e) => {
@@ -24,31 +23,30 @@ const ManageBooking = () => {
     });
   };
 
-  // function to fetch bookings with filter from the server
-  const fetchBookings = async () => {
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/bookings/a/get-filter-bookings`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(filter),
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch bookings");
-      }
-      const data = await response.json();
-      setBookings(data);
-    } catch (error) {
-      console.error("Error fetching bookings:", error);
-    }
-  };
-
   // use effect to fetch bookings when the filter changes
   useEffect(() => {
+    // function to fetch bookings with filter from the server
+    const fetchBookings = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/bookings/a/get-filter-bookings`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(filter),
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch bookings");
+        }
+        const data = await response.json();
+        setBookings(data);
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+      }
+    };
     fetchBookings();
   }, [filter]);
 
@@ -74,6 +72,7 @@ const ManageBooking = () => {
   return (
     <div>
       <table
+      className="table table-fixed"
         border="1"
         cellPadding="8"
         style={{ width: "100%", marginTop: 20 }}
@@ -82,15 +81,16 @@ const ManageBooking = () => {
           <tr>
             <th>
               <select
-                name="model"    
+              className="text-center text-red-500"
+                name="model"
                 value={filter.model}
                 onChange={handleFilterChange}
               >
                 {models.map((m) => (
-                    <option key={m} value={m}>
-                      {m || "All Models"}
-                    </option>
-                  ))}
+                  <option key={m} value={m}>
+                    {m || "All Models"}
+                  </option>
+                ))}
               </select>
             </th>
             <th>
@@ -139,7 +139,7 @@ const ManageBooking = () => {
                 placeholder="End Date"
               />
             </th>
-            <th>Total Amount</th>
+            <th className="text-red-500">Total Amount</th>
             <th>Deposit</th>
             <th>Reservation Fee</th>
             <th>Pickup Location</th>
