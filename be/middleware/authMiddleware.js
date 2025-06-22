@@ -4,10 +4,10 @@ const User = require("../models/User");
 
 const protect = (req, res, next) => {
   let token;
-  console.log("Request cookies:", req.cookies);
+  console.log("Request cookies HERE :", req.cookies);
   if (req.cookies && req.cookies.token) {
     token = req.cookies.token;
-    console.log("Token found in cookie:", token);
+    console.log("Token found in cookie KHAI : ", token);
   }
   if (!token) {
     return res.status(401).json({ message: "Not authorized, no token" });

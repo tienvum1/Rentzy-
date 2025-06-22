@@ -5,6 +5,8 @@ import Footer from "../../components/footer/Footer";
 import DriverLicenseVerification from "../../pages/profile/DriverLicenseVerification";
 import "../../pages/profile/Profile.css";
 
+const PAGE_SIZE = 10;
+
 const ProfilePage = () => {
   const [activeSection, setActiveSection] = useState("account");
   const handleSectionChange = (sectionId) => {
@@ -23,7 +25,6 @@ const ProfilePage = () => {
         </div>
         <div className="profile-page__content">
           {activeSection === "account" && <ManageBooking />}
-          {/* Các component khác như Favorites, MyCars... có thể thêm vào sau */}
           {activeSection !== "account" && (
             <div style={{ padding: "2rem" }}>
               <h2>Chức năng “{activeSection}” đang được phát triển.</h2>
@@ -41,9 +42,7 @@ const ProfilePage = () => {
 export default ProfilePage;
 
 const ManageBooking = () => {
-  // list of bookings
   const [bookings, setBookings] = useState([]);
-  // filter for bookings
   const [filter, setFilter] = useState({
     model: "",
     startDate: "",
@@ -51,20 +50,29 @@ const ManageBooking = () => {
     status: "",
     type: "",
   });
-  // all models :
+  // log filter state to console :
+  console.log("Filter state:", filter);
   const [models, setModels] = useState([]);
+  const [statuses, setStatuses] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Handle filter change
+  // Pagination logic
+  const totalPages = Math.ceil(bookings.length / PAGE_SIZE);
+  const paginatedBookings = bookings.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
   const handleFilterChange = (e) => {
     setFilter({
       ...filter,
       [e.target.name]: e.target.value,
     });
+    setCurrentPage(1); // Reset to first page on filter change
   };
 
-  // use effect to fetch bookings when the filter changes
+  // Fetch bookings based on filter
   useEffect(() => {
-    // function to fetch bookings with filter from the server
     const fetchBookings = async () => {
       try {
         const response = await fetch(
@@ -74,6 +82,7 @@ const ManageBooking = () => {
             headers: {
               "Content-Type": "application/json",
             },
+            credentials: "include",
             body: JSON.stringify(filter),
           }
         );
@@ -89,32 +98,104 @@ const ManageBooking = () => {
     fetchBookings();
   }, [filter]);
 
-  // function to get all models
+  // Fetch all models for the filter dropdown
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await fetch("/api/bookings/a/get-all-models");
+        const response = await fetch("/api/bookings/a/get-all-models", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch models");
         }
         const data = await response.json();
-        // Assuming you want to set the model filter options here
         setModels(data.models || []);
       } catch (error) {
         console.error("Error fetching models:", error);
       }
     };
-
     fetchModels();
   }, []);
 
-  // Table and filter UI
+  // Fetch all status of bookings for specific user
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/bookings/a/get-all-status-of-booking-for-user`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch booking statuses");
+        }
+        const data = await response.json();
+        setStatuses(data.statuses || []);
+      } catch (error) {
+        console.error("Error fetching booking statuses:", error);
+      }
+    };
+    fetchStatus();
+  }, []);
+
+  // Pagination component
+  const Pagination = () => (
+    <div className="flex justify-center mt-6">
+      <nav className="inline-flex rounded-md shadow-sm" aria-label="Pagination">
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          disabled={currentPage === 1}
+          className={`px-3 py-1 rounded-l-md border border-gray-300 bg-white text-gray-700 hover:bg-blue-50 ${
+            currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
+          Prev
+        </button>
+        {[...Array(totalPages)].map((_, idx) => (
+          <button
+            key={idx + 1}
+            onClick={() => setCurrentPage(idx + 1)}
+            className={`px-3 py-1 border-t border-b border-gray-300 bg-white text-gray-700 hover:bg-blue-500 ${
+              currentPage === idx + 1 ? "bg-red-500 text-white font-bold" : ""
+            }`}
+          >
+            {idx + 1}
+          </button>
+        ))}
+        <button
+          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          disabled={currentPage === totalPages || totalPages === 0}
+          className={`px-3 py-1 rounded-r-md border border-gray-300 bg-white text-gray-700 hover:bg-blue-50 ${
+            currentPage === totalPages || totalPages === 0
+              ? "opacity-50 cursor-not-allowed"
+              : ""
+          }`}
+        >
+          Next
+        </button>
+      </nav>
+    </div>
+  );
+  function formatVND(amount) {
+    return amount.toLocaleString("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    });
+  }
   return (
-    <div className=" bg-gray-100 min-h-screen p-">
-      {/* Main Content Area */}
+    <div className="bg-gray-100 min-h-screen p-">
       <div className="">
         {/* Header/Breadcrumbs */}
-        <div className=" flex justify-between items-center px-2 py-6 bg-white rounded-lg shadow">
+        <div className="flex justify-between items-center px-2 py-6 bg-white rounded-lg shadow">
           <div className="text-gray-500 text-sm px-9">
             Dashboards &gt;{" "}
             <span className="font-semibold text-gray-800">Bookings</span>
@@ -136,7 +217,7 @@ const ManageBooking = () => {
                 className="w-8 h-8 rounded-full object-cover"
               />
               <span className="text-gray-700 text-sm font-medium">
-                Ahmed Ihslaq Khan
+               Manage Bookings
               </span>
             </div>
           </div>
@@ -145,7 +226,9 @@ const ManageBooking = () => {
         {/* Filter Row */}
         <div className="bg-gray-50 p-4 rounded-lg mb-4 flex flex-wrap gap-4 items-end shadow-sm">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Model</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
+              Model
+            </label>
             <select
               name="model"
               value={filter.model}
@@ -154,41 +237,53 @@ const ManageBooking = () => {
             >
               <option value="">All Models</option>
               {models.map((m) => (
-                <option key={m} value={m}>{m}</option>
+                <option key={m} value={m}>
+                  {m}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Type</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
+              Type
+            </label>
             <select
               name="type"
               value={filter.type}
-              onChange={handleFilterChange}
+              onChange={(e) => {
+                setFilter({ ...filter, type: e.target.value });
+              }}
               className="w-32 px-3 py-2 border border-gray-300 rounded-md bg-white focus:ring-blue-500 focus:border-blue-500 text-sm"
             >
               <option value="">All Types</option>
-              <option value="SUV">SUV</option>
-              <option value="Sedan">Sedan</option>
-              <option value="Truck">Truck</option>
-              {/* Add more types as needed */}
+              <option value="motorbike">motorbike</option>
+              <option value="car">car</option>
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Status</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
+              Status
+            </label>
             <select
               name="status"
               value={filter.status}
-              onChange={handleFilterChange}
+              onChange={(e) => {
+                setFilter({ ...filter, status: e.target.value });
+              }}
               className="w-32 px-3 py-2 border border-gray-300 rounded-md bg-white focus:ring-blue-500 focus:border-blue-500 text-sm"
             >
               <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="accepted">Accepted</option>
-              <option value="canceled">Canceled</option>
+              {statuses.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Start Date</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
+              Start Date
+            </label>
             <input
               type="date"
               name="startDate"
@@ -198,7 +293,9 @@ const ManageBooking = () => {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">End Date</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
+              End Date
+            </label>
             <input
               type="date"
               name="endDate"
@@ -214,44 +311,84 @@ const ManageBooking = () => {
           <table className="min-w-full divide-y divide-gray-200 text-sm bg-white">
             <thead className="bg-blue-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">#</th>
-                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Model</th>
-                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Type</th>
-                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Status</th>
-                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Start Date</th>
-                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">End Date</th>
-                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Total</th>
-                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Deposit</th>
-                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Reservation Fee</th>
-                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Pickup</th>
-                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Return</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                  #
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                  Model
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                  Start Date
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                  End Date
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                  Total
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                  Deposit
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                  Reservation Fee
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                  Pickup
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                  Return
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {bookings.length === 0 ? (
+              {paginatedBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="text-center py-8 text-gray-400">No bookings found.</td>
+                  <td colSpan={11} className="text-center py-8 text-gray-400">
+                    No bookings found.
+                  </td>
                 </tr>
               ) : (
-                bookings.map((b, idx) => (
+                paginatedBookings.map((b, idx) => (
                   <tr key={idx} className="hover:bg-blue-50 transition">
-                    <td className="px-4 py-2 font-semibold text-gray-700">{idx + 1}</td>
+                    <td className="px-4 py-2 font-semibold text-gray-700">
+                      {(currentPage - 1) * PAGE_SIZE + idx + 1}
+                    </td>
                     <td className="px-3 py-2">{b.vehicle?.model}</td>
                     <td className="px-3 py-2">{b.vehicle?.type}</td>
                     <td className="px-3 py-2">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                        ${b.status === "pending" ? "bg-yellow-100 text-yellow-800" : ""}
-                        ${b.status === "accepted" ? "bg-green-100 text-green-800" : ""}
-                        ${b.status === "canceled" ? "bg-red-100 text-red-800" : ""}
-                      `}>
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                        ${
+                          b.status === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : ""
+                        }
+                        ${
+                          b.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : ""
+                        }
+                        ${
+                          b.status === "canceled"
+                            ? "bg-red-100 text-red-800"
+                            : ""
+                        }
+                      `}
+                      >
                         {b.status}
                       </span>
                     </td>
                     <td className="px-3 py-2">{b.startDate?.slice(0, 10)}</td>
                     <td className="px-3 py-2">{b.endDate?.slice(0, 10)}</td>
-                    <td className="px-3 py-2">{b.totalAmount}</td>
-                    <td className="px-3 py-2">{b.deposit}</td>
-                    <td className="px-3 py-2">{b.reservationFee}</td>
+                    <td className="px-3 py-2">{formatVND(b.totalAmount)}</td>
+                    <td className="px-3 py-2">{formatVND(b.deposit)}</td>
+                    <td className="px-3 py-2">{formatVND(b.reservationFee)}</td>
                     <td className="px-3 py-2">{b.pickupLocation}</td>
                     <td className="px-3 py-2">{b.returnLocation}</td>
                   </tr>
@@ -260,7 +397,9 @@ const ManageBooking = () => {
             </tbody>
           </table>
         </div>
+        {/* Pagination Centered */}
+        <Pagination />
       </div>
     </div>
   );
-}
+};

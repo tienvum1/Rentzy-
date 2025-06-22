@@ -464,7 +464,9 @@ const getAllBookingOfSpecificUser = async (req, res) => {
 // Get all bookings of a specific user with filters from client
 const getFilteredBookingsOfUser = async (req, res) => {
   try {
-    const userId = '6840f01c4fb8acce3d4394c2'
+    const userId =  req.user._id;
+    console.log('userId in getFilteredBookingsOfUser', userId);
+    // Check if userId is available
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -543,6 +545,32 @@ const getAllModelOfVehicle = async (req, res) => {
   }
 };
 
+// lấy tất cả status của booking của user : 
+const getAllStatusOfBooking = async (req, res) => {
+  try {
+    const userId = '6840f01c4fb8acce3d4394c2'
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Lấy tất cả các status của booking của user
+    const bookings = await Booking.find({ renter: userId }).select('status');
+    const statuses = [...new Set(bookings.map(b => b.status))];
+
+    res.status(200).json({
+      success: true,
+      statuses
+    });
+  } catch (error) {
+    console.error('Error fetching booking statuses:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi lấy danh sách trạng thái booking',
+      error: error.message
+    });
+  }
+};  
+
 module.exports = {
   createBooking,
   getVehicleBookedDates,
@@ -555,4 +583,5 @@ module.exports = {
   getAllBookingOfSpecificUser,
   getFilteredBookingsOfUser,
   getAllModelOfVehicle,
+  getAllStatusOfBooking,
 };
