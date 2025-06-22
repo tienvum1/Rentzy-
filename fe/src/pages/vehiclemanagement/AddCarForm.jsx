@@ -25,6 +25,7 @@ const AddCarForm = ({ onSuccess }) => {
     type: 'car',
     features: [],
     rentalPolicy: '',
+    description: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -192,6 +193,7 @@ const AddCarForm = ({ onSuccess }) => {
     if (!formData.fuel_type) newErrors.fuel_type = 'Loại nhiên liệu là bắt buộc';
 
     if (!formData.main_image) newErrors.main_image = 'Ảnh chính là bắt buộc';
+    if (!formData.description.trim()) newErrors.description = 'Mô tả là bắt buộc';
 
     setErrors(newErrors);
 
@@ -227,6 +229,7 @@ const AddCarForm = ({ onSuccess }) => {
     dataToSubmit.append('transmission', formData.transmission);
     dataToSubmit.append('fuel_type', formData.fuel_type);
     dataToSubmit.append('type', formData.type);
+    dataToSubmit.append('description', formData.description.trim());
 
     // Append optional fields if they exist
     if (formData.fuelConsumption) {
@@ -253,8 +256,6 @@ const AddCarForm = ({ onSuccess }) => {
     // Append rental policy
     if (formData.rentalPolicy.trim()) {
       dataToSubmit.append('rentalPolicy', formData.rentalPolicy.trim()); // Ensure field name matches backend
-    } else {
-      dataToSubmit.append('rentalPolicy', ''); // Ensure field name matches backend
     }
 
     // Append additional images individually
@@ -300,6 +301,27 @@ const AddCarForm = ({ onSuccess }) => {
       // Loading state will be set to false in catch block on error.
       // For success, it stays true until the timeout clears the message and calls onCancel
     }
+
+    setFormData({
+      brand: '',
+      model: '',
+      license_plate: '',
+      location: '',
+      price_per_day: '',
+      deposit_required: '',
+      seats: '',
+      body_type: '',
+      transmission: '',
+      fuel_type: '',
+      fuelConsumption: '',
+      main_image: null,
+      additional_images: [],
+      type: 'car',
+      features: [],
+      rentalPolicy: '',
+      description: '',
+    });
+    setMainImagePreview(null);
   };
 
   // Effect to hide messages after a delay
@@ -524,6 +546,19 @@ const AddCarForm = ({ onSuccess }) => {
             placeholder="Nhập các điều khoản đặc biệt khi thuê xe này..."
           >
           </textarea>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="description">Mô tả</label>
+          <textarea
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            rows="5"
+            className={errors.description ? 'input-error' : ''}
+          ></textarea>
+          {errors.description && <span className="error-text">{errors.description}</span>}
         </div>
 
         <div className="form-group">
