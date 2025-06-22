@@ -4,9 +4,11 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import './BookingDetailsPage.css'; // We will create this CSS file next
-import { FaCalendarAlt, FaDollarSign, FaCar, FaUser, FaMapMarkerAlt, FaInfoCircle, FaClipboardList, FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
+import { FaCalendarAlt, FaDollarSign, FaCar, FaUser, FaMapMarkerAlt, FaInfoCircle, FaClipboardList, FaMoneyBillWave, FaCreditCard, FaTimesCircle } from 'react-icons/fa';
 import Header from '../../components/Header/Header';
 import Footer from '../../components/footer/Footer';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 const BookingDetailsPage = () => {
   const { id } = useParams(); // Get booking ID from URL
@@ -110,12 +112,13 @@ const BookingDetailsPage = () => {
         totalPaid: totalPaid,
         remaining: 0,
         showPaymentButton: false,
-        showReservationRefund: false
+        showReservationRefund: false,
+        reservationRefund: 0
       };
     }
 
     // Nếu chỉ thanh toán tiền giữ chỗ (DEPOSIT_PAID)
-    if (booking.status === 'DEPOSIT_PAID') {
+    if (booking.status === 'DEPOSIT_PAID' || booking.status === 'deposit_paid') {
       // Số tiền còn lại phải trả = Tổng tiền - Số tiền đã thanh toán
       const remaining = booking.totalAmount - totalPaid;
       return {
@@ -123,7 +126,21 @@ const BookingDetailsPage = () => {
         remaining: remaining,
         showPaymentButton: remaining > 0,
         showReservationRefund: true,
-        nextPaymentAmount: remaining
+        nextPaymentAmount: remaining,
+        reservationRefund: booking.reservationFee || 0 // Hoàn tiền giữ chỗ đúng bằng reservationFee
+      };
+    }
+
+    // Nếu chưa thanh toán (PENDING)
+    if (booking.status === 'pending') {
+      const remaining = booking.totalAmount - totalPaid;
+      return {
+        totalPaid: totalPaid,
+        remaining: remaining,
+        showPaymentButton: false,
+        showReservationRefund: false,
+        nextPaymentAmount: remaining,
+        reservationRefund: 0 // Không hoàn tiền giữ chỗ
       };
     }
 
@@ -134,11 +151,145 @@ const BookingDetailsPage = () => {
       remaining: remaining,
       showPaymentButton: booking.status === 'DEPOSIT_PAID' && remaining > 0,
       showReservationRefund: true,
-      nextPaymentAmount: remaining
+      nextPaymentAmount: remaining,
+      reservationRefund: booking.reservationFee || 0
     };
   };
 
-  const { totalPaid, remaining, showPaymentButton, showReservationRefund, nextPaymentAmount } = calculatePaymentDetails();
+  const { totalPaid, remaining, showPaymentButton, showReservationRefund, nextPaymentAmount, reservationRefund } = calculatePaymentDetails();
+
+  // Hàm huỷ đặt xe với hoàn tiền
+  const handleCancelBooking = async () => {
+    try {
+      // Lấy thông tin hoàn tiền dự kiến từ backend
+      const config = { withCredentials: true };
+      const refundRes = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}/expected-refund`, 
+        config
+      );
+
+      if (!refundRes.data.success) {
+        toast.error(refundRes.data.message || 'Không thể lấy thông tin hoàn tiền');
+        return;
+      }
+
+      const { 
+        canCancel, 
+        daysUntilStart, 
+        totalPaid, 
+        reservationRefund, 
+        remainingRefund, 
+        totalRefund,
+        refundPolicy 
+      } = refundRes.data.data;
+
+      if (!canCancel) {
+        toast.error('Không thể hủy đơn đã bắt đầu!');
+        return;
+      }
+
+      // Tạo thông báo hoàn tiền
+      let refundMessage = '';
+      if (totalRefund > 0) {
+        if (reservationRefund > 0 && remainingRefund > 0) {
+          refundMessage = `Sẽ hoàn tiền cọc: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(reservationRefund)} và hoàn phần còn lại: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingRefund)}`;
+        } else if (reservationRefund > 0) {
+          refundMessage = `Sẽ hoàn tiền cọc: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(reservationRefund)}`;
+        } else if (remainingRefund > 0) {
+          refundMessage = `Sẽ hoàn phần còn lại: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingRefund)}`;
+        }
+      } else {
+        refundMessage = 'Không hoàn tiền';
+      }
+
+      confirmAlert({
+        title: 'Xác nhận huỷ đơn đặt xe',
+        message: (
+          <div>
+            <p>Bạn có chắc chắn muốn huỷ đơn đặt xe này không?</p>
+            <div style={{ 
+              marginTop: '10px', 
+              padding: '10px', 
+              backgroundColor: '#f8f9fa', 
+              borderRadius: '5px',
+              border: '1px solid #dee2e6'
+            }}>
+              <p><strong>Thông tin hoàn tiền:</strong></p>
+              <p>{refundMessage}</p>
+              <p><strong>Tổng hoàn:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalRefund)}</p>
+              <p><strong>Thời gian còn lại:</strong> {daysUntilStart} ngày</p>
+              <p><strong>Trạng thái hiện tại:</strong> {getStatusText(booking.status)}</p>
+              <p><strong>Số tiền đã thanh toán:</strong> {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaid)}</p>
+              <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+                <p><strong>Chính sách hoàn tiền:</strong></p>
+                <p>• Tiền cọc: {refundPolicy.deposit_paid.over_10_days} (trên 10 ngày), {refundPolicy.deposit_paid.over_5_days} (trên 5 ngày), {refundPolicy.deposit_paid.under_5_days} (dưới 5 ngày)</p>
+                <p>• Đã thanh toán toàn bộ: {refundPolicy.confirmed}</p>
+                <p>• Chưa thanh toán: {refundPolicy.pending}</p>
+              </div>
+            </div>
+          </div>
+        ),
+        buttons: [
+          {
+            label: 'Đồng ý hủy',
+            onClick: async () => {
+              try {
+                // Hiển thị loading
+                toast.info('Đang xử lý hủy đơn...');
+                
+                const cancelRes = await axios.post(
+                  `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}/cancel-with-refund`, 
+                  { reason: 'User canceled' }, 
+                  config
+                );
+
+                if (cancelRes.data.success) {
+                  // Hiển thị thông báo thành công với chi tiết hoàn tiền
+                  const { reservationRefund: actualReservationRefund, remainingRefund: actualRemainingRefund, totalRefund: actualTotalRefund, newWalletBalance } = cancelRes.data.data;
+                  
+                  let successMessage = 'Hủy đơn thành công!\n';
+                  if (actualReservationRefund > 0) {
+                    successMessage += `• Hoàn tiền cọc: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(actualReservationRefund)}\n`;
+                  }
+                  if (actualRemainingRefund > 0) {
+                    successMessage += `• Hoàn phần còn lại: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(actualRemainingRefund)}\n`;
+                  }
+                  successMessage += `• Tổng hoàn: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(actualTotalRefund)}\n`;
+                  successMessage += `• Số dư ví mới: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(newWalletBalance)}`;
+
+                  toast.success(successMessage);
+                  
+                  // Chuyển hướng sau 2 giây
+                  setTimeout(() => {
+                    navigate('/profile/my-bookings');
+                  }, 2000);
+                } else {
+                  toast.error(cancelRes.data.message || 'Hủy đơn thất bại!');
+                }
+              } catch (err) {
+                console.error('Error canceling booking:', err);
+                const errorMessage = err.response?.data?.message || 'Hủy đơn thất bại!';
+                toast.error(errorMessage);
+              }
+            }
+          },
+          {
+            label: 'Không hủy',
+            onClick: () => {
+              toast.info('Đã hủy thao tác');
+            }
+          }
+        ],
+        closeOnEscape: true,
+        closeOnClickOutside: true,
+      });
+
+    } catch (err) {
+      console.error('Error getting expected refund:', err);
+      const errorMessage = err.response?.data?.message || 'Không thể lấy thông tin hoàn tiền!';
+      toast.error(errorMessage);
+    }
+  };
 
   return (
     <>
@@ -253,18 +404,18 @@ const BookingDetailsPage = () => {
           </div>
           <div className="payment-row paid">
               <span className="payment-label">Hoàn tiền giữ chỗ:</span>
-              <span className="payment-value">- {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.reservationFee)}</span>
+              <span className="payment-value">- {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(reservationRefund)}</span>
             </div>
           <div className="payment-row paid">
             <span className="payment-label">Đã thanh toán:</span>
-            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaid)}</span>
+            <span className="payment-value">-{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaid)}</span>
           </div>
      
            
   
           <div className="payment-row remaining">
             <span className="payment-label">Còn lại phải trả:</span>
-            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remaining)}</span>
+            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remaining - totalPaid)}</span>
           </div>
           
           {showPaymentButton && (
@@ -273,10 +424,16 @@ const BookingDetailsPage = () => {
                 className="pay-remaining-details-button"
                 onClick={() => navigate(`/payment-remaining/${booking._id}`)}
               >
-                <FaCreditCard /> Thanh toán phần còn lại ({new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(nextPaymentAmount)})
+                <FaCreditCard /> Thanh toán phần còn lại ({new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remaining - totalPaid)})
               </button>
             </div>
           )}
+            <div className="payment-row remaining">
+           
+            <span className="payment-value"> Hạn thanh toán : {moment(booking.endDate).format('DD/MM/YYYY HH:mm')}</span>
+           
+          </div>
+          
         </div>
       </div>
 
@@ -300,9 +457,56 @@ const BookingDetailsPage = () => {
         )}
       </div>
 
-      <button className="back-button" onClick={() => navigate(-1)}>
-        Quay lại
-      </button>
+      <div className="booking-details-actions">
+        <button className="back-button" onClick={() => navigate(-1)}>
+          Quay lại
+        </button>
+        {(() => {
+          const now = new Date();
+          const startDate = new Date(booking.startDate);
+          const canCancel = booking.status !== 'canceled' && 
+                           booking.status !== 'completed' && 
+                           startDate > now;
+          
+          if (canCancel) {
+            return (
+              <button
+                className="cancel-booking-button"
+                onClick={handleCancelBooking}
+              >
+                <FaTimesCircle style={{ marginRight: 8, fontSize: 18 }} />
+                Huỷ đặt xe
+              </button>
+            );
+          } else if (booking.status === 'canceled') {
+            return (
+              <div className="cancel-info">
+                <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>
+                  <FaTimesCircle style={{ marginRight: 8 }} />
+                  Đơn đã bị hủy
+                </span>
+              </div>
+            );
+          } else if (booking.status === 'completed') {
+            return (
+              <div className="completed-info">
+                <span style={{ color: '#27ae60', fontWeight: 'bold' }}>
+                  ✓ Đơn đã hoàn thành
+                </span>
+              </div>
+            );
+          } else if (startDate <= now) {
+            return (
+              <div className="started-info">
+                <span style={{ color: '#f39c12', fontWeight: 'bold' }}>
+                  ⏰ Chuyến đi đã bắt đầu
+                </span>
+              </div>
+            );
+          }
+          return null;
+        })()}
+      </div>
     </div>
      <Footer/>
      </>

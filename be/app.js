@@ -21,6 +21,8 @@ const carRoutes = require("./route/carRoutes");
 const bookingRoutes = require('./route/bookingRoutes');
 const paymentRoutes = require('./route/paymentRoute');
 const momoRoutes = require('./route/momoRoutes');
+const walletRoutes = require('./route/walletRoutes');
+const transactionRoute = require('./route/transactionRoute');
 
 const app = express();
 
@@ -75,6 +77,8 @@ app.use("/api/cars", carRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/momo', momoRoutes);
+app.use('/api/wallet', walletRoutes);
+app.use('/api/transactions', transactionRoute);
 
 
 app.get("/hello", (req, res) => {

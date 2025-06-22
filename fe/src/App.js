@@ -26,7 +26,7 @@ import PaymentDeposit  from "./pages/paymentDeposit/PaymentDeposit"
 import ConsignForm from "./pages/consignForm/ConsignForm";
 
 // owner
-import OwnerPage from "./pages/owner/ownerPage";
+import OwnerPage from "./pages/owner/OwnerPage";
 import VehicleManagement from "./pages/vehiclemanagement/VehicleManagement";
 import AddCarForm  from "./pages/vehiclemanagement/AddCarForm";
 
@@ -35,6 +35,7 @@ import AddCarForm  from "./pages/vehiclemanagement/AddCarForm";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import OwnerRequestsPage from "./pages/admin/OwnerRequestsPage";
 import VehiclesRequestPage from "./pages/admin/VehiclesRequestPage";
+import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
 
 import PaymentSuccess from './pages/payment/PaymentSuccess';
 import PaymentFailed from './pages/payment/PaymentFailed';
@@ -42,6 +43,7 @@ import PaymentFailed from './pages/payment/PaymentFailed';
 // user
 import TransactionHistory from './pages/profile/TransactionHistory';
 import ManageBooking from "./components/user/ManageBooking";
+import WalletInfo from './pages/profile/WalletInfo';
 
 function App() {
   return (
@@ -62,6 +64,7 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile/change-password" element={<ChangePassword />}/>
             <Route path="/profile/transactions" element={<TransactionHistory />} />
+            <Route path="/profile/wallet" element={<WalletInfo />} />
 
             <Route path="/vehicles/:id" element={<VehicleDetail />} /> {/* Add VehicleDetail route */}
 
@@ -86,6 +89,7 @@ function App() {
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="owner-requests" element={<OwnerRequestsPage />} />
                 <Route path="vehicle-approvals" element={<VehiclesRequestPage />} />
+                <Route path="withdrawals" element={<AdminWithdrawals />} />
             {/* </Route> */}
 
 

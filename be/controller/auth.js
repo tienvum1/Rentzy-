@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const validator = require("validator");
 const User = require("../models/User");
+const Wallet = require("../models/Wallet");
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -24,7 +25,7 @@ const generateTokenAndSetCookie = (user, res) => {
   });
 };
 
-// REGISTER
+// REGISTER bằng email và pass
 exports.register = async (req, res) => {
   const { name, email, password, phone } = req.body;
   console.log(req.body);
@@ -66,6 +67,18 @@ exports.register = async (req, res) => {
     });
 
     await user.save();
+
+    // Kiểm tra nếu user chưa có ví thì tạo ví mới
+    let wallet = await Wallet.findOne({ user: user._id });
+    if (!wallet) {
+      wallet = new Wallet({
+        user: user._id,
+        balance: 0,
+        currency: 'VND',
+        status: 'active'
+      });
+      await wallet.save();
+    }
 
     // Generate email verification token
     const emailToken = jwt.sign({ user_id: user._id }, process.env.JWT_SECRET, {
@@ -216,7 +229,6 @@ exports.googleCallback = async (req, res) => {
     );
   }
 
-
   const googleProfile = req.user;
 
   try {
@@ -231,10 +243,19 @@ exports.googleCallback = async (req, res) => {
       }
 
       user.is_verified = true;
-
-      // Explicitly NOT updating avatar for existing users upon login
-      // This aligns with the requirement: "Chỉ set avatar_url từ Google khi đăng ký lần đầu"
       await user.save();
+
+      // Kiểm tra nếu user chưa có ví thì tạo ví mới
+      let wallet = await Wallet.findOne({ user: user._id });
+      if (!wallet) {
+        wallet = new Wallet({
+          user: user._id,
+          balance: 0,
+          currency: 'VND',
+          status: 'active'
+        });
+        await wallet.save();
+      }
     } else {
       // 2. Tìm theo email nếu chưa có googleId
       user = await User.findOne({ email: googleProfile.email });
@@ -250,19 +271,27 @@ exports.googleCallback = async (req, res) => {
           user.loginMethods.push("google");
         }
 
-        // Chỉ cập nhật tên nếu chưa có
         if (!user.name && googleProfile.displayName) {
           user.name = googleProfile.displayName;
         }
 
-        // Explicitly NOT updating avatar for existing users upon login
-        // This aligns with the requirement: "không set lại khi đăng nhập các lần sau."
         user.is_verified = true;
         await user.save();
+
+        // Kiểm tra nếu user chưa có ví thì tạo ví mới
+        let wallet = await Wallet.findOne({ user: user._id });
+        if (!wallet) {
+          wallet = new Wallet({
+            user: user._id,
+            balance: 0,
+            currency: 'VND',
+            status: 'active'
+          });
+          await wallet.save();
+        }
       } else {
         // 3. Tạo tài khoản mới nếu chưa có
         console.log("New user via Google, creating account:", googleProfile.email);
-
 
         user = new User({
           name: googleProfile.displayName,
@@ -276,6 +305,18 @@ exports.googleCallback = async (req, res) => {
         });
 
         await user.save();
+
+        // Kiểm tra nếu user chưa có ví thì tạo ví mới
+        let wallet = await Wallet.findOne({ user: user._id });
+        if (!wallet) {
+          wallet = new Wallet({
+            user: user._id,
+            balance: 0,
+            currency: 'VND',
+            status: 'active'
+          });
+          await wallet.save();
+        }
       }
     }
 
