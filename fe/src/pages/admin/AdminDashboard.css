@@ -1,19 +1,43 @@
 .admin-dashboard-layout {
-    display: flex; /* Use Flexbox to arrange sidebar and content */
-    min-height: 90vh; /* Make it take up most of the viewport height */
-    background-color: #f4f7f6; /* Light background */
+    display: flex;
+    min-height: 100vh;
+    background-color: #f0f2f5; /* A slightly different background */
 }
 
-/* Style for the main content area */
 .admin-dashboard-content {
-    flex-grow: 1; /* Allow content to take up remaining space */
-    padding: 20px; /* Add some padding */
-    /* Add overflow-y: auto; if content might exceed height */
+    flex-grow: 1;
+    padding: 2rem;
+}
+
+/* This targets the inner content wrappers like owner-requests-inner-content, etc. */
+.admin-dashboard-content > div[class*="-inner-content"] {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .admin-dashboard-content h2 {
-    margin-bottom: 20px;
+    text-align: center; /* Center the title */
+    margin-bottom: 2rem;
     color: #333;
+    font-size: 1.75rem;
+}
+
+/* Container for the "No requests" message */
+.no-requests-message-container {
+    background-color: #f8f9fa; /* Light grey background */
+    border: 1px solid #e9ecef; /* Subtle border */
+    border-radius: 6px;
+    padding: 2rem;
+    text-align: center; /* Center the text */
+    margin: 1rem 0;
+}
+
+.no-requests-message-container p {
+    margin: 0;
+    color: #6c757d; /* A softer text color */
+    font-size: 1.1rem;
 }
 
 .admin-dashboard-content section {

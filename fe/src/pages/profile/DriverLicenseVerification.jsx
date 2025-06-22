@@ -2,275 +2,173 @@ import React, { useState, useEffect } from 'react';
 import './DriverLicenseVerification.css';
 import { FaPen } from 'react-icons/fa';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
+
+const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999';
 
 const DriverLicenseVerification = () => {
+  const { user, login } = useAuth();
   const [form, setForm] = useState({
-    licenseNumber: '',
-    fullName: '',
-    birthDate: '1970-01-01',
+    driver_license_number: '',
+    driver_license_full_name: '',
+    driver_license_birth_date: '',
   });
-
-  const [originalForm, setOriginalForm] = useState(null); // To store fetched data
-  const [editMode, setEditMode] = useState(false);
   const [image, setImage] = useState(null);
-  const [file, setFile] = useState(null); // New file selected by user
-  const [originalImage, setOriginalImage] = useState(null); // To store fetched image URL
-  const [isLoading, setIsLoading] = useState(true);
-  const [isVerified, setIsVerified] = useState(false);
+  const [file, setFile] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [status, setStatus] = useState('none');
 
-  // Fetch user's driver license info when component mounts
   useEffect(() => {
-    const fetchDriverLicenseInfo = async () => {
-      try {
-        console.log('Fetching driver license info...');
-        const response = await axios.get('/api/user/profile', {
-          withCredentials: true
-        });
-        
-        console.log('Response from /api/user/profile:', response.data);
-        const userData = response.data.user; // Access user object from response.data
-        console.log('userData extracted:', userData);
+    if (user) {
+      const userStatus = user.driver_license_verification_status || 'none';
+      setStatus(userStatus);
 
-        if (userData) {
-          const newForm = {
-            licenseNumber: userData.driver_license_number || '',
-            fullName: userData.driver_license_full_name || '',
-            birthDate: userData.driver_license_birth_date ? userData.driver_license_birth_date.split('T')[0] : '1970-01-01',
-          };
-          setForm(newForm);
-          setOriginalForm(newForm); // Store original fetched data
+      setForm({
+        driver_license_number: user.driver_license_number || '',
+        driver_license_full_name: user.driver_license_full_name || '',
+        driver_license_birth_date: user.driver_license_birth_date ? new Date(user.driver_license_birth_date).toISOString().split('T')[0] : '',
+      });
 
-          if (userData.driver_license_front_url) {
-            setImage(userData.driver_license_front_url);
-            setOriginalImage(userData.driver_license_front_url); // Store original image URL
-            console.log('Image URL set:', userData.driver_license_front_url);
-          }
-          
-          // Update isVerified based on the new driver_license_verification_status
-          if (userData.driver_license_verification_status === 'verified') {
-            setIsVerified(true);
-          } else {
-            setIsVerified(false); // Can be pending or rejected
-          }
-
-          console.log('Form state after setting:', newForm);
-          console.log('Verification Status:', userData.driver_license_verification_status);
-
-        } else {
-          console.log('No user data received.');
-          setIsVerified(false);
-        }
-      } catch (error) {
-        console.error('Error fetching driver license info:', error);
-      } finally {
-        setIsLoading(false);
-        console.log('Finished fetching driver license info. isLoading set to false.');
+      if (user.driver_license_image) {
+        setImage(user.driver_license_image);
       }
-    };
 
-    fetchDriverLicenseInfo();
-  }, []);
+      // Automatically enter edit mode if the user has no license info submitted.
+      if (userStatus === 'none' && !user.driver_license_number) {
+        setEditMode(true);
+      } else {
+        setEditMode(false);
+      }
+    }
+  }, [user]);
 
-  const handleChange = (e) => {
-    if (!editMode) return; // Only allow changes in edit mode
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleImageUpload = (e) => {
-    if (!editMode) return; // Only allow image upload in edit mode
+  const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    console.log('Selected file:', selectedFile);
+    setFile(selectedFile);
     if (selectedFile) {
       setImage(URL.createObjectURL(selectedFile));
-      setFile(selectedFile); // Set the new file
-      console.log('File set successfully');
     }
   };
 
-  const handleRemoveImage = () => {
-    setImage(null);
-    setFile(null); // Clear the new file
-    // Keep originalImage for comparison/restoring if user cancels
-  };
-
-  const handleEditToggle = () => {
-    if (editMode) { // If currently in edit mode, user is cancelling
-      // Reset form and image to original fetched state
-      setForm(originalForm || { licenseNumber: '', fullName: '', birthDate: '1970-01-01' });
-      setImage(originalImage);
-      setFile(null); // Clear any newly selected file
+  const handleCancel = () => {
+    // Reset form to the state from context
+    if (user) {
+      setForm({
+        driver_license_number: user.driver_license_number || '',
+        driver_license_full_name: user.driver_license_full_name || '',
+        driver_license_birth_date: user.driver_license_birth_date ? new Date(user.driver_license_birth_date).toISOString().split('T')[0] : '',
+      });
+      setImage(user.driver_license_image || null);
     }
-    setEditMode(!editMode);
+    setFile(null);
+    setEditMode(false);
   };
 
   const handleSubmit = async () => {
-    if (!editMode) return; // Only allow submission in edit mode
-
-    console.log('Form data:', form);
-    console.log('File (newly selected):', file);
-    console.log('Image (current display):', image);
-    console.log('Original Image:', originalImage);
-
-    if (!form.licenseNumber || !form.fullName || !form.birthDate) {
-      alert('Vui lòng điền đầy đủ thông tin GPLX.');
-      return;
-    }
-
-    // Check if an image exists (either original or a new one)
-    if (!image) { // If image is null, it means no original and no new file was set
-      alert('Vui lòng tải lên ảnh mặt trước GPLX.');
-      return;
+    const formData = new FormData();
+    formData.append('driver_license_number', form.driver_license_number);
+    formData.append('driver_license_full_name', form.driver_license_full_name);
+    formData.append('driver_license_birth_date', form.driver_license_birth_date);
+    if (file) {
+      formData.append('driver_license_image', file);
     }
 
     try {
-      const formData = new FormData();
-      formData.append('driver_license_number', form.licenseNumber);
-      formData.append('driver_license_full_name', form.fullName);
-      formData.append('driver_license_birth_date', form.birthDate);
-      
-      // Only append the file if a new file was selected
-      if (file) {
-        formData.append('driver_license_front', file, file.name);
-      }
-
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
-      }
-
-      const response = await axios.post('/api/user/create-driver-license', formData, {
+      const response = await axios.post(`${backendUrl}/api/user/create-driver-license`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
         withCredentials: true
       });
-      
+
       if (response.data) {
-        alert('Thông tin GPLX đã được cập nhật thành công!');
-        setEditMode(false);
-        setIsVerified(true);
-        // Update original form and image with new saved data
-        setOriginalForm(form); 
-        setOriginalImage(image); // Update original image to the current displayed one
-        setFile(null); // Clear the new file after successful submission
+        alert('Thông tin GPLX đã được gửi để chờ duyệt!');
+        await login(); // Refresh user data from context
       }
     } catch (error) {
-      console.error('Lỗi khi cập nhật thông tin GPLX:', error);
-      if (error.response) {
-        console.error('Error response:', error.response.data);
-        alert(error.response.data.message || 'Lỗi khi cập nhật thông tin GPLX. Vui lòng thử lại.');
-      } else {
-        alert('Lỗi khi cập nhật thông tin GPLX. Vui lòng thử lại.');
-      }
+      console.error("Lỗi khi cập nhật GPLX:", error);
+      alert('Đã xảy ra lỗi khi gửi thông tin.');
     }
   };
-
-  if (isLoading) {
-    return <div className="dlx__loading">Đang tải thông tin...</div>;
-  }
+  
+  const getStatusInfo = () => {
+    switch (status) {
+      case 'verified':
+        return { text: '✅ Đã xác thực', className: 'verified' };
+      case 'pending':
+        return { text: '🟡 Đang chờ duyệt', className: 'pending' };
+      case 'rejected':
+        return { text: '❌ Đã từ chối', className: 'rejected' };
+      case 'none':
+      default:
+        return { text: '🔴 Chưa xác thực', className: '' };
+    }
+  };
+  
+  const statusInfo = getStatusInfo();
 
   return (
-    <div className="dlx__card">
-      <div className="dlx__header">
+    <div className="dlx-container">
+      <div className="dlx-header">
         <h2>Giấy phép lái xe</h2>
-        <span className={`dlx__badge
-          ${isVerified ? 'verified' : ''}
-          ${originalForm && originalForm.driver_license_verification_status === 'pending' ? 'pending' : ''}
-          ${originalForm && originalForm.driver_license_verification_status === 'rejected' ? 'rejected' : ''}
-        `}>
-          {
-            isVerified 
-              ? '✅ Đã xác thực' 
-              : (originalForm && originalForm.driver_license_number && originalForm.driver_license_verification_status === 'pending'
-                  ? '🟡 Đang chờ duyệt'
-                  : (originalForm && originalForm.driver_license_number && originalForm.driver_license_verification_status === 'rejected'
-                      ? '❌ Đã từ chối'
-                      : '🔴 Chưa xác thực'
-                    )
-                )
-          }
-        </span>
-        <button 
-          className="dlx__edit-btn" 
-          onClick={handleEditToggle}
-        >
-          {editMode ? 'Hủy' : 'Chỉnh sửa'} <FaPen size={12} />
-        </button>
-      </div>
-
-      <div className="dlx__alert">
-        <strong>Lưu ý:</strong> để tránh phát sinh vấn đề trong quá trình thuê xe, 
-        <span className="highlight"> người đặt xe </span> trên hệ thống (đã xác thực GPLX) 
-        <strong> ĐỒNG THỜI </strong> phải là <span className="highlight">người nhận xe</span>.
-      </div>
-
-      <div className="dlx__form">
-        <div className="dlx__image-upload">
-          <label>Ảnh mặt trước GPLX</label>
-          {image ? (
-            <div className="dlx__preview-container">
-              <img src={image} alt="Ảnh mặt trước GPLX" className="dlx__preview" />
-              {editMode && (
-                <button 
-                  className="dlx__remove-image" 
-                  onClick={handleRemoveImage}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          ) : (
-            <label className={`dlx__upload-placeholder ${!editMode ? 'disabled' : ''}`}>
-              <input 
-                type="file" 
-                accept="image/*"
-                hidden 
-                onChange={handleImageUpload}
-                disabled={!editMode}
-              />
-              <span>📤 Tải lên ảnh mặt trước GPLX</span>
-            </label>
+        <div className="dlx-header-actions">
+          <span className={`dlx__badge ${statusInfo.className}`}>
+            {statusInfo.text}
+          </span>
+          {status !== 'verified' && !editMode && (
+            <button onClick={() => setEditMode(true)} className="dlx-edit-btn">Chỉnh sửa</button>
           )}
         </div>
-
-        <div className="dlx__info">
-          <label>Số GPLX</label>
-          <input
-            type="text"
-            name="licenseNumber"
-            disabled={!editMode}
-            placeholder="Nhập số GPLX đã cấp"
-            value={form.licenseNumber}
-            onChange={handleChange}
-          />
-          <label>Họ và tên</label>
-          <input
-            type="text"
-            name="fullName"
-            disabled={!editMode}
-            placeholder="Nhập đầy đủ họ tên"
-            value={form.fullName}
-            onChange={handleChange}
-          />
-          <label>Ngày sinh</label>
-          <input
-            type="date"
-            name="birthDate"
-            disabled={!editMode}
-            value={form.birthDate}
-            onChange={handleChange}
-          />
+      </div>
+      <div className="dlx-notice">
+        <p>Lưu ý: để tránh phát sinh vấn đề trong quá trình thuê xe, <strong>người đặt xe</strong> trên hệ thống (đã xác thực GPLX) <strong>ĐỒNG THỜI</strong> phải là <strong>người lái xe</strong>.</p>
+      </div>
+      <div className="dlx-form-container">
+        <div className="dlx-image-section">
+          <h4>Ảnh mặt trước GPLX</h4>
+          <div className="dlx-image-preview">
+            {image ? <img src={image} alt="GPLX" /> : <p>Chưa có ảnh</p>}
+          </div>
+          {editMode && <input type="file" onChange={handleFileChange} />}
+        </div>
+        <div className="dlx-info-section">
+          <div className="dlx-form-field">
+            <label>Số GPLX</label>
+            <input
+              type="text"
+              value={form.driver_license_number}
+              onChange={(e) => setForm({ ...form, driver_license_number: e.target.value })}
+              readOnly={!editMode}
+            />
+          </div>
+          <div className="dlx-form-field">
+            <label>Họ và tên</label>
+            <input
+              type="text"
+              value={form.driver_license_full_name}
+              onChange={(e) => setForm({ ...form, driver_license_full_name: e.target.value })}
+              readOnly={!editMode}
+            />
+          </div>
+          <div className="dlx-form-field">
+            <label>Ngày sinh</label>
+            <input
+              type="date"
+              value={form.driver_license_birth_date}
+              onChange={(e) => setForm({ ...form, driver_license_birth_date: e.target.value })}
+              readOnly={!editMode}
+            />
+          </div>
         </div>
       </div>
-
       {editMode && (
-        <button className="dlx__submit-btn" onClick={handleSubmit}>
-          Lưu thông tin
-        </button>
+        <div className="dlx-actions">
+          <button onClick={handleCancel} className="dlx-cancel-btn">Hủy</button>
+          <button onClick={handleSubmit} className="dlx-save-btn">Lưu lại</button>
+        </div>
       )}
-
-      <div className="dlx__footer-note">
-        Vì sao tôi phải xác thực GPLX ❓
+      <div className="dlx-faq">
+        <a href="#">Vì sao tôi phải xác thực GPLX ?</a>
       </div>
     </div>
   );

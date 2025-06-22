@@ -5,8 +5,8 @@ import './ChangePassword.css'; // Optional: Create a specific CSS file
 // Removed ProfileSidebar import - integrate this page into a layout with sidebar instead
 // import ProfileSidebar from '../profile/ProfileSidebar';
 
-import ProfileSidebar from '../profile/ProfileSidebar';
 import Header from '../../components/Header/Header'; // Import Header component
+import ProfileSidebar from '../profile/ProfileSidebar';
 
 const ChangePassword = () => {
   const [oldPassword, setOldPassword] = useState('');
@@ -68,11 +68,7 @@ const ChangePassword = () => {
   };
 
   return (
-    <>
-<Header />
     <div className="change-password-layout">
-   
-      <ProfileSidebar/>
       <div className="change-password-container">
         <div className="change-password-card">
           <h2>Đổi mật khẩu</h2>
@@ -127,7 +123,6 @@ const ChangePassword = () => {
         </div>
       </div>
     </div>
-    </>
   );
 };
 

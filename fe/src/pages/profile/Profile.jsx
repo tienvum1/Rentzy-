@@ -12,7 +12,7 @@ import VerifyPhonePopup from './VerifyPhonePopup';
 import UpdateNamePopup from './UpdateNamePopup';
 
 const Profile = () => {
-  const { user, isAuthenticated, isLoading, fetchUserProfile } = useAuth();
+  const { user, isAuthenticated, isLoading, login } = useAuth();
   const navigate = useNavigate();
 
   const [message, setMessage] = useState(null);
@@ -24,6 +24,7 @@ const Profile = () => {
   const [emailUpdateErrorMessage, setEmailUpdateErrorMessage] = useState(null);
   const [showVerifyPhonePopup, setShowVerifyPhonePopup] = useState(false);
   const [phoneUpdateErrorMessage, setPhoneUpdateErrorMessage] = useState(null);
+  const [phoneVerificationError, setPhoneVerificationError] = useState('');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -42,11 +43,11 @@ const Profile = () => {
 
       if (response.status === 200) {
         setMessage(response.data.message || 'Tên người dùng đã được cập nhật thành công!');
-        fetchUserProfile();
+        await login();
         setShowNamePopup(false);
       } else {
         setMessage(response.data.message || 'Cập nhật tên người dùng thành công nhưng có cảnh báo.');
-        fetchUserProfile();
+        await login();
         setShowNamePopup(false);
       }
     } catch (error) {
@@ -68,8 +69,8 @@ const Profile = () => {
       });
       if (!response.ok) throw new Error('Avatar update failed');
       setShowAvatarPopup(false);
+      await login();
       setMessage('Avatar updated successfully!');
-      fetchUserProfile();
     } catch {
       setMessage('Error updating avatar!');
     }
@@ -158,7 +159,13 @@ const Profile = () => {
                 <span className="profile__value">{user.phone || 'Not set'}</span>
                 <FaPencilAlt
                   className="profile__edit-icon"
-                  onClick={() => setShowPhonePopup(true)}
+                  onClick={() => {
+                    if (user.phone && !user.is_phone_verified) {
+                      setShowVerifyPhonePopup(true);
+                    } else {
+                      setShowPhonePopup(true);
+                    }
+                  }}
                   style={{ cursor: 'pointer' }}
                 />
               </div>
@@ -197,7 +204,7 @@ const Profile = () => {
               setShowEmailPopup(false);
               setShowVerifyEmailPopup(true);
             } else {
-              fetchUserProfile();
+              await login();
               setShowEmailPopup(false);
               setMessage(response.data.message || 'Email updated!');
             }
@@ -219,7 +226,7 @@ const Profile = () => {
               setShowPhonePopup(false);
               setShowVerifyPhonePopup(true);
             } else {
-              fetchUserProfile();
+              await login();
               setShowPhonePopup(false);
               setMessage(response.data.message || 'Phone updated!');
             }
@@ -244,11 +251,12 @@ const Profile = () => {
         onVerifyOtp={async (otp) => {
           try {
             const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999'}/api/user/verify-email-otp`, { otp }, { withCredentials: true });
-            fetchUserProfile();
+            await login();
             setShowVerifyEmailPopup(false);
             setMessage(response.data.message || 'Email xác minh thành công!');
           } catch (error) {
-            setMessage(error.response?.data?.message || 'OTP không hợp lệ.');
+            console.error('Lỗi khi xác minh OTP email:', error.response?.data?.message || error.message);
+            // You could set an error message in the popup here
           }
         }}
         onResendOtp={async () => {
@@ -264,19 +272,22 @@ const Profile = () => {
       <VerifyPhonePopup
         open={showVerifyPhonePopup}
         onClose={() => setShowVerifyPhonePopup(false)}
+        userPhone={user.phone}
         onVerifyOtp={async (otp) => {
           try {
+            setPhoneVerificationError('');
             const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999'}/api/user/verify-phone-otp`, { otp }, { withCredentials: true });
-            fetchUserProfile();
+            await login();
             setShowVerifyPhonePopup(false);
-            setMessage(response.data.message || 'Xác minh số điện thoại thành công!');
+            setMessage(response.data.message || 'Số điện thoại đã được xác minh thành công!');
           } catch (error) {
-            setMessage(error.response?.data?.message || 'OTP không hợp lệ hoặc hết hạn.');
+            const errorMessage = error.response?.data?.message || 'Lỗi không xác định.';
+            console.error('Lỗi khi xác minh OTP điện thoại:', errorMessage);
+            setPhoneVerificationError(errorMessage);
           }
         }}
-        onResendOtp={async () => {
-          setMessage('Chức năng gửi lại OTP điện thoại chưa được triển khai.');
-        }}
+        errorMessage={phoneVerificationError}
+        setErrorMessage={setPhoneVerificationError}
       />
     </>
   );

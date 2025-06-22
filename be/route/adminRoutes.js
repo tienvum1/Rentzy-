@@ -1,33 +1,31 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
-const adminController = require('../controller/adminController');
+const { protect, adminOnly } = require('../middleware/authMiddleware');
+const { 
+    getOwnerRequests, 
+    updateOwnerRequestStatus, 
+    getVehicleApprovalRequests, 
+    updateVehicleApprovalStatus,
+    getDriverLicenseRequests,
+    updateDriverLicenseStatus
+} = require('../controller/adminController');
 
-// Simple middleware to check if user is admin
-const checkAdmin = (req, res, next) => {
-    // Assuming user info (including roles) is attached to req.user by protect middleware
-    if (req.user && req.user.role && req.user.role.includes('admin')) {
-        next(); // User is admin, proceed
-    } else {
-        res.status(403).json({ message: 'Admin access required.' }); // Not authorized
-    }
-};
+// Route để lấy danh sách các yêu cầu trở thành chủ xe
+router.get('/owner-requests', protect, adminOnly, getOwnerRequests);
 
-// Admin Routes for Owner Request Management
-// GET all pending owner requests
-router.get(
-    '/owner/pendingRequests', // Changed route path for clarity
-    protect, // Ensure user is authenticated
-    checkAdmin, // Ensure user is admin
-    adminController.getPendingOwnerRequests
-);
+// Route để cập nhật trạng thái yêu cầu của chủ xe
+router.put('/owner-requests/:userId', protect, adminOnly, updateOwnerRequestStatus);
 
-// PUT review an owner request (approve/reject)
-router.put(
-    '/owner/reviewRequest/:userId', // Changed route path for clarity
-    protect, // Ensure user is authenticated
-    checkAdmin, // Ensure user is admin
-    adminController.reviewOwnerRequest
-);
+// Route để lấy danh sách các xe chờ duyệt
+router.get('/vehicle-approvals', protect, adminOnly, getVehicleApprovalRequests);
+
+// Route để cập nhật trạng thái của xe
+router.put('/vehicle-approvals/:vehicleId', protect, adminOnly, updateVehicleApprovalStatus);
+
+// Route để lấy danh sách các yêu cầu xác thực GPLX
+router.get('/driver-license-requests', protect, adminOnly, getDriverLicenseRequests);
+
+// Route để cập nhật trạng thái xác thực GPLX
+router.put('/driver-license-status/:userId', protect, adminOnly, updateDriverLicenseStatus);
 
 module.exports = router;

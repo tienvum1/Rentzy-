@@ -1,79 +1,129 @@
 // fe/src/context/AuthContext.js
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Lưu thông tin user hoặc null nếu chưa đăng nhập
-  const [isLoading, setIsLoading] = useState(true); // Trạng thái loading khi kiểm tra đăng nhập ban đầu
-  const backendUrl = process.env.REACT_APP_BACKEND_URL; // Lấy URL backend từ biến môi trường
+  const [user, setUser] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+  const [isLoading, setIsLoading] = useState(true); // isLoading now represents the initial auth check
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999';
 
-  // Hàm để lấy thông tin user profile từ backend
-  const fetchUserProfile = async () => {
-    setIsLoading(true); // Bắt đầu loading
+  useEffect(() => {
+    // This effect runs once on mount to check the user's authentication status
+    const checkAuthStatus = async () => {
+      try {
+        const response = await axios.get(`${backendUrl}/api/user/profile`, {
+          withCredentials: true,
+        });
+        const fetchedUser = response.data.user;
+        setUser(fetchedUser);
+        // If user is fetched, load their favorites from localStorage
+        if (fetchedUser) {
+          const storedFavorites = localStorage.getItem(`favoriteVehicles_${fetchedUser._id}`);
+          if (storedFavorites) {
+            setFavorites(JSON.parse(storedFavorites));
+          }
+        }
+      } catch (error) {
+        // Not logged in or token expired
+        setUser(null);
+        setFavorites([]);
+      } finally {
+        // Auth check is complete, app is no longer loading
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, []); // Empty dependency array ensures this runs only once on mount
+
+  const login = async () => {
+    setIsLoading(true);
+    setFavorites([]); // Immediately clear favorites on login attempt
     try {
-      // Gửi request đến API profile, đảm bảo gửi kèm cookie
       const response = await axios.get(`${backendUrl}/api/user/profile`, {
         withCredentials: true,
       });
-      // Nếu thành công, lưu thông tin user vào state
-      setUser(response.data.user);
-      console.log("User profile fetched and updated in context:", response.data.user);
+      const loggedInUser = response.data.user;
+      setUser(loggedInUser);
+      if (loggedInUser) {
+        const storedFavorites = localStorage.getItem(`favoriteVehicles_${loggedInUser._id}`);
+        if (storedFavorites) {
+          setFavorites(JSON.parse(storedFavorites));
+        } else {
+          setFavorites([]); // Ensure favorites are empty if nothing is in storage
+        }
+      } else {
+        setUser(null);
+        setFavorites([]);
+      }
     } catch (error) {
-      console.error("Error fetching user profile or not authenticated:", error);
-      // Nếu lỗi (ví dụ: 401 Unauthorized), đặt user về null
       setUser(null);
-      // Note: No need to manually clear cookie here as it's httpOnly and backend logout handles it
+      setFavorites([]);
     } finally {
-      setIsLoading(false); // Kết thúc loading
+      setIsLoading(false);
     }
   };
 
-  // Effect chạy khi component mount để kiểm tra trạng thái đăng nhập ban đầu
-  useEffect(() => {
-    fetchUserProfile(); // Gọi hàm fetchUserProfile để kiểm tra token từ cookie
-  }, []); // Dependency rỗng, chỉ chạy 1 lần khi component mount
-
-  // Hàm đăng nhập: Cập nhật state user sau khi đăng nhập thành công
-  const login = (userData) => {
-    console.log("Login triggered, fetching profile from backend...");
-    // Backend sets the cookie, fetchUserProfile will get the updated user state
-    fetchUserProfile();
-  };
-
-  // Hàm đăng xuất: Xóa state user và gọi API logout backend
   const logout = async () => {
-    setUser(null); // Xóa thông tin user khỏi state frontend
-    console.log("Logging out, clearing user state...");
+    setUser(null);
+    setFavorites([]); // Clear favorites from UI state on logout
+
+    // DO NOT REMOVE from localStorage. The user's favorites should persist for their next login.
+    // The line below was incorrect and has been removed.
+    // localStorage.removeItem(`favoriteVehicles_${user?._id}`); 
+
     try {
-      // Gọi API logout backend để xóa cookie
       await axios.get(`${backendUrl}/api/auth/logout`, {
-        withCredentials: true, // Gửi cookie để backend xóa
+        withCredentials: true,
       });
-      console.log("Backend logout successful.");
     } catch (error) {
       console.error("Error during backend logout:", error);
-      // Even if backend logout fails, user state is cleared on frontend
     }
   };
 
-  // Giá trị sẽ được cung cấp bởi Context cho các component con
-  const contextValue = {
-    user,
-    isAuthenticated: !!user, // Trạng thái đăng nhập (true nếu user khác null)
-    isLoading, // Trạng thái loading ban đầu
-    login, // Hàm đăng nhập
-    logout, // Hàm đăng xuất
-    fetchUserProfile, // Hàm refresh profile (ví dụ sau set password)
+  const toggleFavorite = (vehicle) => {
+    if (!user) {
+      console.log("User must be logged in to favorite items.");
+      return;
+    }
+    const key = `favoriteVehicles_${user._id}`;
+    
+    // Use a callback with setFavorites to ensure we have the latest state
+    setFavorites(prevFavorites => {
+      const isAlreadyFavorite = prevFavorites.some(fav => fav._id === vehicle._id);
+      let updatedFavorites;
+
+      if (isAlreadyFavorite) {
+        updatedFavorites = prevFavorites.filter(fav => fav._id !== vehicle._id);
+      } else {
+        updatedFavorites = [...prevFavorites, vehicle];
+      }
+      
+      localStorage.setItem(key, JSON.stringify(updatedFavorites));
+      return updatedFavorites;
+    });
   };
 
+  // Memoize the context value to prevent unnecessary re-renders of consumers
+  const value = useMemo(() => ({
+    user,
+    setUser, // Keep setUser for direct updates if needed elsewhere
+    isAuthenticated: !!user,
+    isLoading,
+    favorites,
+    toggleFavorite,
+    login,
+    logout,
+  }), [user, isLoading, favorites]);
+
   return (
-    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 };
 
-// Custom hook để sử dụng AuthContext
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
