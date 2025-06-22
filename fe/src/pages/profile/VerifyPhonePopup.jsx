@@ -43,9 +43,13 @@ const VerifyPhonePopup = ({ open, onClose, onVerifyOtp, userPhone, errorMessage,
     setMessage('');
     setErrorMessage('');
     try {
-      await axios.post(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999'}/api/user/resend-phone-otp`, {}, {
-        withCredentials: true,
-      });
+      await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999'}/api/user/resend-phone-otp`,
+        { phone: userPhone }, // Send the current phone number with the correct key 'phone'
+        {
+          withCredentials: true,
+        }
+      );
       setMessage('Mã OTP mới đã được gửi thành công.');
     } catch (err) {
       setErrorMessage(err.response?.data?.message || 'Lỗi khi gửi lại mã OTP.');
