@@ -972,8 +972,4 @@ module.exports = {
   getFilteredBookingsOfUser,
   getAllModelOfVehicle,
   getAllStatusOfBooking
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> tienvu
