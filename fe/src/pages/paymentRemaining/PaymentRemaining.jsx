@@ -189,7 +189,7 @@ const PaymentRemaining = () => {
           <div className="detail-row total">
             <span className="label">Số tiền cần thanh toán:</span>
             <span className="value price">
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount)}
+              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount-totalPaidAmount)}
             </span>
           </div>
         </div>
