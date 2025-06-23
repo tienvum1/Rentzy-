@@ -64,7 +64,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/my-bookings" element={<ManageBooking />} /> {/* New route for user bookings */}
             <Route path="/profile/favorites" element={<ProfilePage />} />
-            <Route path="/profile/my-bookings" element={<UserBookings />} /> {/* New route for user bookings */}
+            {/* <Route path="/profile/my-bookings" element={<UserBookings />} />  */}
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile/change-password" element={<ChangePassword />} />
@@ -107,10 +107,18 @@ function App() {
             {/*  Chỉ có user đăng kí chủ xe mới dăng nhập được  đăng nhập được */}
 
             <Route path="/ownerpage" element={<OwnerRouteGuard />}>
+             
               <Route path="overview" element={<OwnerPage />} />
               <Route path="vehicle-management" element={<VehicleManagement />} />
+              <Route path="notification" element={<NotificationPage />} />
               <Route path="add-car" element={<AddCarForm />} />
+              <Route path="add-motorbike" element={<AddMotorbikeForm />} />
+              <Route path="edit-vehicle/:id" element={<EditVehicle />} />
             </Route>
+
+
+
+
 
             {/* 404 Route - Thêm route cho trang không tìm thấy */}
             <Route
@@ -122,14 +130,6 @@ function App() {
                 </div>
               }
             />
-
-            <Route path="overview" element={<OwnerPage />} />
-            <Route path="vehicle-management" element={<VehicleManagement />} />
-            <Route path="notification" element={<NotificationPage />} />
-            <Route path="add-car" element={<AddCarForm />} />
-            <Route path="add-motorbike" element={<AddMotorbikeForm />} />
-            <Route path="edit-vehicle/:id" element={<EditVehicle />} />
-
           </Routes>
         </div>
       </AuthProvider>

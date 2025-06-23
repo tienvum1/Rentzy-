@@ -469,7 +469,7 @@ function getReservationRefund(booking) {
   const startDate = new Date(booking.startDate);
   const diffDays = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
   const reservationFee = booking.reservationFee || 0;
-  
+
   console.log("=== REFUND CALCULATION DEBUG ===");
   console.log("startDate:", startDate);
   console.log("now:", now);
@@ -488,7 +488,7 @@ function getReservationRefund(booking) {
     refundAmount = 0; // 0%
     console.log("Không hoàn tiền cọc (dưới 5 ngày)");
   }
-  
+
   console.log("=== END REFUND CALCULATION ===");
   return refundAmount;
 }
@@ -496,7 +496,7 @@ function getReservationRefund(booking) {
 // Hàm tính số tiền hoàn lại tổng cộng
 function getTotalRefund(booking) {
   console.log("=== TOTAL REFUND CALCULATION ===");
-  
+
   // Tính tổng số tiền đã thanh toán từ transactions COMPLETED
   const totalPaid = booking.transactions.reduce((sum, t) => {
     if (t.status === 'COMPLETED' && (t.type === 'DEPOSIT' || t.type === 'RENTAL')) {
@@ -504,7 +504,7 @@ function getTotalRefund(booking) {
     }
     return sum;
   }, 0);
-  
+
   console.log("Total paid from transactions:", totalPaid);
   console.log("Booking status:", booking.status);
 
@@ -514,28 +514,28 @@ function getTotalRefund(booking) {
     const reservationRefund = getReservationRefund(booking);
     // Phần còn lại hoàn 100%
     const remainingRefund = totalPaid - (booking.reservationFee || 0);
-    
+
     console.log("CONFIRMED/RENTAL_PAID - reservationRefund:", reservationRefund, "remainingRefund:", remainingRefund);
-    
+
     return {
       reservationRefund,
       remainingRefund,
       totalRefund: reservationRefund + remainingRefund
     };
   }
-  
+
   // Nếu chỉ thanh toán tiền cọc (DEPOSIT_PAID): chỉ hoàn reservationFee theo chính sách
   if (booking.status === 'DEPOSIT_PAID' || booking.status === 'deposit_paid') {
     const reservationRefund = getReservationRefund(booking);
     console.log("DEPOSIT_PAID - reservationRefund:", reservationRefund);
-    
+
     return {
       reservationRefund,
       remainingRefund: 0,
       totalRefund: reservationRefund
-    };  
+    };
   }
-  
+
   // Nếu chưa thanh toán (pending): không hoàn
   if (booking.status === 'pending' || booking.status === 'PENDING') {
     console.log("PENDING - no refund");
@@ -545,7 +545,7 @@ function getTotalRefund(booking) {
       totalRefund: 0
     };
   }
-  
+
   // Nếu trạng thái khác: không hoàn
   console.log("OTHER STATUS - no refund");
   return {
@@ -560,14 +560,14 @@ const cancelBookingWithRefund = async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
-    
+
     // Tìm booking và populate transactions
     const booking = await Booking.findById(id).populate('transactions');
-    
+
     if (!booking) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Không tìm thấy đơn đặt xe.' 
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy đơn đặt xe.'
       });
     }
 
@@ -576,18 +576,18 @@ const cancelBookingWithRefund = async (req, res) => {
       booking.renter.toString() !== req.user._id.toString() &&
       !req.user.role.includes('admin')
     ) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Bạn không có quyền hủy đơn này.' 
+      return res.status(403).json({
+        success: false,
+        message: 'Bạn không có quyền hủy đơn này.'
       });
     }
 
     // Kiểm tra trạng thái booking có thể hủy
     const allowedStatuses = ['pending', 'DEPOSIT_PAID', 'CONFIRMED', 'RENTAL_PAID'];
     if (!allowedStatuses.includes(booking.status)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Không thể hủy đơn đặt xe ở trạng thái này.' 
+      return res.status(400).json({
+        success: false,
+        message: 'Không thể hủy đơn đặt xe ở trạng thái này.'
       });
     }
 
@@ -595,9 +595,9 @@ const cancelBookingWithRefund = async (req, res) => {
     const now = new Date();
     const startDate = new Date(booking.startDate);
     if (startDate <= now) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Không thể hủy đơn đã bắt đầu.' 
+      return res.status(400).json({
+        success: false,
+        message: 'Không thể hủy đơn đã bắt đầu.'
       });
     }
 
@@ -607,9 +607,9 @@ const cancelBookingWithRefund = async (req, res) => {
     // Tìm ví của user
     const wallet = await Wallet.findOne({ user: booking.renter });
     if (!wallet) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Không tìm thấy ví của người dùng.' 
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy ví của người dùng.'
       });
     }
 
@@ -690,10 +690,10 @@ const cancelBookingWithRefund = async (req, res) => {
 
   } catch (error) {
     console.error('Cancel booking with refund error:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Lỗi server khi hủy đơn và hoàn tiền.',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -702,14 +702,14 @@ const cancelBookingWithRefund = async (req, res) => {
 const getExpectedRefund = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Tìm booking và populate transactions
     const booking = await Booking.findById(id).populate('transactions');
-    
+
     if (!booking) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Không tìm thấy đơn đặt xe.' 
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy đơn đặt xe.'
       });
     }
 
@@ -718,9 +718,9 @@ const getExpectedRefund = async (req, res) => {
       booking.renter.toString() !== req.user._id.toString() &&
       !req.user.role.includes('admin')
     ) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Bạn không có quyền xem đơn này.' 
+      return res.status(403).json({
+        success: false,
+        message: 'Bạn không có quyền xem đơn này.'
       });
     }
 
@@ -728,7 +728,7 @@ const getExpectedRefund = async (req, res) => {
     const now = new Date();
     const startDate = new Date(booking.startDate);
     const canCancel = startDate > now;
-    
+
     if (!canCancel) {
       return res.status(400).json({
         success: false,
@@ -742,10 +742,10 @@ const getExpectedRefund = async (req, res) => {
 
     // Tính số tiền hoàn lại dự kiến
     const { reservationRefund, remainingRefund, totalRefund } = getTotalRefund(booking);
-    
+
     // Tính thời gian còn lại
     const daysUntilStart = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
-    
+
     // Tính tổng số tiền đã thanh toán
     const totalPaid = booking.transactions.reduce((sum, t) => {
       if (t.status === 'COMPLETED' && (t.type === 'DEPOSIT' || t.type === 'RENTAL')) {
@@ -781,10 +781,10 @@ const getExpectedRefund = async (req, res) => {
 
   } catch (error) {
     console.error('Get expected refund error:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Lỗi server khi lấy thông tin hoàn tiền.',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -792,7 +792,7 @@ const getExpectedRefund = async (req, res) => {
 // Get all bookings of a specific user with filters from client
 const getFilteredBookingsOfUser = async (req, res) => {
   try {
-    const userId =  req.user._id;
+    const userId = req.user._id;
     console.log('userId in getFilteredBookingsOfUser', userId);
     // Check if userId is available
     if (!userId) {
@@ -897,7 +897,7 @@ const getAllStatusOfBooking = async (req, res) => {
       error: error.message
     });
   }
-};  
+};
 
 module.exports = {
   createBooking,
@@ -910,5 +910,8 @@ module.exports = {
   cancelBookingByFrontend,
   getAllBookingOfSpecificUser,
   cancelBookingWithRefund,
-  getExpectedRefund
+  getExpectedRefund,
+  getFilteredBookingsOfUser,
+  getAllModelOfVehicle,
+  getAllStatusOfBooking
 };

@@ -393,7 +393,7 @@ const AddCarForm = ({ onSuccess }) => {
           {errors.location && <span className="error">{errors.location}</span>}
         </div>
 
-        <div className="form-group">
+        {/* <div className="form-group">
           <label htmlFor="description">Mô tả xe:</label>
           <textarea
             id="description"
@@ -404,7 +404,7 @@ const AddCarForm = ({ onSuccess }) => {
             placeholder="Nhập mô tả chi tiết về xe..."
           >
           </textarea>
-        </div>
+        </div> */}
 
         <div className="form-group">
           <label>Giá mỗi ngày (VND):</label>
