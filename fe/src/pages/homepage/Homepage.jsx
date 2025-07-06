@@ -7,15 +7,72 @@ import StatsSection from '../../components/StatsSection/StatsSection';
 import BrandsSection from '../../components/BrandsSection/BrandsSection';
 import VehicleList from './VehicleList';
 
+// Testimonial Section
+const testimonials = [
+  {
+    name: 'Nguyễn Văn A',
+    comment: 'Thuê xe ở đây rất nhanh chóng, xe mới và giá hợp lý. Sẽ quay lại!',
+    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+  },
+  {
+    name: 'Trần Thị B',
+    comment: 'Dịch vụ hỗ trợ tận tình, thủ tục đơn giản. Rất hài lòng!',
+    avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+  },
+  {
+    name: 'Lê Quốc C',
+    comment: 'Nhiều lựa chọn xe, giao xe đúng giờ, giá tốt.',
+    avatar: 'https://randomuser.me/api/portraits/men/65.jpg',
+  },
+];
+
+function TestimonialSection() {
+  return (
+    <section className="testimonial-section">
+      <h3 className="testimonial-title">Khách hàng nói gì về chúng tôi?</h3>
+      <div className="testimonial-list">
+        {testimonials.map((t, idx) => (
+          <div className="testimonial-card" key={idx}>
+            <img src={t.avatar} alt={t.name} className="testimonial-avatar" />
+            <div className="testimonial-comment">"{t.comment}"</div>
+            <div className="testimonial-name">- {t.name}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// Call to Action Section
+function CallToActionSection() {
+  return (
+    <section className="cta-section">
+      <h2>Bạn đã sẵn sàng trải nghiệm dịch vụ thuê xe chuyên nghiệp?</h2>
+      <p>Đăng ký tài khoản ngay để nhận ưu đãi và khám phá hàng trăm mẫu xe chất lượng!</p>
+      <a href="/register" className="cta-btn">Đăng ký ngay</a>
+    </section>
+  );
+}
+
 function Homepage() {
   return (
-    <div>
+    <div className="homepage-root">
       <Header />
       <div className="homepage-container">
-        <HeroSection />
-        <StatsSection />
-        <BrandsSection />
-        <VehicleList />
+        <section className="hero-wrapper">
+          <HeroSection />
+        </section>
+        <section className="stats-wrapper">
+          <StatsSection />
+        </section>
+        <section className="brands-wrapper">
+          <BrandsSection />
+        </section>
+        <section className="vehiclelist-wrapper">
+          <VehicleList />
+        </section>
+        <TestimonialSection />
+
       </div>
       <Footer />
     </div>

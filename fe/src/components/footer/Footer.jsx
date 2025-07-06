@@ -10,7 +10,7 @@ const Footer = () => (
           <span className="footer__brand-name-modern">Rentzy</span>
         </div>
         <div className="footer__slogan-modern">
-          <span>Trải nghiệm thuê xe hiện đại, an toàn, tiện lợi.</span>
+          <span>Thuê xe ô tô chuyên nghiệp tại Đà Nẵng - An toàn, tiện lợi, giá tốt.</span>
         </div>
         <button className="footer__cta-btn" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
           Đặt xe ngay
@@ -23,15 +23,6 @@ const Footer = () => (
         </div>
       </div>
       <div className="footer__links-modern">
-        <div>
-          <div className="footer__col-title-modern">Dịch vụ</div>
-          <ul>
-            <li><a href="#">Thuê xe tự lái</a></li>
-            <li><a href="#">Thuê xe có tài xế</a></li>
-            <li><a href="#">Thuê xe du lịch</a></li>
-            <li><a href="#">Thuê xe theo tháng</a></li>
-          </ul>
-        </div>
         <div>
           <div className="footer__col-title-modern">Loại xe</div>
           <ul>

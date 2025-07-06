@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
 const Vehicle = require("../models/Vehicle");
-const Car = require("../models/Car");
-const Motorbike = require("../models/Motorbike");
+// const Car = require("../models/Car");
+// const Motorbike = require("../models/Motorbike");
 // VehicleImage model is no longer strictly necessary for storing URLs based on the latest schema,
 // as primaryImage and gallery are on the Vehicle schema itself. Keep if still used elsewhere.
 // const VehicleImage = require('../models/VehicleImage');
@@ -44,11 +44,10 @@ exports.addVehicle = async (req, res) => {
     price_per_day,
     deposit_required,
     fuelConsumption,
-    type,
-    seats,
-    body_type,
+    seatCount,
+    bodyType,
     transmission,
-    fuel_type,
+    fuelType,
     features,
     rentalPolicy,
   } = req.body;
@@ -76,12 +75,14 @@ exports.addVehicle = async (req, res) => {
     deposit_required === undefined ||
     deposit_required === null ||
     deposit_required.trim() === "" ||
-    !type ||
-    type.trim() === ""
+    !seatCount ||
+    !bodyType ||
+    !transmission ||
+    !fuelType
   ) {
     return res
       .status(400)
-      .json({ message: "Missing required general vehicle fields." });
+      .json({ message: "Missing required vehicle fields." });
   }
 
   const pricePerDayNum = parseFloat(price_per_day);
@@ -136,13 +137,16 @@ exports.addVehicle = async (req, res) => {
       owner: ownerId,
       brand,
       model,
-      type,
       licensePlate,
       location: location,
       description: description,
       pricePerDay: pricePerDayNum,
       deposit: depositNum,
       fuelConsumption: fuelConsumptionNum,
+      seatCount: parseInt(seatCount, 10),
+      bodyType,
+      transmission: transmission.toLowerCase(),
+      fuelType: fuelType.toLowerCase(),
       features: features,
       rentalPolicy: Array.isArray(rentalPolicy)
         ? rentalPolicy.join("\n")
@@ -152,23 +156,6 @@ exports.addVehicle = async (req, res) => {
     });
 
     await vehicle.save();
-
-    if (type === "car") {
-      const seatsNum = parseInt(seats, 10);
-
-      const car = new Car({
-        vehicle: vehicle._id,
-        seatCount: seatsNum,
-        bodyType: body_type,
-        transmission: transmission.toLowerCase(),
-        fuelType: fuel_type.toLowerCase(),
-      });
-      await car.save();
-    } else if (type === "motorbike") {
-      console.log(
-        "Motorbike type received. Specific motorbike save logic should be added if needed."
-      );
-    }
 
     res.status(201).json({
       message: "Vehicle added successfully!",
@@ -205,221 +192,25 @@ exports.addVehicle = async (req, res) => {
 
 // Add new function to get vehicles owned by the authenticated user
 exports.getOwnerVehicles = async (req, res) => {
-  console.log("Request User for getOwnerVehicles:", req.user);
-
-  // Get owner ID from req.user (set by authMiddleware)
-  const ownerId = req.user ? req.user._id : null; // Assuming _id is already an ObjectId or string valid for ObjectId
-
+  const ownerId = req.user ? req.user._id : null;
   if (!ownerId) {
     return res.status(401).json({ message: "User not authenticated." });
   }
-
   try {
-    // Use aggregation to find vehicles by owner and join with specific details
-    const ownerVehicles = await Vehicle.aggregate([
-      // Stage 1: Match vehicles by the owner ID
-      // Ensure ownerId is treated as ObjectId for the match stage
-      { $match: { owner: new mongoose.Types.ObjectId(ownerId) } },
-
-      // Stage 2: Join with the 'cars' collection
-      {
-        $lookup: {
-          from: "cars", // The name of the cars collection
-          localField: "_id", // Field from the input documents (Vehicle)
-          foreignField: "vehicle", // Field from the documents of the "from" collection (Car)
-          as: "car_details", // Output array field name
-        },
-      },
-      // $unwind deconstructs the array field. preserveNullAndEmptyArrays: true keeps vehicles without matching details (e.g., motorbikes).
-      { $unwind: { path: "$car_details", preserveNullAndEmptyArrays: true } },
-
-      // Stage 3: Join with the 'motorbikes' collection (if applicable)
-      {
-        $lookup: {
-          from: "motorbikes", // The name of the motorbikes collection
-          localField: "_id", // Field from the input documents (Vehicle)
-          foreignField: "vehicle", // Field from the documents of the "from" collection (Motorbike)
-          as: "motorbike_details", // Output array field name
-        },
-      },
-      {
-        $unwind: {
-          path: "$motorbike_details",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-
-      // Stage 4: Project the final output shape
-      {
-        $project: {
-          _id: 1,
-          owner: 1,
-          brand: 1,
-          model: 1,
-          type: 1,
-          licensePlate: 1,
-          location: 1,
-          pricePerDay: 1,
-          deposit: 1,
-          fuelConsumption: 1,
-          features: 1,
-          rentalPolicy: 1,
-          primaryImage: 1,
-          gallery: 1,
-          approvalStatus: 1,
-          status: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          // Include specific details based on type
-          specificDetails: {
-            // Create a new field to hold car or motorbike details
-            $cond: {
-              // Use $cond to conditionally include car or motorbike details
-              if: { $eq: ["$type", "car"] }, // If type is car
-              then: "$car_details", // Include car details
-              else: {
-                // If not car, check if it's a motorbike
-                $cond: {
-                  if: { $eq: ["$type", "motorbike"] }, // If type is motorbike
-                  then: "$motorbike_details", // Include motorbike details
-                  else: null, // Otherwise, include null
-                },
-              },
-            },
-          },
-        },
-      },
-      // You might add $sort, $skip, $limit stages here for pagination/sorting
-    ]);
-
-    res
-      .status(200)
-      .json({ count: ownerVehicles.length, vehicles: ownerVehicles });
+    const ownerVehicles = await Vehicle.find({ owner: ownerId });
+    res.status(200).json({ count: ownerVehicles.length, vehicles: ownerVehicles });
   } catch (error) {
-    console.error("Error getting owner vehicles:", error);
-    res
-      .status(500)
-      .json({
-        message: "Failed to fetch owner vehicles.",
-        error: error.message,
-      });
+    res.status(500).json({ message: "Failed to fetch owner vehicles.", error: error.message });
   }
 };
 
 // Rename and modify the function to get pending vehicle approvals for Admin
 exports.getPendingVehicleApprovalsForAdmin = async (req, res) => {
-  console.log("Request User for getPendingVehicleApprovalsForAdmin:", req.user);
-
-  // Assuming admin check middleware (like adminOnly) is applied to this route,
-  // so we don't need to check req.user.role here.
-
   try {
-    // Use aggregation to find vehicles with pending approval status and join with specific details
-    const pendingVehicles = await Vehicle.aggregate([
-      // Stage 1: Match vehicles by the PENDING approval status
-      // Use the approvalStatus field directly, not owner ID
-      { $match: { approvalStatus: "pending" } }, // <--- Corrected match condition
-
-      // Stage 2: Join with the 'cars' collection
-      {
-        $lookup: {
-          from: "cars", // The name of the cars collection
-          localField: "_id", // Field from the input documents (Vehicle)
-          foreignField: "vehicle", // Field from the documents of the "from" collection (Car)
-          as: "car_details", // Output array field name
-        },
-      },
-      // $unwind deconstructs the array field. preserveNullAndEmptyArrays: true keeps vehicles without matching details (e.g., motorbikes).
-      { $unwind: { path: "$car_details", preserveNullAndEmptyArrays: true } },
-
-      // Stage 3: Join with the 'motorbikes' collection (if applicable)
-      {
-        $lookup: {
-          from: "motorbikes", // The name of the motorbikes collection
-          localField: "_id", // Field from the input documents (Vehicle)
-          foreignField: "vehicle", // Field from the documents of the "from" collection (Motorbike)
-          as: "motorbike_details", // Output array field name
-        },
-      },
-      {
-        $unwind: {
-          path: "$motorbike_details",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-
-      // Stage 4: Join with the 'users' collection to get owner details
-      {
-        $lookup: {
-          from: "users", // The name of the users collection
-          localField: "owner", // Field from the input documents (Vehicle)
-          foreignField: "_id", // Field from the documents of the "from" collection (User)
-          as: "owner_details", // Output array field name
-        },
-      },
-      { $unwind: { path: "$owner_details", preserveNullAndEmptyArrays: true } }, // Assuming owner is always present due to required: true, but using preserveNullAndEmptyArrays is safer
-
-      // Stage 5: Project the final output shape (include owner details)
-      {
-        $project: {
-          _id: 1,
-          owner: {
-            // Project only necessary owner fields for admin view
-            _id: "$owner_details._id",
-            name: "$owner_details.name",
-            email: "$owner_details.email",
-            phone: "$owner_details.phone", // Include phone for admin
-            // Add other owner fields useful for admin review (e.g., cccd_number if needed)
-          },
-          brand: 1,
-          model: 1,
-          type: 1,
-          licensePlate: 1,
-          location: 1,
-          pricePerDay: 1,
-          deposit: 1,
-          fuelConsumption: 1,
-          features: 1,
-          rentalPolicy: 1,
-          primaryImage: 1,
-          gallery: 1,
-          approvalStatus: 1,
-          status: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          specificDetails: {
-            // Create a new field to hold car or motorbike details
-            $cond: {
-              // Use $cond to conditionally include car or motorbike details
-              if: { $eq: ["$type", "car"] },
-              then: "$car_details",
-              else: {
-                // If not car, check if it's a motorbike
-                $cond: {
-                  if: { $eq: ["$type", "motorbike"] },
-                  then: "$motorbike_details",
-                  else: null,
-                },
-              },
-            },
-          },
-        },
-      },
-      // You might add $sort, $skip, $limit stages here for pagination/sorting
-      // { $sort: { createdAt: -1 } } // Example: sort by newest first
-    ]);
-
-    res
-      .status(200)
-      .json({ count: pendingVehicles.length, vehicles: pendingVehicles });
+    const pendingVehicles = await Vehicle.find({ approvalStatus: "pending" }).populate('owner', 'name email phone');
+    res.status(200).json({ count: pendingVehicles.length, vehicles: pendingVehicles });
   } catch (error) {
-    console.error("Error getting pending vehicle approvals for admin:", error);
-    res
-      .status(500)
-      .json({
-        message: "Failed to fetch pending vehicle approvals.",
-        error: error.message,
-      });
+    res.status(500).json({ message: "Failed to fetch pending vehicles.", error: error.message });
   }
 };
 

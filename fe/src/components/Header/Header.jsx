@@ -41,7 +41,7 @@ const Header = () => {
 
   const handleViewProfile = () => {
     setShowDropdown(false);
-    navigate('/profile');
+    navigate('/profile/account');
   };
 
   // Temporary: Fetch user profile again if authenticated state changes (for debugging)

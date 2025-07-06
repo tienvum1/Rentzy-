@@ -38,26 +38,25 @@ const VehicleList = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.post(`${backendUrl}/api/cars/approved`, {
-          brand: filter.brand,
-          model: filter.model,
-          location: filter.location,
-          seatCount: filter.seatCount,
-          fuelType: filter.fuelType,
-          startDate: filter.startDate,
-          endDate: filter.endDate,
-          transmission: filter.transmission,
+        // Sử dụng endpoint mới lấy danh sách xe
+        const response = await axios.get(`${backendUrl}/api/vehicles/approved`, {
+          params: {
+            brand: filter.brand,
+            model: filter.model,
+            location: filter.location,
+            seatCount: filter.seatCount,
+            fuelType: filter.fuelType,
+            startDate: filter.startDate,
+            endDate: filter.endDate,
+            transmission: filter.transmission,
+          },
         });
-        console.log("Fetched approved vehicles:", response.data.vehicles);
         setVehicles(response.data.vehicles);
       } catch (err) {
-        console.error("Error fetching approved vehicles:", err);
-        // Display error message from backend if available
         setError(err.response?.data?.message || "Không thể tải danh sách xe.");
       }
       setLoading(false);
     };
-
     fetchApprovedVehicles();
   }, [filter]);
 
@@ -65,7 +64,7 @@ const VehicleList = () => {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        const response = await axios.get(`${backendUrl}/api/cars/a/brands`, {
+        const response = await axios.get(`${backendUrl}/api/vehicles/a/brands`, {
           withCredentials: true,
         });
         console.log("Fetched brands:", response.data.brands);
@@ -80,7 +79,7 @@ const VehicleList = () => {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await axios.get(`${backendUrl}/api/cars/a/models`, {
+        const response = await axios.get(`${backendUrl}/api/vehicles/a/models`, {
           withCredentials: true,
         });
         setModels(response.data.models);
@@ -94,7 +93,7 @@ const VehicleList = () => {
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const response = await axios.get(`${backendUrl}/api/cars/a/locations`, {
+        const response = await axios.get(`${backendUrl}/api/vehicles/a/locations`, {
           withCredentials: true,
         });
         setLocations(response.data.locations);
@@ -109,7 +108,7 @@ const VehicleList = () => {
     const fetchSeatCounts = async () => {
       try {
         const response = await axios.get(
-          `${backendUrl}/api/cars/a/seatCounts`,
+          `${backendUrl}/api/vehicles/a/seatCounts`,
           {
             withCredentials: true,
           }
@@ -125,7 +124,7 @@ const VehicleList = () => {
   useEffect(() => {
     const fetchFuelTypes = async () => {
       try {
-        const response = await axios.get(`${backendUrl}/api/cars/a/fuelTypes`, {
+        const response = await axios.get(`${backendUrl}/api/vehicles/a/fuelTypes`, {
           withCredentials: true,
         });
         setFuelTypes(response.data.fuelTypes);
@@ -140,7 +139,7 @@ const VehicleList = () => {
     const fetchTransmissions = async () => {
       try {
         const response = await axios.get(
-          `${backendUrl}/api/cars/a/transmissions`,
+          `${backendUrl}/api/vehicles/a/transmissions`,
           {
             withCredentials: true,
           }

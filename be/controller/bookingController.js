@@ -1,7 +1,7 @@
 // be/controller/bookingController.js
 const Booking = require("../models/Booking");
 const Vehicle = require("../models/Vehicle");
-const Car = require("../models/Car");
+// const Car = require("../models/Car");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 const Wallet = require("../models/Wallet");
@@ -85,13 +85,13 @@ const createBooking = async (req, res) => {
     }
 
     // Check for existing bookings
-    const car = await Car.findById(vehicleId);
+    const vehicle = await Vehicle.findById(vehicleId);
 
-    if (!car) {
+    if (!vehicle) {
       return res.status(404).json({ message: "Không tìm thấy xe." });
     }
 
-    const realVehicleId = car.vehicle;
+    const realVehicleId = vehicle._id;
 
     // Kiểm tra các lịch thuê bị trùng
     const existingBookings = await Booking.find({
@@ -114,7 +114,7 @@ const createBooking = async (req, res) => {
     // Create new booking
     const booking = new Booking({
       renter: req.user._id,
-      vehicle: car.vehicle,
+      vehicle: vehicle._id,
       startDate: startDateTime,
       endDate: endDateTime,
       pickupLocation,
@@ -158,10 +158,10 @@ const getVehicleBookedDates = async (req, res) => {
   try {
     const { vehicleId } = req.params;
     console.log(vehicleId);
-    const car = await Car.findById(vehicleId);
-    console.log("id của vehicle", car.vehicle._id);
+    const vehicle = await Vehicle.findById(vehicleId);
+    console.log("id của vehicle", vehicle._id);
     const bookings = await Booking.find({
-      vehicle: car.vehicle._id,
+      vehicle: vehicle._id,
       status: {
         $in: [
           "pending",
@@ -285,7 +285,7 @@ const getBookingDetails = async (req, res) => {
       });
     }
 
-    const car = await Car.findOne({ vehicle: booking.vehicle._id });
+    const vehicle = await Vehicle.findOne({ vehicle: booking.vehicle._id });
 
     // Format dates for response
     const formattedBooking = {
@@ -299,7 +299,7 @@ const getBookingDetails = async (req, res) => {
     res.status(200).json({
       success: true,
       booking: formattedBooking,
-      carId: car ? car._id : null,
+      carId: vehicle ? vehicle._id : null,
     });
   } catch (error) {
     console.error("Get booking details error:", error);

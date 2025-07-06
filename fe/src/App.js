@@ -10,7 +10,7 @@ import Homepage from "./pages/homepage/Homepage";
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import VerifyEmail from "./pages/verifyEmail/VerifyEmail";
-import ProfilePage from "./pages/profile/ProfilePage"; // IMPORT: New ProfilePage component
+import Profile from "./pages/profile/Profile"; // IMPORT: New ProfilePage component
 import UserBookings from "./pages/profile/UserBookings"; // Import UserBookings
 import ForgotPassword from "./pages/login/ForgotPassword";
 import ResetPassword from "./pages/login/ResetPassword";
@@ -54,14 +54,16 @@ function App() {
         {/* Wrap the application with AuthProvider */}
         <div className="App">
           <Routes>
-             {/* Profile*/}
+       
             <Route path="/homepage" element={<Homepage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/profile" element={<ProfilePage />} />
+
+      {/* Profile*/}
+            <Route path="/profile/account" element={<Profile />} />
             <Route path="/profile/my-bookings" element={<ManageBooking />} /> {/* New route for user bookings */}
-            <Route path="/profile/favorites" element={<ProfilePage />} />
+            <Route path="/profile/favorites" element={<Profile />} />
             <Route path="/profile/my-bookings" element={<UserBookings />} /> {/* New route for user bookings */}
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -103,7 +105,7 @@ function App() {
             {/*  Chỉ có user đăng kí chủ xe mới dăng nhập được  đăng nhập được */}
 
             <Route path="/ownerpage" element={<OwnerRouteGuard />}>
-                  <Route path="overview" element={<OwnerPage />} />
+                <Route path="overview" element={<OwnerPage />} />
                  <Route path="vehicle-management" element={<VehicleManagement />} />
                  <Route path="add-car" element={<AddCarForm />} />
             </Route>

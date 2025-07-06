@@ -10,6 +10,10 @@ import VerifyEmailPopup from './VerifyEmailPopup';
 import axios from 'axios';
 import VerifyPhonePopup from './VerifyPhonePopup';
 import UpdateNamePopup from './UpdateNamePopup';
+import DriverLicenseVerification from './DriverLicenseVerification';
+import ProfileSidebar from './ProfileSidebar';
+import Header from '../../components/Header/Header';
+import Footer from '../../components/footer/Footer';
 
 const Profile = () => {
   const { user, isAuthenticated, isLoading, login } = useAuth();
@@ -85,109 +89,115 @@ const Profile = () => {
 
   return (
     <>
-      <div className="profile__bg">
-        <div className="profile__card">
-          {/* Avatar Section */}
-          <div
-            className="profile__avatar-wrap"
-            onClick={() => setShowAvatarPopup(true)}
-            role="button"
-            tabIndex={0}
-          >
-            <img
-              src={user.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}
-              alt={user.name || 'User Avatar'}
-              className="profile__avatar"
-            />
-            <span className="profile__avatar-edit">✏️</span>
-          </div>
-          <div className="profile__avatar-note">Click to change avatar</div>
+      <Header />
+      <div className="profile-flex-row-full">
+        <div className="profile-sidebar-wrap">
+          <ProfileSidebar />
+        </div>
+        <div className="profile-main-content">
+          <div className="profile__card">
+            {/* Avatar Section */}
+            <div
+              className="profile__avatar-wrap"
+              onClick={() => setShowAvatarPopup(true)}
+              role="button"
+              tabIndex={0}
+            >
+              <img
+                src={user.avatar_url || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}
+                alt={user.name || 'User Avatar'}
+                className="profile__avatar"
+              />
+              <span className="profile__avatar-edit">✏️</span>
+            </div>
+            <div className="profile__avatar-note">Click to change avatar</div>
 
-          {/* Profile Display */}
-          <div className="profile__form">
-            <div className="profile__field">
-              <span className="profile__label">Name:</span>
-              <div className="profile__name-details">
-                <span className="profile__value">{user.name || 'Not set'}</span>
-                <FaPencilAlt
-                  className="profile__edit-icon"
-                  onClick={() => setShowNamePopup(true)}
-                  style={{ cursor: 'pointer' }}
-                />
+            {/* Profile Display */}
+            <div className="profile__form">
+              <div className="profile__field">
+                <span className="profile__label">Name:</span>
+                <div className="profile__name-details">
+                  <span className="profile__value">{user.name || 'Not set'}</span>
+                  <FaPencilAlt
+                    className="profile__edit-icon"
+                    onClick={() => setShowNamePopup(true)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="profile__field">
-              <span className="profile__label">Email:</span>
-              <div className="profile__email-details">
-                {!user.is_verified && (
-                  <span className="profile__verification-badge profile__not-verified-badge">
-                    <FaExclamationCircle className="badge-icon" />
-                    Chưa xác thực
-                  </span>
-                )}
-                {user.is_verified && (
-                  <span className="profile__verification-badge profile__verified-badge">
-                    <FaCheckCircle className="badge-icon" />
-                    Đã xác thực
-                  </span>
-                )}
-                <span className="profile__value">{user.email}</span>
-                <FaPencilAlt
-                  className="profile__edit-icon"
-                  onClick={() => setShowEmailPopup(true)}
-                  style={{ cursor: 'pointer' }}
-                />
+              <div className="profile__field">
+                <span className="profile__label">Email:</span>
+                <div className="profile__email-details">
+                  {!user.is_verified && (
+                    <span className="profile__verification-badge profile__not-verified-badge">
+                      <FaExclamationCircle className="badge-icon" />
+                      Chưa xác thực
+                    </span>
+                  )}
+                  {user.is_verified && (
+                    <span className="profile__verification-badge profile__verified-badge">
+                      <FaCheckCircle className="badge-icon" />
+                      Đã xác thực
+                    </span>
+                  )}
+                  <span className="profile__value">{user.email}</span>
+                  <FaPencilAlt
+                    className="profile__edit-icon"
+                    onClick={() => setShowEmailPopup(true)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="profile__field">
-              <span className="profile__label">Phone:</span>
-              <div className="profile__phone-details">
-                {!user.is_phone_verified && user.phone && (
-                  <span className="profile__verification-badge profile__not-verified-badge">
-                    <FaExclamationCircle className="badge-icon" />
-                    Chưa xác thực
-                  </span>
-                )}
-                {user.is_phone_verified && user.phone && (
-                  <span className="profile__verification-badge profile__verified-badge">
-                    <FaCheckCircle className="badge-icon" />
-                    Đã xác thực
-                  </span>
-                )}
-                <span className="profile__value">{user.phone || 'Not set'}</span>
-                <FaPencilAlt
-                  className="profile__edit-icon"
-                  onClick={() => {
-                    if (user.phone && !user.is_phone_verified) {
-                      setShowVerifyPhonePopup(true);
-                    } else {
-                      setShowPhonePopup(true);
-                    }
-                  }}
-                  style={{ cursor: 'pointer' }}
-                />
+              <div className="profile__field">
+                <span className="profile__label">Phone:</span>
+                <div className="profile__phone-details">
+                  {!user.is_phone_verified && user.phone && (
+                    <span className="profile__verification-badge profile__not-verified-badge">
+                      <FaExclamationCircle className="badge-icon" />
+                      Chưa xác thực
+                    </span>
+                  )}
+                  {user.is_phone_verified && user.phone && (
+                    <span className="profile__verification-badge profile__verified-badge">
+                      <FaCheckCircle className="badge-icon" />
+                      Đã xác thực
+                    </span>
+                  )}
+                  <span className="profile__value">{user.phone || 'Not set'}</span>
+                  <FaPencilAlt
+                    className="profile__edit-icon"
+                    onClick={() => {
+                      if (user.phone && !user.is_phone_verified) {
+                        setShowVerifyPhonePopup(true);
+                      } else {
+                        setShowPhonePopup(true);
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="profile__field">
-              <span className="profile__label">Role:</span>
-              <span className="profile__value">
-                {Array.isArray(user.role) ? user.role.join(', ') : user.role}
-              </span>
-            </div>
+              <div className="profile__field">
+                <span className="profile__label">Role:</span>
+                <span className="profile__value">
+                  {Array.isArray(user.role) ? user.role.join(', ') : user.role}
+                </span>
+              </div>
 
-            <div className="profile__field">
-              <span className="profile__label">Created:</span>
-              <span className="profile__value">{formatDate(user.created_at)}</span>
-            </div>
+              <div className="profile__field">
+                <span className="profile__label">Created:</span>
+                <span className="profile__value">{formatDate(user.created_at)}</span>
+              </div>
 
-            {message && <div className="profile__msg">{message}</div>}
+              {message && <div className="profile__msg">{message}</div>}
+            </div>
           </div>
         </div>
       </div>
-
+      <DriverLicenseVerification />
       <AvatarPopup
         open={showAvatarPopup}
         onClose={() => setShowAvatarPopup(false)}
@@ -289,6 +299,7 @@ const Profile = () => {
         errorMessage={phoneVerificationError}
         setErrorMessage={setPhoneVerificationError}
       />
+      <Footer />
     </>
   );
 };

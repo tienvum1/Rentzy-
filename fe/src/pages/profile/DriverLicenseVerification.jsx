@@ -115,9 +115,9 @@ const DriverLicenseVerification = () => {
           <span className={`dlx__badge ${statusInfo.className}`}>
             {statusInfo.text}
           </span>
-          {status !== 'verified' && !editMode && (
+
             <button onClick={() => setEditMode(true)} className="dlx-edit-btn">Chỉnh sửa</button>
-          )}
+
         </div>
       </div>
       <div className="dlx-notice">

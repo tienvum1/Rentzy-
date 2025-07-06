@@ -26,13 +26,43 @@ const vehicleSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-
-    // Loại xe: car hoặc motorbike
-    type: {
-      type: String,
-      enum: ["car", "motorbike"],
+    year: {
+      type: Number,
+      min: 1990,
+      max: new Date().getFullYear(),
       required: true,
     },
+
+    // Số chỗ ngồi
+    seatCount: {
+      type: Number,
+      required: true,
+      min: 2,
+    },
+
+    // Dạng thân xe (sedan, SUV, hatchback, pickup...)
+    bodyType: {
+      type: String,
+      required: true,
+    },
+
+    // Hộp số
+    transmission: {
+      type: String,
+      enum: ["manual", "automatic"],
+      required: true,
+    },
+
+    // Nhiên liệu
+    fuelType: {
+      type: String,
+      enum: ["petrol", "diesel", "electric", "hybrid"],
+      required: true,
+    },
+      // Mức tiêu hao nhiên liệu (l/100km hoặc tương đương)
+      fuelConsumption: {
+        type: String, // ví dụ: "6.5 L/100km", "15 kWh/100km"
+      },
 
     // Biển số xe (không được trùng)
     licensePlate: {
@@ -69,12 +99,7 @@ const vehicleSchema = new mongoose.Schema(
       min: 0,
     },
 
-    // Mức tiêu hao nhiên liệu (l/100km hoặc tương đương)
-    fuelConsumption: {
-      type: Number,
-      // required: false by default
-    },
-
+  
     // Mô tả tính năng (VD: Bluetooth, camera lùi, điều hoà...)
     features: {
       type: [String],

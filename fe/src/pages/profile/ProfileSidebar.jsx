@@ -1,44 +1,45 @@
 import React from 'react';
-// Add icons import back
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FaUser, FaHeart, FaCar, FaSuitcaseRolling, FaClipboardCheck, FaGift, FaWallet, FaLock, FaTrash } from 'react-icons/fa';
 import './ProfileSidebar.css';
-import { useNavigate, useLocation } from 'react-router-dom';
-// Remove import menu items from the new file
-// import { profileMenuItems } from '../../utils/profileMenuItems'; // Removed
 
-const ProfileSidebar = ({ activeSection, onSectionChange }) => {
-    const navigate = useNavigate();
-    const location = useLocation();
+const menuItems = [
+  { id: 'account', icon: <FaUser />, label: 'Tài khoản của tôi', path: '/profile/account' },
+  { id: 'favorites', icon: <FaHeart />, label: 'Xe yêu thích', path: '/profile/favorites' },
+  { id: 'my-cars', icon: <FaCar />, label: 'Xe của tôi', path: '/profile/my-cars' },
+  { id: 'my-bookings', icon: <FaSuitcaseRolling />, label: 'Đơn thuê của tôi', path: '/profile/my-bookings' },
+  { id: 'owner-management', icon: <FaClipboardCheck />, label: 'Quản lí xe cho owner', path: '/profile/owner-management' },
+  { id: 'transactions', icon: <FaGift />, label: 'Lịch sử giao dịch', path: '/profile/transactions' },
+  { id: 'wallet', icon: <FaWallet />, label: 'Ví của tôi', path: '/profile/wallet' },
+  { id: 'change-password', icon: <FaLock />, label: 'Đổi mật khẩu', path: '/profile/change-password' },
+  { id: 'delete-account', icon: <FaTrash />, label: 'Yêu cầu xoá tài khoản', path: '/profile/delete-account' },
+];
 
-    // Định nghĩa sectionId cho từng mục
-    const menuItems = [
-        { sectionId: 'account', label: 'Tài khoản của tôi', icon: <FaUser /> },
-        { sectionId: 'favorites', label: 'Xe yêu thích', icon: <FaHeart /> },
-        { sectionId: 'my-cars', label: 'Xe của tôi', icon: <FaCar /> },
-        { sectionId: 'my-bookings', label: 'Đơn thuê của tôi', icon: <FaSuitcaseRolling /> },
-        { sectionId: 'owner-management', label: 'Quản lí xe cho owner', icon: <FaClipboardCheck /> },
-        { sectionId: 'transactions', label: 'Lịch sử giao dịch', icon: <FaGift /> },
-        { sectionId: 'wallet', label: 'Ví của tôi', icon: <FaWallet /> },
-        { sectionId: 'change-password', label: 'Đổi mật khẩu', icon: <FaLock /> },
-        { sectionId: 'delete-account', label: 'Yêu cầu xoá tài khoản', icon: <FaTrash /> },
-    ];
+const ProfileSidebar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    return (
-        <div className="profile-sidebar">
-            <h2>Xin chào bạn!</h2>
-            <ul className="sidebar-menu">
-                {menuItems.map(item => (
-                    <li
-                        key={item.sectionId}
-                        className={`sidebar-menu-item${activeSection === item.sectionId ? ' active' : ''}`}
-                        onClick={() => onSectionChange ? onSectionChange(item.sectionId) : null}
-                    >
-                        <span>{item.icon}</span> {item.label}
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
+  // Xác định active dựa trên pathname
+  const isActive = (path) => location.pathname === path;
+
+  return (
+    <div className="sidebar-profile">
+      <div className="sidebar-header">
+        <h3>Quản lý tài khoản</h3>
+      </div>
+      <ul className="sidebar-menu">
+        {menuItems.map((item) => (
+          <li
+            key={item.id}
+            className={isActive(item.path) ? 'active' : ''}
+            onClick={() => navigate(item.path)}
+          >
+            <span className="menu-icon">{item.icon}</span> {item.label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 };
 
 export default ProfileSidebar;

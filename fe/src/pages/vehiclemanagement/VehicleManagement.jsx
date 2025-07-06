@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './VehicleManagement.css'
 import AddCarForm from './AddCarForm';
-import AddMotorbikeForm from './AddMotorbikeForm';
 import axios from 'axios';
 import EditCarForm from './EditCarForm';
-import EditMotorbikeForm from './EditMotorbikeForm';
 import SidebarOwner from '../../components/SidebarOwner/SidebarOwner';
 import { useNavigate } from 'react-router-dom';
 
@@ -90,12 +88,6 @@ const VehicleManagement = () => {
         // setMessage({ type: 'info', text: 'Navigate to Add Car page' }); // Remove placeholder message
     };
 
-    // Placeholder for navigation to add motorbike page
-    const handleNavigateToAddMotorbike = () => {
-        navigate('/ownerpage/add-motorbike'); // Use navigate
-        // setMessage({ type: 'info', text: 'Navigate to Add Motorbike page' }); // Remove placeholder message
-    };
-
     return (
         <div className="vehicle-management-container">
             <SidebarOwner />
@@ -107,7 +99,6 @@ const VehicleManagement = () => {
                 {error && <p className="error">{error}</p>}
                 <div className="add-buttons">
                     <button className="btn-add-car" onClick={handleNavigateToAddCar}>+ Add New Car</button>
-                    <button className="btn-add-motorbike" onClick={handleNavigateToAddMotorbike}>+ Add New Motorbike</button>
                 </div>
                 {loading && <p>Đang tải danh sách xe...</p>}
                 {!loading && ownerVehicles.length === 0 && !error && (
@@ -138,21 +129,11 @@ const VehicleManagement = () => {
                                         )}
                                     </td>
                                     <td>
-                                        <strong>{vehicle.brand} {vehicle.model}</strong> ({vehicle.type})
-                                        {vehicle.type === 'car' && vehicle.specificDetails && (
-                                            <>
-                                                <br />Số chỗ: {vehicle.specificDetails.seatCount}
-                                                <br />Thân xe: {vehicle.specificDetails.bodyType}
-                                                <br />Hộp số: {vehicle.specificDetails.transmission}
-                                                <br />Nhiên liệu: {vehicle.specificDetails.fuelType}
-                                            </>
-                                        )}
-                                        {vehicle.type === 'motorbike' && vehicle.specificDetails && (
-                                            <>
-                                                <br />Dung tích: {vehicle.specificDetails.engineCapacity} cc
-                                                <br />Có số: {vehicle.specificDetails.hasGear ? 'Có' : 'Không'}
-                                            </>
-                                        )}
+                                        <strong>{vehicle.brand} {vehicle.model}</strong>
+                                        <br />Số chỗ: {vehicle.seatCount}
+                                        <br />Thân xe: {vehicle.bodyType}
+                                        <br />Hộp số: {vehicle.transmission}
+                                        <br />Nhiên liệu: {vehicle.fuelType}
                                     </td>
                                     <td>{vehicle.licensePlate}</td>
                                     <td>{vehicle.location}</td>
