@@ -44,6 +44,11 @@ const SidebarAdmin = () => {
 
                 
 
+                {/* Mục điều hướng Duyệt thay đổi xe */}
+                <li onClick={() => handleMenuItemClick('/admin/vehicle-changes')}>
+                    Duyệt thay đổi xe
+                </li>
+
                 {/* Thêm các mục admin khác nếu cần */}
                 {/* <li>...</li> */}
             </ul>

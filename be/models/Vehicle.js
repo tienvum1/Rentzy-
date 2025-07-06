@@ -26,10 +26,23 @@ const vehicleSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+<<<<<<< HEAD
     year: {
       type: Number,
       min: 1990,
       max: new Date().getFullYear(),
+=======
+    // thêm mô tả xe 
+    description: {
+      type: String,
+      required: true,
+    },
+
+    // Loại xe: car hoặc motorbike
+    type: {
+      type: String,
+      enum: ["car", "motorbike"],
+>>>>>>> f41472aa5cb3d5952921be06ad29a8460920d975
       required: true,
     },
 
@@ -154,8 +167,58 @@ const vehicleSchema = new mongoose.Schema(
     rentalCount: {
       type: Number,
       default: 0,
+    // User hiện tại đang thuê hoặc giữ chỗ xe này
+    currentRenter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+
+    // Thông tin thay đổi đang chờ duyệt
+    pendingChanges: {
+      type: {
+        brand: String,
+        model: String,
+        location: String,
+        pricePerDay: Number,
+        deposit: Number,
+        fuelConsumption: Number,
+        features: [String],
+        rentalPolicy: String,
+        primaryImage: String,
+        gallery: [String],
+        // Thông tin chi tiết dựa trên loại xe
+        specificDetails: {
+          type: {
+            // Cho xe hơi
+            seatCount: Number,
+            bodyType: String,
+            transmission: String,
+            fuelType: String,
+            // Cho xe máy
+            engineCapacity: Number,
+            hasGear: Boolean
+          },
+          _id: false
+        }
+      },
+      _id: false,
+      default: null
+    },
+
+    // Trạng thái thay đổi đang chờ duyệt
+    pendingChangeStatus: {
+      type: String,
+      enum: ["none", "pending", "approved", "rejected"],
+      default: "none"
+    },
+
+    // Lý do từ chối thay đổi (nếu có)
+    changeRejectionReason: {
+      type: String,
+      default: null
     }
-  },
+  }},
   { timestamps: true }
 );
 

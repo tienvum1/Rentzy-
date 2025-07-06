@@ -18,7 +18,7 @@ router.post('/:id/cancel-with-refund', protect, cancelBookingWithRefund);
 
 // VAN KHAI : 
 // route for get all bookings of specific user : 
-router.post('/a/get-filter-bookings', protect, getFilteredBookingsOfUser)
+router.post('/a/get-filter-bookings', protect, getFilteredBookingsOfUser )
 // router for get all models 
 router.get("/a/get-all-models", protect, getAllModelOfVehicle)
 // router for get all status bookings of specific user 

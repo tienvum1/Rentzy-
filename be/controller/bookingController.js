@@ -559,12 +559,7 @@ function getTotalRefund(booking) {
     // Phần còn lại hoàn 100%
     const remainingRefund = totalPaid - (booking.reservationFee || 0);
 
-    console.log(
-      "CONFIRMED/RENTAL_PAID - reservationRefund:",
-      reservationRefund,
-      "remainingRefund:",
-      remainingRefund
-    );
+    console.log("CONFIRMED/RENTAL_PAID - reservationRefund:", reservationRefund, "remainingRefund:", remainingRefund);
 
     return {
       reservationRefund,
@@ -800,8 +795,7 @@ const getExpectedRefund = async (req, res) => {
     }
 
     // Tính số tiền hoàn lại dự kiến
-    const { reservationRefund, remainingRefund, totalRefund } =
-      getTotalRefund(booking);
+    const { reservationRefund, remainingRefund, totalRefund } = getTotalRefund(booking);
 
     // Tính thời gian còn lại
     const daysUntilStart = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));

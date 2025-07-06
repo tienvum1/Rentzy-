@@ -1,4 +1,10 @@
 const mongoose = require("mongoose");
+const express = require('express');
+const router = express.Router();
+const vehicleController = require('../controller/vehicleController');
+// You will likely need middleware for authentication and file uploads
+const { protect, adminOnly } = require('../middleware/authMiddleware'); // Assuming you have an auth middleware
+const multer = require('multer');
 
 const Vehicle = require("../models/Vehicle");
 // const Car = require("../models/Car");
@@ -8,6 +14,10 @@ const Vehicle = require("../models/Vehicle");
 // const VehicleImage = require('../models/VehicleImage');
 
 const cloudinary = require("../utils/cloudinary");
+
+// Configure multer for file uploads
+const storage = multer.memoryStorage(); // Store file in memory for processing
+const upload = multer({ storage: storage }); // Keep storage config
 
 // Helper function to upload image to Cloudinary
 const uploadImageToCloudinary = async (imageFile) => {
@@ -40,7 +50,6 @@ exports.addVehicle = async (req, res) => {
     model,
     license_plate: licensePlate,
     location,
-    description,
     price_per_day,
     deposit_required,
     fuelConsumption,
@@ -50,6 +59,7 @@ exports.addVehicle = async (req, res) => {
     fuelType,
     features,
     rentalPolicy,
+    description,
   } = req.body;
   console.log("body lay tu req ", req.body);
   console.log("files", req.files);
@@ -153,10 +163,45 @@ exports.addVehicle = async (req, res) => {
         : rentalPolicy,
       primaryImage: primaryImageUrl,
       gallery: galleryImageUrls,
+      description,
     });
 
     await vehicle.save();
 
+<<<<<<< HEAD
+=======
+    if (type === "car") {
+      const seatsNum = parseInt(seats, 10);
+
+      const car = new Car({
+        vehicle: vehicle._id,
+        seatCount: seatsNum,
+        bodyType: body_type,
+        transmission: transmission.toLowerCase(),
+        fuelType: fuel_type.toLowerCase(),
+      });
+      await car.save();
+    } else if (type === "motorbike") {
+      const { engineCapacity, hasGear } = req.body; // Extract motorbike specific fields
+      const engineCapacityNum = parseFloat(engineCapacity);
+      const hasGearBool = hasGear === 'true'; // Convert string 'true'/'false' to boolean
+
+      if (isNaN(engineCapacityNum) || engineCapacityNum <= 0) {
+        return res.status(400).json({ message: "Dung tích động cơ không hợp lệ.", field: "engineCapacity" });
+      }
+      if (hasGear === undefined || hasGear === null || hasGear.trim() === "") {
+        return res.status(400).json({ message: "Loại hộp số là bắt buộc.", field: "hasGear" });
+      }
+
+      const motorbike = new Motorbike({
+        vehicle_id: vehicle._id,
+        engine_capacity: engineCapacityNum,
+        has_gear: hasGearBool,
+      });
+      await motorbike.save();
+    }
+
+>>>>>>> f41472aa5cb3d5952921be06ad29a8460920d975
     res.status(201).json({
       message: "Vehicle added successfully!",
       vehicleId: vehicle._id,
@@ -197,8 +242,106 @@ exports.getOwnerVehicles = async (req, res) => {
     return res.status(401).json({ message: "User not authenticated." });
   }
   try {
+<<<<<<< HEAD
     const ownerVehicles = await Vehicle.find({ owner: ownerId });
     res.status(200).json({ count: ownerVehicles.length, vehicles: ownerVehicles });
+=======
+    // Use aggregation to find vehicles by owner and join with specific details
+    const ownerVehicles = await Vehicle.aggregate([
+      // Stage 1: Match vehicles by the owner ID
+      // Ensure ownerId is treated as ObjectId for the match stage
+      { $match: { owner: new mongoose.Types.ObjectId(ownerId) } },
+
+      // Stage 2: Join with the 'cars' collection
+      {
+        $lookup: {
+          from: "cars", // The name of the cars collection
+          localField: "_id", // Field from the input documents (Vehicle)
+          foreignField: "vehicle", // Field from the documents of the "from" collection (Car)
+          as: "car_details", // Output array field name
+        },
+      },
+      // $unwind deconstructs the array field. preserveNullAndEmptyArrays: true keeps vehicles without matching details (e.g., motorbikes).
+      { $unwind: { path: "$car_details", preserveNullAndEmptyArrays: true } },
+
+      // Stage 3: Join with the 'motorbikes' collection (if applicable)
+      {
+        $lookup: {
+          from: "motorbikes", // The name of the motorbikes collection
+          localField: "_id", // Field from the input documents (Vehicle)
+          foreignField: "vehicle", // Field from the documents of the "from" collection (Motorbike)
+          as: "motorbike_details", // Output array field name
+        },
+      },
+      {
+        $unwind: {
+          path: "$motorbike_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      // Stage 4: Join với bảng users để lấy thông tin currentRenter
+      {
+        $lookup: {
+          from: "users",
+          localField: "currentRenter",
+          foreignField: "_id",
+          as: "currentRenter_details"
+        }
+      },
+      { $unwind: { path: "$currentRenter_details", preserveNullAndEmptyArrays: true } },
+
+      // Stage 5: Project the final output shape
+      {
+        $project: {
+          _id: 1,
+          owner: 1,
+          brand: 1,
+          model: 1,
+          type: 1,
+          licensePlate: 1,
+          location: 1,
+          pricePerDay: 1,
+          deposit: 1,
+          fuelConsumption: 1,
+          features: 1,
+          rentalPolicy: 1,
+          primaryImage: 1,
+          gallery: 1,
+          approvalStatus: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          description: 1,
+          currentRenter: {
+            _id: "$currentRenter_details._id",
+            name: "$currentRenter_details.name",
+            email: "$currentRenter_details.email",
+            phone: "$currentRenter_details.phone"
+          },
+          // Include specific details based on type
+          specificDetails: {
+            $cond: {
+              if: { $eq: ["$type", "car"] },
+              then: "$car_details",
+              else: {
+                $cond: {
+                  if: { $eq: ["$type", "motorbike"] },
+                  then: "$motorbike_details",
+                  else: null,
+                },
+              },
+            },
+          },
+        },
+      },
+      // You might add $sort, $skip, $limit stages here for pagination/sorting
+    ]);
+
+    res
+      .status(200)
+      .json({ count: ownerVehicles.length, vehicles: ownerVehicles });
+>>>>>>> f41472aa5cb3d5952921be06ad29a8460920d975
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch owner vehicles.", error: error.message });
   }
@@ -207,8 +350,110 @@ exports.getOwnerVehicles = async (req, res) => {
 // Rename and modify the function to get pending vehicle approvals for Admin
 exports.getPendingVehicleApprovalsForAdmin = async (req, res) => {
   try {
+<<<<<<< HEAD
     const pendingVehicles = await Vehicle.find({ approvalStatus: "pending" }).populate('owner', 'name email phone');
     res.status(200).json({ count: pendingVehicles.length, vehicles: pendingVehicles });
+=======
+    // Use aggregation to find vehicles with pending approval status and join with specific details
+    const pendingVehicles = await Vehicle.aggregate([
+      // Stage 1: Match vehicles by the PENDING approval status
+      // Use the approvalStatus field directly, not owner ID
+      { $match: { approvalStatus: "pending" } }, // <--- Corrected match condition
+
+      // Stage 2: Join with the 'cars' collection
+      {
+        $lookup: {
+          from: "cars", // The name of the cars collection
+          localField: "_id", // Field from the input documents (Vehicle)
+          foreignField: "vehicle", // Field from the documents of the "from" collection (Car)
+          as: "car_details", // Output array field name
+        },
+      },
+      // $unwind deconstructs the array field. preserveNullAndEmptyArrays: true keeps vehicles without matching details (e.g., motorbikes).
+      { $unwind: { path: "$car_details", preserveNullAndEmptyArrays: true } },
+
+      // Stage 3: Join with the 'motorbikes' collection (if applicable)
+      {
+        $lookup: {
+          from: "motorbikes", // The name of the motorbikes collection
+          localField: "_id", // Field from the input documents (Vehicle)
+          foreignField: "vehicle", // Field from the documents of the "from" collection (Motorbike)
+          as: "motorbike_details", // Output array field name
+        },
+      },
+      {
+        $unwind: {
+          path: "$motorbike_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      // Stage 4: Join with the 'users' collection to get owner details
+      {
+        $lookup: {
+          from: "users", // The name of the users collection
+          localField: "owner", // Field from the input documents (Vehicle)
+          foreignField: "_id", // Field from the documents of the "from" collection (User)
+          as: "owner_details", // Output array field name
+        },
+      },
+      { $unwind: { path: "$owner_details", preserveNullAndEmptyArrays: true } }, // Assuming owner is always present due to required: true, but using preserveNullAndEmptyArrays is safer
+
+      // Stage 5: Project the final output shape (include owner details)
+      {
+        $project: {
+          _id: 1,
+          owner: {
+            // Project only necessary owner fields for admin view
+            _id: "$owner_details._id",
+            name: "$owner_details.name",
+            email: "$owner_details.email",
+            phone: "$owner_details.phone", // Include phone for admin
+            // Add other owner fields useful for admin review (e.g., cccd_number if needed)
+          },
+          brand: 1,
+          model: 1,
+          type: 1,
+          licensePlate: 1,
+          location: 1,
+          pricePerDay: 1,
+          deposit: 1,
+          fuelConsumption: 1,
+          features: 1,
+          rentalPolicy: 1,
+          primaryImage: 1,
+          gallery: 1,
+          approvalStatus: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          description: 1,
+          specificDetails: {
+            // Create a new field to hold car or motorbike details
+            $cond: {
+              // Use $cond to conditionally include car or motorbike details
+              if: { $eq: ["$type", "car"] },
+              then: "$car_details",
+              else: {
+                // If not car, check if it's a motorbike
+                $cond: {
+                  if: { $eq: ["$type", "motorbike"] },
+                  then: "$motorbike_details",
+                  else: null,
+                },
+              },
+            },
+          },
+        },
+      },
+      // You might add $sort, $skip, $limit stages here for pagination/sorting
+      // { $sort: { createdAt: -1 } } // Example: sort by newest first
+    ]);
+
+    res
+      .status(200)
+      .json({ count: pendingVehicles.length, vehicles: pendingVehicles });
+>>>>>>> f41472aa5cb3d5952921be06ad29a8460920d975
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch pending vehicles.", error: error.message });
   }
@@ -473,6 +718,7 @@ exports.getVehicles = async (req, res) => {
           status: 1, // Include general vehicle status
           createdAt: 1,
           updatedAt: 1, // Include update timestamp
+          description: 1,
           // Include all fields from carDetails and motorbikeDetails
           "carDetails.seatCount": 1, // Corrected field name
           "carDetails.bodyType": 1, // Corrected field name
@@ -580,6 +826,7 @@ exports.getVehicleById = async (req, res) => {
           status: 1, // Include general vehicle status
           createdAt: 1,
           updatedAt: 1, // Include update timestamp
+          description: 1,
           // Include all fields from carDetails and motorbikeDetails
           "carDetails.seatCount": 1, // Corrected field name
           "carDetails.bodyType": 1, // Corrected field name
@@ -670,4 +917,395 @@ exports.reviewVehicleApproval = async (req, res) => {
   }
 };
 
+// Add function to request vehicle update
+exports.requestVehicleUpdate = async (req, res) => {
+  console.log("Request Vehicle Update Body:", req.body);
+  const { id } = req.params;
+  const {
+    brand,
+    model,
+    licensePlate,
+    location: rawLocation, // Đổi tên để tránh nhầm lẫn với biến đã parse
+    pricePerDay,
+    deposit,
+    fuelConsumption,
+    features,
+    rentalPolicy,
+    type,
+    description,
+    ...specificData
+  } = req.body;
+
+  try {
+    // Find the vehicle to check its type and ownership
+    const vehicleToUpdate = await Vehicle.findById(id);
+
+    if (!vehicleToUpdate) {
+      return res.status(404).json({ message: "Vehicle not found." });
+    }
+
+    // Check if the user is the owner of the vehicle
+    if (vehicleToUpdate.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to update this vehicle." });
+    }
+
+    // Check if there's already a pending change
+    if (vehicleToUpdate.pendingChangeStatus === "pending") {
+      return res.status(400).json({ message: "There is already a pending change for this vehicle." });
+    }
+
+    // Parse location data
+    let parsedLocation = rawLocation;
+    if (typeof rawLocation === 'string' && rawLocation.startsWith('{')) {
+      try {
+        parsedLocation = JSON.parse(rawLocation).address; // Lấy chỉ trường address
+      } catch (e) {
+        console.warn("Could not parse location JSON, using raw value:", rawLocation);
+        parsedLocation = rawLocation; // Fallback if parsing fails
+      }
+    } else if (typeof rawLocation === 'object' && rawLocation.address) {
+      parsedLocation = rawLocation.address;
+    }
+
+    // Helper function to safely get a single value from req.body (handles arrays)
+    const getSingleValue = (value) => {
+      return Array.isArray(value) ? value[0] : value;
+    };
+
+    // Prepare the pending changes object
+    const pendingChanges = {
+      brand,
+      model,
+      location: parsedLocation, // Sử dụng giá trị location đã parse
+      pricePerDay: parseFloat(getSingleValue(pricePerDay)),
+      deposit: parseFloat(getSingleValue(deposit)),
+      fuelConsumption: getSingleValue(fuelConsumption) ? parseFloat(getSingleValue(fuelConsumption)) : undefined,
+      features: Array.isArray(features) ? features : (getSingleValue(features) ? JSON.parse(getSingleValue(features)) : []), // Handle features correctly
+      rentalPolicy: getSingleValue(rentalPolicy),
+      description: getSingleValue(description),
+      specificDetails: {}
+    };
+
+    // Debugging: Log features after parsing and before assigning to pendingChanges
+    console.log('DEBUG: Features used for pendingChanges:', pendingChanges.features);
+
+    // Add specific details based on vehicle type
+    if (vehicleToUpdate.type === "car") {
+      pendingChanges.specificDetails = {
+        seatCount: parseInt(getSingleValue(specificData.seatCount), 10),
+        bodyType: getSingleValue(specificData.bodyType),
+        transmission: getSingleValue(specificData.transmission) ? getSingleValue(specificData.transmission).toLowerCase() : '',
+        fuelType: getSingleValue(specificData.fuelType) ? getSingleValue(specificData.fuelType).toLowerCase() : '',
+      };
+    } else if (vehicleToUpdate.type === "motorbike") {
+      pendingChanges.specificDetails = {
+        engineCapacity: parseFloat(getSingleValue(specificData.engineCapacity)),
+        hasGear: getSingleValue(specificData.hasGear) === 'true' // Chuyển đổi string 'true'/'false' sang boolean
+      };
+    }
+
+    // Handle image updates if provided
+    if (req.files) {
+      if (req.files.main_image && req.files.main_image.length > 0) {
+        try {
+          pendingChanges.primaryImage = await uploadImageToCloudinary(req.files.main_image[0]);
+        } catch (error) {
+          console.error("Error uploading main image:", error);
+          return res.status(500).json({ message: "Failed to upload main image.", error: error.message });
+        }
+      }
+
+      if (req.files.additional_images && req.files.additional_images.length > 0) {
+        const galleryImageUrls = [];
+        for (const file of req.files.additional_images) {
+          try {
+            const imageUrl = await uploadImageToCloudinary(file);
+            galleryImageUrls.push(imageUrl);
+          } catch (error) {
+            console.error("Error uploading additional image:", error);
+          }
+        }
+        if (galleryImageUrls.length > 0) {
+          pendingChanges.gallery = galleryImageUrls;
+        }
+      }
+    }
+
+    // Update the vehicle with pending changes
+    vehicleToUpdate.pendingChanges = pendingChanges;
+    vehicleToUpdate.pendingChangeStatus = "pending";
+    vehicleToUpdate.changeRejectionReason = null;
+
+    await vehicleToUpdate.save();
+
+    res.status(200).json({
+      message: "Vehicle update request submitted successfully. Waiting for admin approval.",
+      vehicle: vehicleToUpdate
+    });
+  } catch (error) {
+    console.error("Error requesting vehicle update:", error);
+    res.status(500).json({ message: "Failed to submit vehicle update request.", error: error.message });
+  }
+};
+
+// Add function to get vehicles with pending changes for admin review
+exports.getVehiclesWithPendingChanges = async (req, res) => {
+  try {
+    const vehiclesWithPendingChanges = await Vehicle.aggregate([
+      { $match: { pendingChangeStatus: "pending" } },
+      {
+        $lookup: {
+          from: "cars",
+          let: { vehicleId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$vehicle", "$$vehicleId"] } } }
+          ],
+          as: "carDetails"
+        }
+      },
+      {
+        $lookup: {
+          from: "motorbikes",
+          let: { vehicleId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$vehicle", "$$vehicleId"] } } }
+          ],
+          as: "motorbikeDetails"
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "ownerDetails"
+        }
+      },
+      {
+        $addFields: {
+          carDetails: { $arrayElemAt: ["$carDetails", 0] },
+          motorbikeDetails: { $arrayElemAt: ["$motorbikeDetails", 0] },
+          ownerDetails: { $arrayElemAt: ["$ownerDetails", 0] }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          owner: 1,
+          brand: 1,
+          model: 1,
+          type: 1,
+          licensePlate: 1,
+          location: 1,
+          pricePerDay: 1,
+          deposit: 1,
+          fuelConsumption: 1,
+          features: 1,
+          rentalPolicy: 1,
+          primaryImage: 1,
+          gallery: 1,
+          approvalStatus: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          pendingChanges: 1, // Explicitly include pendingChanges
+          description: 1,
+          specificDetails: {
+            $cond: {
+              if: { $eq: ["$type", "car"] },
+              then: "$carDetails",
+              else: {
+                $cond: {
+                  if: { $eq: ["$type", "motorbike"] },
+                  then: "$motorbikeDetails",
+                  else: null,
+                },
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      count: vehiclesWithPendingChanges.length,
+      vehicles: vehiclesWithPendingChanges
+    });
+  } catch (error) {
+    console.error("Error getting vehicles with pending changes:", error);
+    res.status(500).json({
+      message: "Failed to fetch vehicles with pending changes.",
+      error: error.message
+    });
+  }
+};
+
+// Add function for admin to review vehicle changes
+exports.reviewVehicleChanges = async (req, res) => {
+  const vehicleIdString = req.params.vehicleId;
+  console.log("DEBUG: vehicleId from req.params (string, before validation):", vehicleIdString); 
+  const { status, rejectionReason } = req.body;
+
+  // Validate the ID format before conversion
+  if (!mongoose.Types.ObjectId.isValid(vehicleIdString)) {
+    console.error("Invalid ObjectId format provided for vehicleId:", vehicleIdString);
+    return res.status(400).json({ message: "Invalid Vehicle ID format provided." });
+  }
+
+  const objectVehicleId = new mongoose.Types.ObjectId(vehicleIdString);
+  console.log("DEBUG: vehicleId as Mongoose ObjectId (after conversion):", objectVehicleId);
+
+  if (!["approved", "rejected"].includes(status)) {
+    return res.status(400).json({ message: "Invalid status provided." });
+  }
+
+  try {
+    console.log("DEBUG: Attempting to query Vehicle with _id:", objectVehicleId);
+    let vehicle = await Vehicle.findOne({ _id: objectVehicleId }); // Use let for re-assignment
+    console.log("DEBUG: Retrieved Vehicle object (before modifications):", vehicle);
+
+    if (!vehicle) {
+      console.error(`Vehicle not found for query ID: ${objectVehicleId.toString()}. This ID was derived from req.params. Check database consistency.`);
+      return res.status(404).json({ message: "Vehicle not found with the provided ID. Please check the ID in the database." });
+    }
+
+    if (vehicle.pendingChangeStatus !== "pending") {
+      return res.status(400).json({ message: "No pending changes to review." });
+    }
+
+    // Prepare the update operations for the main Vehicle document
+    let updateOperations = {};
+    let carUpdate = null; // To hold update for Car model
+    let motorbikeUpdate = null; // To hold update for Motorbike model
+
+    if (status === "approved") {
+        const changesToApply = vehicle.pendingChanges.toObject 
+          ? vehicle.pendingChanges.toObject({ getters: true, virtuals: false }) 
+          : JSON.parse(JSON.stringify(vehicle.pendingChanges));
+        
+        console.log("DEBUG: changesToApply (plain object) before application:", changesToApply);
+
+        // Ensure _id is not present on specificDetails within the changes being applied
+        if (changesToApply.specificDetails && changesToApply.specificDetails._id) {
+            console.warn("DEBUG: Found _id in changesToApply.specificDetails, deleting it.");
+            delete changesToApply.specificDetails._id;
+        }
+        // Also ensure _id is not present on the pendingChanges object itself if it was somehow added
+        if (changesToApply._id) {
+            console.warn("DEBUG: Found _id in changesToApply root, deleting it.");
+            delete changesToApply._id;
+        }
+
+        // Fields to be $set on the main Vehicle document
+        updateOperations.$set = {
+            brand: changesToApply.brand,
+            model: changesToApply.model,
+            location: changesToApply.location,
+            pricePerDay: changesToApply.pricePerDay,
+            deposit: changesToApply.deposit,
+            fuelConsumption: changesToApply.fuelConsumption,
+            features: changesToApply.features,
+            rentalPolicy: changesToApply.rentalPolicy,
+            primaryImage: changesToApply.primaryImage, // Apply new image if present
+            gallery: changesToApply.gallery,           // Apply new gallery if present
+            description: changesToApply.description,   // Apply new description
+            pendingChangeStatus: "approved",
+            changeRejectionReason: null,
+        };
+        // Use $unset to remove the pendingChanges field from the document
+        updateOperations.$unset = { pendingChanges: "" }; 
+
+        // Prepare updates for type-specific details
+        if (vehicle.type === "car" && changesToApply.specificDetails) {
+          carUpdate = Car.findOneAndUpdate(
+            { vehicle: objectVehicleId },
+            {
+              seatCount: changesToApply.specificDetails.seatCount,
+              bodyType: changesToApply.specificDetails.bodyType,
+              transmission: changesToApply.specificDetails.transmission,
+              fuelType: changesToApply.specificDetails.fuelType
+            },
+            { new: true, upsert: true } // Use upsert: true to create if not exists
+          );
+        } else if (vehicle.type === "motorbike" && changesToApply.specificDetails) {
+          motorbikeUpdate = Motorbike.findOneAndUpdate(
+            { vehicle_id: objectVehicleId }, // Corrected from 'vehicle' to 'vehicle_id'
+            {
+              engine_capacity: changesToApply.specificDetails.engineCapacity, // Corrected field name
+              has_gear: changesToApply.specificDetails.hasGear // Corrected field name
+            },
+            { new: true, upsert: true } // Use upsert: true to create if not exists
+          );
+        }
+
+    } else if (status === "rejected") {
+        if (!rejectionReason) {
+            return res.status(400).json({ message: "Rejection reason is required" });
+        }
+        updateOperations.$set = {
+          pendingChangeStatus: "rejected",
+          changeRejectionReason: rejectionReason
+        };
+        // Use $unset to remove the pendingChanges field from the document
+        updateOperations.$unset = { pendingChanges: "" }; 
+    }
+
+    // Execute all updates in parallel
+    const [finalUpdatedVehicle] = await Promise.all([
+      Vehicle.findOneAndUpdate({ _id: objectVehicleId }, updateOperations, { new: true, runValidators: true }),
+      carUpdate, // This will be null or a promise
+      motorbikeUpdate // This will be null or a promise
+    ].filter(Boolean)); // Filter out nulls if carUpdate/motorbikeUpdate are not set
+    
+    console.log("DEBUG: Final updated Vehicle document:", finalUpdatedVehicle);
+
+    res.status(200).json({ message: `Changes ${status}d successfully` });
+  } catch (error) {
+    console.error("Error reviewing vehicle changes:", error);
+    console.error("FULL ERROR OBJECT (reviewVehicleChanges catch block):", JSON.stringify(error, null, 2));
+    if (error.name === 'CastError' && error.path === '_id') {
+      return res.status(400).json({ message: "Invalid Vehicle ID format provided." });
+    }
+    res.status(500).json({ message: "Failed to review vehicle changes." });
+  }
+};
+
 // lấy tất cả vehicles approved
+exports.updateVehicleStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status, userId } = req.body;
+  const ownerId = req.user._id; // ID của chủ xe đã xác thực
+
+  try {
+    // Kiểm tra tính hợp lệ của status
+    const allowedStatuses = ["available", "reserved", "rented", "maintenance", "blocked"];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status provided." });
+    }
+
+    const vehicle = await Vehicle.findOne({ _id: id, owner: ownerId });
+
+    if (!vehicle) {
+      return res.status(404).json({ message: "Vehicle not found or you are not the owner." });
+    }
+
+    // Cập nhật trạng thái xe và currentRenter
+    vehicle.status = status;
+    if (status === "rented" || status === "reserved") {
+      if (!userId) {
+        return res.status(400).json({ message: "userId is required when setting status to rented or reserved." });
+      }
+      vehicle.currentRenter = userId;
+    } else if (status === "available") {
+      vehicle.currentRenter = null;
+    }
+    // Các trạng thái khác giữ nguyên currentRenter
+
+    await vehicle.save();
+
+    res.status(200).json({ message: "Vehicle status updated successfully!", vehicle });
+  } catch (error) {
+    console.error("Error updating vehicle status:", error);
+    res.status(500).json({ message: "Failed to update vehicle status.", error: error.message });
+  }
+};
