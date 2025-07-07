@@ -8,7 +8,7 @@ const menuItems = [
   { id: 'favorites', icon: <FaHeart />, label: 'Xe yêu thích', path: '/profile/favorites' },
   { id: 'my-cars', icon: <FaCar />, label: 'Xe của tôi', path: '/profile/my-cars' },
   { id: 'my-bookings', icon: <FaSuitcaseRolling />, label: 'Đơn thuê của tôi', path: '/profile/my-bookings' },
-  { id: 'owner-management', icon: <FaClipboardCheck />, label: 'Quản lí xe cho owner', path: '/profile/owner-management' },
+  { id: 'owner-management', icon: <FaClipboardCheck />, label: 'Quản lí xe cho owner', path: '/ownerpage/overview' },
   { id: 'transactions', icon: <FaGift />, label: 'Lịch sử giao dịch', path: '/profile/transactions' },
   { id: 'wallet', icon: <FaWallet />, label: 'Ví của tôi', path: '/profile/wallet' },
   { id: 'change-password', icon: <FaLock />, label: 'Đổi mật khẩu', path: '/profile/change-password' },

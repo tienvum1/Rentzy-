@@ -10,8 +10,7 @@ import Homepage from "./pages/homepage/Homepage";
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import VerifyEmail from "./pages/verifyEmail/VerifyEmail";
-import Profile from "./pages/profile/Profile"; // IMPORT: New ProfilePage component
-import UserBookings from "./pages/profile/UserBookings"; // Import UserBookings
+
 import ForgotPassword from "./pages/login/ForgotPassword";
 import ResetPassword from "./pages/login/ResetPassword";
 import ChangePassword from "./pages/changePassword/ChangePassword";
@@ -26,11 +25,9 @@ import PaymentDeposit from "./pages/paymentDeposit/PaymentDeposit"
 import ConsignForm from "./pages/consignForm/ConsignForm";
 
 // owner
-import OwnerPage from "./pages/owner/OwnerPage";
-import VehicleManagement from "./pages/vehiclemanagement/VehicleManagement";
-import AddCarForm from "./pages/vehiclemanagement/AddCarForm";
-import EditVehicle from "./pages/vehiclemanagement/EditVehicle";
-import AddMotorbikeForm from "./pages/vehiclemanagement/AddMotorbikeForm"; // NEW: Import AddMotorbikeForm
+import OwnerPage from "./pages/owner/Ownerpage";
+import VehicleManagement from "./pages/owner/vehiclemanagement/VehicleManagement";
+import AddVehicleForm from "./pages/owner/vehiclemanagement/AddVehicleForm";
 import NotificationPage from "./pages/notification/NotificationPage";
 
 // admin 
@@ -44,8 +41,9 @@ import PaymentSuccess from './pages/payment/PaymentSuccess';
 import PaymentFailed from './pages/payment/PaymentFailed';
 
 // user
+import Profile from "./pages/profile/myAccount/Profile"; // IMPORT: New ProfilePage component
+import UserBookings from "./pages/profile/myBookings/UserBookings"; // Import UserBookings
 import TransactionHistory from './pages/profile/TransactionHistory';
-import ManageBooking from "./components/user/ManageBooking";
 import WalletInfo from './pages/profile/WalletInfo';
 import VehicleChangesPage from "./pages/admin/VehicleChangesPage";
 
@@ -56,11 +54,7 @@ function App() {
         {/* Wrap the application with AuthProvider */}
         <div className="App">
           <Routes>
-<<<<<<< HEAD
-       
-=======
             {/* Profile*/}
->>>>>>> f41472aa5cb3d5952921be06ad29a8460920d975
             <Route path="/homepage" element={<Homepage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -68,14 +62,9 @@ function App() {
 
       {/* Profile*/}
             <Route path="/profile/account" element={<Profile />} />
-            <Route path="/profile/my-bookings" element={<ManageBooking />} /> {/* New route for user bookings */}
-<<<<<<< HEAD
             <Route path="/profile/favorites" element={<Profile />} />
             <Route path="/profile/my-bookings" element={<UserBookings />} /> {/* New route for user bookings */}
-=======
-            <Route path="/profile/favorites" element={<ProfilePage />} />
-            {/* <Route path="/profile/my-bookings" element={<UserBookings />} />  */}
->>>>>>> f41472aa5cb3d5952921be06ad29a8460920d975
+           
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile/change-password" element={<ChangePassword />} />
@@ -117,20 +106,12 @@ function App() {
             {/* Route Guard owner  managemnt route */}
             {/*  Chỉ có user đăng kí chủ xe mới dăng nhập được  đăng nhập được */}
 
-            <Route path="/ownerpage" element={<OwnerRouteGuard />}>
-<<<<<<< HEAD
-                <Route path="overview" element={<OwnerPage />} />
-                 <Route path="vehicle-management" element={<VehicleManagement />} />
-                 <Route path="add-car" element={<AddCarForm />} />
-=======
-             
+            <Route path="/ownerpage" element={<OwnerRouteGuard />}>        
               <Route path="overview" element={<OwnerPage />} />
               <Route path="vehicle-management" element={<VehicleManagement />} />
               <Route path="notification" element={<NotificationPage />} />
-              <Route path="add-car" element={<AddCarForm />} />
-              <Route path="add-motorbike" element={<AddMotorbikeForm />} />
-              <Route path="edit-vehicle/:id" element={<EditVehicle />} />
->>>>>>> f41472aa5cb3d5952921be06ad29a8460920d975
+              <Route path="add-vehicle" element={<AddVehicleForm />} />
+
             </Route>
 
 

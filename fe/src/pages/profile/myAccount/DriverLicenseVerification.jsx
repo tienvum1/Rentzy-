@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './DriverLicenseVerification.css';
 import { FaPen } from 'react-icons/fa';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 
 const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999';
 

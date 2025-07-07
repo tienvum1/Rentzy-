@@ -39,199 +39,67 @@ const uploadImageToCloudinary = async (imageFile) => {
 
 // Add New Vehicle Handler
 exports.addVehicle = async (req, res) => {
-  console.log("Request Body Keys:", Object.keys(req.body));
-  console.log(
-    "Request Files Keys:",
-    req.files ? Object.keys(req.files) : "No files"
-  );
-
-  const {
-    brand,
-    model,
-    license_plate: licensePlate,
-    location,
-    price_per_day,
-    deposit_required,
-    fuelConsumption,
-    seatCount,
-    bodyType,
-    transmission,
-    fuelType,
-    features,
-    rentalPolicy,
-    description,
-  } = req.body;
-  console.log("body lay tu req ", req.body);
-  console.log("files", req.files);
-
-  const ownerId = req.user ? req.user._id : null;
-  console.log("ownerId", ownerId);
-  if (!ownerId) {
-    return res.status(401).json({ message: "User not authenticated." });
-  }
-
-  if (
-    !brand ||
-    brand.trim() === "" ||
-    !model ||
-    model.trim() === "" ||
-    !licensePlate ||
-    licensePlate.trim() === "" ||
-    !location ||
-    location.trim() === "" ||
-    price_per_day === undefined ||
-    price_per_day === null ||
-    price_per_day.trim() === "" ||
-    deposit_required === undefined ||
-    deposit_required === null ||
-    deposit_required.trim() === "" ||
-    !seatCount ||
-    !bodyType ||
-    !transmission ||
-    !fuelType
-  ) {
-    return res
-      .status(400)
-      .json({ message: "Missing required vehicle fields." });
-  }
-
-  const pricePerDayNum = parseFloat(price_per_day);
-  const depositNum = parseFloat(deposit_required);
-  const fuelConsumptionNum =
-    fuelConsumption !== undefined &&
-    fuelConsumption !== null &&
-    fuelConsumption.trim() !== ""
-      ? parseFloat(fuelConsumption)
-      : undefined;
-
   try {
-    let primaryImageUrl = "";
-    const galleryImageUrls = [];
+    // Lấy dữ liệu từ form
+    const {
+      brand, model, licensePlate, location, pricePerDay, deposit,
+      seatCount, bodyType, transmission, fuelType, features, rentalPolicy, description
+    } = req.body;
+    console.log(req.body)
 
-    if (req.files && req.files.main_image && req.files.main_image.length > 0) {
-      try {
-        primaryImageUrl = await uploadImageToCloudinary(
-          req.files.main_image[0]
-        );
-      } catch (error) {
-        console.error("Error uploading main image:", error);
-        return res
-          .status(500)
-          .json({
-            message: "Failed to upload main image.",
-            error: error.message,
-          });
-      }
-    } else {
-      return res
-        .status(400)
-        .json({ message: "Main image file is required.", field: "main_image" });
+    // Validate các trường bắt buộc
+    if (!brand || !model || !licensePlate || !location || !pricePerDay || !deposit ||
+        !seatCount || !bodyType || !transmission || !fuelType || !description) {
+      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin xe.' });
     }
 
-    if (
-      req.files &&
-      req.files.additional_images &&
-      req.files.additional_images.length > 0
-    ) {
+    // Xử lý ảnh (nếu có upload)
+    let main_image_url = '';
+    let additional_images_urls = [];
+    if (req.files && req.files.main_image) {
+      main_image_url = await uploadImageToCloudinary(req.files.main_image[0]);
+    }
+    if (req.files && req.files.additional_images) {
       for (const file of req.files.additional_images) {
-        try {
-          const imageUrl = await uploadImageToCloudinary(file);
-          galleryImageUrls.push(imageUrl);
-        } catch (error) {
-          console.error("Error uploading additional image:", error);
-        }
+        const url = await uploadImageToCloudinary(file);
+        additional_images_urls.push(url);
       }
     }
 
-    const vehicle = new Vehicle({
-      owner: ownerId,
+    // Xử lý location: nếu là JSON hợp lệ thì parse, nếu không thì giữ nguyên chuỗi
+    let parsedLocation = location;
+    try {
+      parsedLocation = JSON.parse(location);
+    } catch (e) {
+      // Nếu không phải JSON, giữ nguyên chuỗi
+    }
+
+    // Tạo vehicle mới
+    const newVehicle = new Vehicle({
       brand,
       model,
       licensePlate,
-      location: location,
-      description: description,
-      pricePerDay: pricePerDayNum,
-      deposit: depositNum,
-      fuelConsumption: fuelConsumptionNum,
-      seatCount: parseInt(seatCount, 10),
+      location: parsedLocation,
+      pricePerDay,
+      deposit,
+      seatCount,
       bodyType,
-      transmission: transmission.toLowerCase(),
-      fuelType: fuelType.toLowerCase(),
-      features: features,
-      rentalPolicy: Array.isArray(rentalPolicy)
-        ? rentalPolicy.join("\n")
-        : rentalPolicy,
-      primaryImage: primaryImageUrl,
-      gallery: galleryImageUrls,
+      transmission,
+      fuelType,
+      features: Array.isArray(features) ? features : [features],
+      primaryImage: main_image_url,
+      gallery: additional_images_urls,
+      rentalPolicy,
       description,
+      owner: req.user._id // Lấy từ middleware xác thực
     });
 
-    await vehicle.save();
+    await newVehicle.save();
 
-<<<<<<< HEAD
-=======
-    if (type === "car") {
-      const seatsNum = parseInt(seats, 10);
-
-      const car = new Car({
-        vehicle: vehicle._id,
-        seatCount: seatsNum,
-        bodyType: body_type,
-        transmission: transmission.toLowerCase(),
-        fuelType: fuel_type.toLowerCase(),
-      });
-      await car.save();
-    } else if (type === "motorbike") {
-      const { engineCapacity, hasGear } = req.body; // Extract motorbike specific fields
-      const engineCapacityNum = parseFloat(engineCapacity);
-      const hasGearBool = hasGear === 'true'; // Convert string 'true'/'false' to boolean
-
-      if (isNaN(engineCapacityNum) || engineCapacityNum <= 0) {
-        return res.status(400).json({ message: "Dung tích động cơ không hợp lệ.", field: "engineCapacity" });
-      }
-      if (hasGear === undefined || hasGear === null || hasGear.trim() === "") {
-        return res.status(400).json({ message: "Loại hộp số là bắt buộc.", field: "hasGear" });
-      }
-
-      const motorbike = new Motorbike({
-        vehicle_id: vehicle._id,
-        engine_capacity: engineCapacityNum,
-        has_gear: hasGearBool,
-      });
-      await motorbike.save();
-    }
-
->>>>>>> f41472aa5cb3d5952921be06ad29a8460920d975
-    res.status(201).json({
-      message: "Vehicle added successfully!",
-      vehicleId: vehicle._id,
-      primaryImage: primaryImageUrl,
-      gallery: galleryImageUrls.length,
-    });
+    res.status(201).json({ message: 'Xe đã được thêm thành công!', vehicle: newVehicle });
   } catch (error) {
-    console.error("Error adding vehicle:", error);
-
-    if (
-      error.code === 11000 &&
-      error.keyPattern &&
-      error.keyPattern.licensePlate
-    ) {
-      return res
-        .status(400)
-        .json({
-          message: "License plate already exists.",
-          field: "licensePlate",
-        });
-    }
-
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map((val) => val.message);
-      return res.status(400).json({ message: messages.join(", ") });
-    }
-
-    res
-      .status(500)
-      .json({ message: "Failed to add vehicle.", error: error.message });
+    console.error('Lỗi khi thêm xe:', error);
+    res.status(500).json({ message: 'Có lỗi xảy ra khi thêm xe.' });
   }
 };
 
@@ -242,10 +110,6 @@ exports.getOwnerVehicles = async (req, res) => {
     return res.status(401).json({ message: "User not authenticated." });
   }
   try {
-<<<<<<< HEAD
-    const ownerVehicles = await Vehicle.find({ owner: ownerId });
-    res.status(200).json({ count: ownerVehicles.length, vehicles: ownerVehicles });
-=======
     // Use aggregation to find vehicles by owner and join with specific details
     const ownerVehicles = await Vehicle.aggregate([
       // Stage 1: Match vehicles by the owner ID
@@ -341,7 +205,6 @@ exports.getOwnerVehicles = async (req, res) => {
     res
       .status(200)
       .json({ count: ownerVehicles.length, vehicles: ownerVehicles });
->>>>>>> f41472aa5cb3d5952921be06ad29a8460920d975
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch owner vehicles.", error: error.message });
   }
@@ -350,10 +213,6 @@ exports.getOwnerVehicles = async (req, res) => {
 // Rename and modify the function to get pending vehicle approvals for Admin
 exports.getPendingVehicleApprovalsForAdmin = async (req, res) => {
   try {
-<<<<<<< HEAD
-    const pendingVehicles = await Vehicle.find({ approvalStatus: "pending" }).populate('owner', 'name email phone');
-    res.status(200).json({ count: pendingVehicles.length, vehicles: pendingVehicles });
-=======
     // Use aggregation to find vehicles with pending approval status and join with specific details
     const pendingVehicles = await Vehicle.aggregate([
       // Stage 1: Match vehicles by the PENDING approval status
@@ -453,7 +312,6 @@ exports.getPendingVehicleApprovalsForAdmin = async (req, res) => {
     res
       .status(200)
       .json({ count: pendingVehicles.length, vehicles: pendingVehicles });
->>>>>>> f41472aa5cb3d5952921be06ad29a8460920d975
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch pending vehicles.", error: error.message });
   }

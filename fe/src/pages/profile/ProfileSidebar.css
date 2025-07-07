@@ -10,14 +10,13 @@
 /* Profile Sidebar as a component, not main layout */
 .sidebar-profile {
     width: 100%;
-    max-width: 300px;
-    background: linear-gradient(135deg, #ededed 70%, #ffffff 100%);
+    max-width: 350px;
+    background: linear-gradient(135deg, #f5f5f5 70%, #ffffff 100%);
     color: #000000;
     padding: 18px 10px 10px 10px;
     box-shadow: 0 2px 12px rgba(44,62,80,0.10);
     display: flex;
     flex-direction: column;
-    border-radius: 14px;
     position: static;
     height: auto;
     z-index: 1;

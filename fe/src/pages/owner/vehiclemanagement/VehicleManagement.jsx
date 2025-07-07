@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './VehicleManagement.css'
-import AddCarForm from './AddCarForm';
+import AddCarForm from './AddVehicleForm';
 import axios from 'axios';
-import EditCarForm from './EditCarForm';
-import SidebarOwner from '../../components/SidebarOwner/SidebarOwner';
+import EditCarForm from './EditVehicleForm';
+import SidebarOwner from '../../../components/SidebarOwner/SidebarOwner';
 import { useNavigate } from 'react-router-dom';
 
 const VehicleManagement = () => {
@@ -83,7 +83,7 @@ const VehicleManagement = () => {
 
     // Placeholder for navigation to add car page
     const handleNavigateToAddCar = () => {
-        navigate('/ownerpage/add-car'); // Use navigate
+        navigate('/ownerpage/add-vehicle'); // Use navigate
         // setMessage({ type: 'info', text: 'Navigate to Add Car page' }); // Remove placeholder message
     };
 

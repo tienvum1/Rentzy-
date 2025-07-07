@@ -15,7 +15,7 @@ const OwnerRouteGuard = ({ children }) => {
     console.log('  isAuthenticated:', isAuthenticated);
     console.log('  user:', user);
     console.log('  user.role:', user?.role);
-    console.log('  user.owner_request_status:', user?.owner_request_status);
+    console.log('  phê duyệt cho thuê xe  owner_request_status:', user?.owner_request_status);
 
     // Check if authenticated AND user exists AND user has role 'owner' AND owner_request_owner_status is 'approved'
     const isApprovedOwner = isAuthenticated && user && 

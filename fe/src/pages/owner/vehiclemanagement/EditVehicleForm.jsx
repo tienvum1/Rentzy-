@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import './VehicleForm.css'; // Import the shared CSS file
+import './EditVehicleForm.css'; // Import the shared CSS file
 
-const EditCarForm = ({ vehicle, onCancel, onSubmit }) => {
+const EditVehicleForm = ({ vehicle, onCancel, onSubmit }) => {
     // Initialize state with vehicle data
     const [formData, setFormData] = useState({
         brand: vehicle.brand || '',
@@ -163,4 +163,4 @@ const EditCarForm = ({ vehicle, onCancel, onSubmit }) => {
     );
 };
 
-export default EditCarForm; 
+export default EditVehicleForm; 

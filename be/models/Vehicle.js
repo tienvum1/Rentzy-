@@ -26,26 +26,11 @@ const vehicleSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-<<<<<<< HEAD
-    year: {
-      type: Number,
-      min: 1990,
-      max: new Date().getFullYear(),
-=======
     // thêm mô tả xe 
     description: {
       type: String,
       required: true,
     },
-
-    // Loại xe: car hoặc motorbike
-    type: {
-      type: String,
-      enum: ["car", "motorbike"],
->>>>>>> f41472aa5cb3d5952921be06ad29a8460920d975
-      required: true,
-    },
-
     // Số chỗ ngồi
     seatCount: {
       type: Number,
@@ -90,8 +75,7 @@ const vehicleSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-      
-
+    
     // Địa chỉ 
     location: {
       type: String,

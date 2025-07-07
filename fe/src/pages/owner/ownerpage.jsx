@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import SidebarOwner from '../../components/SidebarOwner/SidebarOwner';
 
 // Import các component nội dung cho từng mục menu (bạn cần đảm bảo các file này tồn tại)
-import VehicleManagement from '../vehiclemanagement/VehicleManagement';
+import VehicleManagement from './vehiclemanagement/VehicleManagement';
 import NotificationPage from '../notification/NotificationPage';
 // Import các component nội dung thực tế của bạn
 // import OverviewContent from './OverviewContent';
