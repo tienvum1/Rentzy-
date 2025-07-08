@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './VehicleChangesPage.css';
-import SidebarAdmin from '../../components/SidebarAdmin/SidebarAdmin';
+import SidebarAdmin from '../../../components/SidebarAdmin/SidebarAdmin';
 
 const VehicleChangesPage = () => {
     const [vehicles, setVehicles] = useState([]);

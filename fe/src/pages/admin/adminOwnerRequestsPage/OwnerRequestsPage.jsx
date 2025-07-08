@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 import './OwnerRequestsPage.css';
-import './AdminDashboard.css';
-import SidebarAdmin from '../../components/SidebarAdmin/SidebarAdmin';
+import SidebarAdmin from '../../../components/SidebarAdmin/SidebarAdmin';
 
 const OwnerRequestsPage = () => {
   const [pendingRequests, setPendingRequests] = useState([]);

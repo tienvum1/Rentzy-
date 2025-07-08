@@ -23,7 +23,6 @@ const userSchema = new mongoose.Schema({
   cccd_number: String,
   cccd_front_url: String,
   cccd_back_url: String,
-  is_identity_verified_for_owner: { type: Boolean, default: false }, // Identity verification status for owner role (via CCCD)
 
   driver_license_number: String,
   driver_license_front_url: String,

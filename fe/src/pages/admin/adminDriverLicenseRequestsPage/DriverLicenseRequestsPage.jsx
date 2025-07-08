@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './DriverLicenseRequestsPage.css';
-import './AdminDashboard.css'; // Import layout
-import SidebarAdmin from '../../components/SidebarAdmin/SidebarAdmin'; // Import sidebar
+import SidebarAdmin from '../../../components/SidebarAdmin/SidebarAdmin'; // Import sidebar
 
 const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999';
 

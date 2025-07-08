@@ -58,7 +58,7 @@ const VehicleCard = ({ vehicle }) => {
                     <div><Users size={18} strokeWidth={2} /> {vehicle.seatCount} chỗ</div>
                     <div><Gauge size={18} strokeWidth={2} /> {vehicle.transmission === 'automatic' ? 'Tự động' : 'Số sàn'}</div>
                     <div><Fuel size={18} strokeWidth={2} /> {vehicle.fuelType === 'electric' ? 'Điện' : 'Xăng'}</div>
-                </div>
+                    </div>
                 <div className="vehicle-card-pro-price-row">
                     <span className="vehicle-card-pro-price">{formatCurrency(vehicle.pricePerDay)}</span>
                     <span className="vehicle-card-pro-price-unit">/ngày</span>

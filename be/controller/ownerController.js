@@ -2,6 +2,7 @@ const User = require("../models/User");
 const cloudinary = require("../utils/cloudinary");
 const Booking = require("../models/Booking");
 const Vehicle = require("../models/Vehicle");
+const Notification = require('../models/Notification');
 
 // --- 1. Gửi yêu cầu trở thành chủ xe ---
 const becomeOwner = async (req, res) => {
@@ -52,6 +53,28 @@ const becomeOwner = async (req, res) => {
 
     const savedUser = await user.save();
 
+    // --- Notification logic ---
+    // 1. Notify the user
+    await Notification.create({
+      user: savedUser._id,
+      type: 'system',
+      title: 'Yêu cầu đăng ký chủ xe',
+      message: 'Yêu cầu đăng ký chủ xe của bạn đã được gửi và đang chờ admin duyệt.',
+      data: { owner_request_status: 'pending' },
+    });
+
+    // 2. Notify all admins
+    const admins = await User.find({ role: 'admin' });
+    for (const admin of admins) {
+      await Notification.create({
+        user: admin._id,
+        type: 'admin',
+        title: 'Yêu cầu đăng ký chủ xe mới',
+        message: `Người dùng ${savedUser.name} (${savedUser.email}) vừa gửi yêu cầu trở thành chủ xe.`,
+        data: { userId: savedUser._id, name: savedUser.name, email: savedUser.email },
+      });
+    }
+
     return res.status(200).json({
       success: true,
       message: "Yêu cầu đăng ký chủ xe đã được gửi.",
@@ -73,73 +96,7 @@ const becomeOwner = async (req, res) => {
   }
 };
 
-// --- 2. Lấy danh sách yêu cầu làm chủ xe (dành cho Admin) ---
-const getPendingOwnerRequests = async (req, res) => {
-  try {
-    const pendingRequests = await User.find({
-      owner_request_status: "pending",
-    }).select(
-      "name email phone cccd_number cccd_front_url cccd_back_url owner_request_submitted_at"
-    );
-
-    res.status(200).json({ success: true, data: pendingRequests });
-  } catch (error) {
-    console.error("Error in getPendingOwnerRequests:", error);
-    res.status(500).json({ success: false, message: "Internal server error." });
-  }
-};
-
-// --- 3. Admin duyệt hoặc từ chối yêu cầu ---
-const reviewOwnerRequest = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { status, rejectionReason } = req.body;
-
-    if (!["approved", "rejected"].includes(status)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid status provided." });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
-    }
-
-    if (user.owner_request_status !== "pending") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Yêu cầu này đã được xử lý." });
-    }
-
-    user.owner_request_status = status;
-    user.owner_request_reviewed_by = req.user._id;
-    user.owner_request_reviewed_at = new Date();
-    user.owner_request_rejection_reason =
-      status === "rejected" ? rejectionReason : null;
-
-    if (status === "approved") {
-      user.is_identity_verified_for_owner = true;
-      if (!user.role.includes("owner")) {
-        user.role.push("owner");
-      }
-    } else {
-      user.is_identity_verified_for_owner = false;
-    }
-
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: `Yêu cầu đã được ${status === "approved" ? "chấp nhận" : "từ chối"}.`,
-    });
-  } catch (error) {
-    console.error("Error in reviewOwnerRequest:", error);
-    res.status(500).json({ success: false, message: "Internal server error." });
-  }
-};
-
-// --- 4. Lấy tất cả đơn thuê của chủ xe ---
+// --- 2. Lấy tất cả đơn thuê của chủ xe ---
 const getOwnerBookings = async (req, res) => {
   try {
     const ownerId = req.user._id;
@@ -160,7 +117,7 @@ const getOwnerBookings = async (req, res) => {
   }
 };
 
-// --- 5. Lấy danh sách yêu cầu huỷ cần duyệt ---
+// --- 3. Lấy danh sách yêu cầu huỷ cần duyệt ---
 const getOwnerCancelRequests = async (req, res) => {
   try {
     const vehicles = await Vehicle.find({ owner: req.user._id }).select("_id");
@@ -185,8 +142,6 @@ const getOwnerCancelRequests = async (req, res) => {
 // --- Export tất cả ---
 module.exports = {
   becomeOwner,
-  getPendingOwnerRequests,
-  reviewOwnerRequest,
   getOwnerBookings,
   getOwnerCancelRequests,
 };

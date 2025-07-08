@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import moment from 'moment';
 import { FaCheck, FaTimes, FaEye, FaSpinner } from 'react-icons/fa';
-import Header from '../../components/Header/Header';
-import SidebarAdmin from '../../components/SidebarAdmin/SidebarAdmin';
+import SidebarAdmin from '../../../components/SidebarAdmin/SidebarAdmin';
 import './AdminWithdrawals.css';
 
 const AdminWithdrawals = () => {
@@ -84,7 +83,6 @@ const AdminWithdrawals = () => {
   if (loading) {
     return (
       <>
-        <Header />
         <div className="admin-page-container">
           <SidebarAdmin />
           <main className="admin-main-content">
@@ -100,7 +98,6 @@ const AdminWithdrawals = () => {
 
   return (
     <>
-      <Header />
       <div className="admin-page-container">
         <SidebarAdmin />
         <main className="admin-main-content">

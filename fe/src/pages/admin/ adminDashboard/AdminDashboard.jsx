@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 // import './AdminDashboard.css'; // Optional: Create specific CSS for admin dashboard
-import SidebarAdmin from '../../components/SidebarAdmin/SidebarAdmin'; // Assuming this path is correct
+import SidebarAdmin from '../../../components/SidebarAdmin/SidebarAdmin'; // Assuming this path is correct
 
 const AdminDashboard = () => {
     const navigate = useNavigate();

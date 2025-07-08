@@ -2,6 +2,7 @@ const Wallet = require('../models/Wallet');
 const Transaction = require('../models/Transaction');
 const crypto = require('crypto');
 const axios = require('axios');
+const Notification = require('../models/Notification');
 
 // MoMo configuration cho wallet deposit
 const MOMO_CONFIG = {
@@ -368,6 +369,15 @@ exports.approveWithdraw = async (req, res) => {
       // Số dư đã được trừ từ trước, không cần trừ nữa
       console.log(`Withdraw approved: ${transaction.amount} VND for wallet ${transaction.wallet._id}`);
 
+      // --- Notification logic ---
+      await Notification.create({
+        user: transaction.wallet.user,
+        type: 'payment',
+        title: 'Yêu cầu rút tiền đã được duyệt',
+        message: `Yêu cầu rút ${transaction.amount.toLocaleString('vi-VN')} VND của bạn đã được duyệt và sẽ được chuyển khoản trong thời gian sớm nhất.`,
+        data: { status: 'approved', amount: transaction.amount },
+      });
+
       res.json({
         success: true,
         message: 'Đã duyệt yêu cầu rút tiền thành công'
@@ -389,6 +399,15 @@ exports.approveWithdraw = async (req, res) => {
       }
 
       console.log(`Withdraw rejected: ${transaction.amount} VND for wallet ${transaction.wallet._id}`);
+
+      // --- Notification logic ---
+      await Notification.create({
+        user: transaction.wallet.user,
+        type: 'payment',
+        title: 'Yêu cầu rút tiền bị từ chối',
+        message: `Yêu cầu rút ${transaction.amount.toLocaleString('vi-VN')} VND của bạn đã bị từ chối. Số tiền đã được hoàn lại vào ví.`,
+        data: { status: 'rejected', amount: transaction.amount },
+      });
 
       res.json({
         success: true,

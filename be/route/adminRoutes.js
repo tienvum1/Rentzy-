@@ -15,7 +15,6 @@ const {
 
 // Route để lấy danh sách các yêu cầu trở thành chủ xe
 router.get('/owner-requests', protect, adminOnly, getOwnerRequests);
-
 // Route để cập nhật trạng thái yêu cầu của chủ xe
 router.put('/owner-requests/:userId', protect, adminOnly, updateOwnerRequestStatus);
 

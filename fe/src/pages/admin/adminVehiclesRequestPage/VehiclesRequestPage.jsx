@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './VehiclesRequestPage.css';
-import './AdminDashboard.css';
 import axios from 'axios';
-import SidebarAdmin from '../../components/SidebarAdmin/SidebarAdmin';
+import SidebarAdmin from '../../../components/SidebarAdmin/SidebarAdmin';
 import { useNavigate } from 'react-router-dom';
 
 const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999';

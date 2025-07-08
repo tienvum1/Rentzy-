@@ -33,7 +33,6 @@ import Profile from "./pages/profile/myAccount/Profile"; // IMPORT: New ProfileP
 import UserBookings from "./pages/profile/myBookings/UserBookings"; // Import UserBookings
 import TransactionHistory from './pages/profile/myTransactions/TransactionHistory';
 import WalletInfo from './pages/profile/myWallet/WalletInfo';
-import VehicleChangesPage from "./pages/admin/VehicleChangesPage";
 import NotificationPage from './pages/profile/myNotifications/NotificationPage';
 
 // owner
@@ -48,12 +47,13 @@ import OwnerBookingManagement from "./pages/owner/ownerBookings/OwnerBookingMana
 import OwenerCancelRequest from "./pages/owner/ownerBookings/OwnerCancelRequests";
 
 // admin 
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import OwnerRequestsPage from "./pages/admin/OwnerRequestsPage";
-import VehiclesRequestPage from "./pages/admin/VehiclesRequestPage";
-import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
-import DriverLicenseRequestsPage from "./pages/admin/DriverLicenseRequestsPage";
-import AdminVehicleDetailPage from './pages/admin/AdminVehicleDetailPage';
+import AdminDashboard from "./pages/admin/ adminDashboard/AdminDashboard";
+import OwnerRequestsPage from "./pages/admin/adminOwnerRequestsPage/OwnerRequestsPage";
+import VehiclesRequestPage from "./pages/admin/adminVehiclesRequestPage/VehiclesRequestPage";
+import AdminWithdrawals from "./pages/admin/adminWithdrawals/AdminWithdrawals";
+import DriverLicenseRequestsPage from "./pages/admin/adminDriverLicenseRequestsPage/DriverLicenseRequestsPage";
+import AdminVehicleDetailPage from './pages/admin/adminAdminVehicleDetailPage/AdminVehicleDetailPage';
+import VehicleChangesPage from "./pages/admin/adminVehicleChangesPage/VehicleChangesPage";
 
 
 import PaymentSuccess from './pages/payment/PaymentSuccess';

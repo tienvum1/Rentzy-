@@ -14,6 +14,7 @@ const Vehicle = require("../models/Vehicle");
 // const VehicleImage = require('../models/VehicleImage');
 
 const cloudinary = require("../utils/cloudinary");
+const Notification = require('../models/Notification');
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage(); // Store file in memory for processing
@@ -401,7 +402,7 @@ exports.reviewVehicleApproval = async (req, res) => {
   }
 
   try {
-    const vehicle = await Vehicle.findById(vehicleId);
+    const vehicle = await Vehicle.findById(vehicleId).populate('owner', 'name email');
 
     if (!vehicle) {
       return res.status(404).json({ message: "Vehicle not found." });
@@ -424,7 +425,22 @@ exports.reviewVehicleApproval = async (req, res) => {
 
     await vehicle.save();
 
-    // TODO: Optionally notify the owner about the approval/rejection
+    // --- Notification logic ---
+    let notifyTitle = 'Kết quả duyệt xe';
+    let notifyMessage = '';
+    if (status === 'approved') {
+      notifyMessage = `Xe ${vehicle.brand} ${vehicle.model} của bạn đã được duyệt và sẵn sàng cho thuê.`;
+    } else {
+      notifyMessage = `Xe ${vehicle.brand} ${vehicle.model} của bạn đã bị từ chối duyệt.${rejectionReason ? ' Lý do: ' + rejectionReason : ''}`;
+    }
+    await Notification.create({
+      user: vehicle.owner._id,
+      type: 'vehicle',
+      title: notifyTitle,
+      message: notifyMessage,
+      vehicle: vehicle._id,
+      data: { approvalStatus: status, rejectionReason: status === 'rejected' ? rejectionReason : undefined },
+    });
 
     res
       .status(200)
@@ -780,6 +796,23 @@ exports.reviewVehicleChanges = async (req, res) => {
       // motorbikeUpdate // This will be null or a promise
     ].filter(Boolean)); // Filter out nulls if carUpdate/motorbikeUpdate are not set
     
+    // --- Notification logic ---
+    let notifyTitle = 'Kết quả duyệt thay đổi xe';
+    let notifyMessage = '';
+    if (status === 'approved') {
+      notifyMessage = `Yêu cầu thay đổi xe ${finalUpdatedVehicle.brand} ${finalUpdatedVehicle.model} của bạn đã được duyệt.`;
+    } else {
+      notifyMessage = `Yêu cầu thay đổi xe ${finalUpdatedVehicle.brand} ${finalUpdatedVehicle.model} của bạn đã bị từ chối.${rejectionReason ? ' Lý do: ' + rejectionReason : ''}`;
+    }
+    await Notification.create({
+      user: finalUpdatedVehicle.owner,
+      type: 'vehicle',
+      title: notifyTitle,
+      message: notifyMessage,
+      vehicle: finalUpdatedVehicle._id,
+      data: { changeStatus: status, rejectionReason: status === 'rejected' ? rejectionReason : undefined },
+    });
+
     console.log("DEBUG: Final updated Vehicle document:", finalUpdatedVehicle);
 
     res.status(200).json({ message: `Changes ${status}d successfully` });

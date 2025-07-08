@@ -25,22 +25,6 @@ router.put(
   ownerController.becomeOwner
 );
 
-// Admin Routes for Owner Request Management
-// GET all pending owner requests
-router.get(
-    '/admin/pendingRequests',
-    protect, // Ensure user is authenticated
-    checkAdmin, // Ensure user is admin
-    ownerController.getPendingOwnerRequests
-);
-
-// PUT review an owner request (approve/reject)
-router.put(
-    '/admin/reviewRequest/:userId',
-    protect, // Ensure user is authenticated
-    checkAdmin, // Ensure user is admin
-    ownerController.reviewOwnerRequest
-);
 
 // Lấy tất cả đơn thuê của chủ xe hiện tại
 router.get('/owner-bookings', protect, ownerController.getOwnerBookings);
