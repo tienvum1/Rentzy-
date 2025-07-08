@@ -24,21 +24,7 @@ import PaymentDeposit from "./pages/paymentDeposit/PaymentDeposit"
 
 import ConsignForm from "./pages/consignForm/ConsignForm";
 
-// owner
-import OwnerPage from "./pages/owner/Ownerpage";
-import VehicleManagement from "./pages/owner/vehiclemanagement/VehicleManagement";
-import AddVehicleForm from "./pages/owner/vehiclemanagement/AddVehicleForm";
-import NotificationPage from "./pages/notification/NotificationPage";
 
-// admin 
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import OwnerRequestsPage from "./pages/admin/OwnerRequestsPage";
-import VehiclesRequestPage from "./pages/admin/VehiclesRequestPage";
-import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
-import DriverLicenseRequestsPage from "./pages/admin/DriverLicenseRequestsPage";
-
-import PaymentSuccess from './pages/payment/PaymentSuccess';
-import PaymentFailed from './pages/payment/PaymentFailed';
 
 // user
 import Profile from "./pages/profile/myAccount/Profile"; // IMPORT: New ProfilePage component
@@ -46,6 +32,26 @@ import UserBookings from "./pages/profile/myBookings/UserBookings"; // Import Us
 import TransactionHistory from './pages/profile/TransactionHistory';
 import WalletInfo from './pages/profile/WalletInfo';
 import VehicleChangesPage from "./pages/admin/VehicleChangesPage";
+
+// owner
+import OwnerPage from "./pages/owner/Ownerpage";
+import VehicleManagement from "./pages/owner/vehiclemanagement/VehicleManagement";
+import AddVehicleForm from "./pages/owner/vehiclemanagement/AddVehicleForm";
+import NotificationPage from "./pages/notification/NotificationPage";
+import OwnerVehicleDetail from './pages/owner/vehiclemanagement/OwnerVehicleDetail';
+import EditVehicleForm from "./pages/owner/vehiclemanagement/EditVehicleForm";
+
+// admin 
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import OwnerRequestsPage from "./pages/admin/OwnerRequestsPage";
+import VehiclesRequestPage from "./pages/admin/VehiclesRequestPage";
+import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
+import DriverLicenseRequestsPage from "./pages/admin/DriverLicenseRequestsPage";
+import AdminVehicleDetailPage from './pages/admin/AdminVehicleDetailPage';
+
+
+import PaymentSuccess from './pages/payment/PaymentSuccess';
+import PaymentFailed from './pages/payment/PaymentFailed';
 
 function App() {
   return (
@@ -94,6 +100,7 @@ function App() {
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="owner-requests" element={<OwnerRequestsPage />} />
               <Route path="vehicle-approvals" element={<VehiclesRequestPage />} />
+              <Route path="vehicle-approvals/:id" element={<AdminVehicleDetailPage />} />
               <Route path="withdrawals" element={<AdminWithdrawals />} />
               {/* </Route> */}
               <Route path="driver-license-requests" element={<DriverLicenseRequestsPage />} />
@@ -111,6 +118,8 @@ function App() {
               <Route path="vehicle-management" element={<VehicleManagement />} />
               <Route path="notification" element={<NotificationPage />} />
               <Route path="add-vehicle" element={<AddVehicleForm />} />
+              <Route path="vehicle/:id" element={<OwnerVehicleDetail />} />
+              <Route path="edit-vehicle/:id" element={<EditVehicleForm />} />
 
             </Route>
 

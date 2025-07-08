@@ -54,7 +54,7 @@ const vehicleSchema = new mongoose.Schema(
     // Nhiên liệu
     fuelType: {
       type: String,
-      enum: ["petrol", "diesel", "electric", "hybrid"],
+      enum: ["gasoline", "diesel", "electric", "hybrid"],
       required: true,
     },
       // Mức tiêu hao nhiên liệu (l/100km hoặc tương đương)

@@ -44,7 +44,7 @@ const VehicleDetail = () => {
             setLoading(true);
             setError(null);
             try {
-                const response = await axios.get(`${backendUrl}/api/cars/${id}`);
+                const response = await axios.get(`${backendUrl}/api/vehicles/${id}`);
                 setVehicle(response.data.vehicle);
                 setSelectedImage(response.data.vehicle.primaryImage);
             } catch (err) {

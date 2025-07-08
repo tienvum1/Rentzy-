@@ -1,166 +1,242 @@
-import React, { useState, useEffect } from 'react';
-import './EditVehicleForm.css'; // Import the shared CSS file
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import './OwnerVehicleDetail.css';
+import SidebarOwner from '../../../components/SidebarOwner/SidebarOwner';
 
-const EditVehicleForm = ({ vehicle, onCancel, onSubmit }) => {
-    // Initialize state with vehicle data
-    const [formData, setFormData] = useState({
-        brand: vehicle.brand || '',
-        model: vehicle.model || '',
-        license_plate: vehicle.license_plate || '',
-        location: vehicle.location || '',
-        is_available: vehicle.is_available || false,
-        // Initialize raw price and deposit
-        price_per_day_raw: vehicle.price_per_day || 0,
-        deposit_required_raw: vehicle.deposit_required || 0,
-        terms: vehicle.terms || '',
-        // Car specific details
-        seats: vehicle.carDetails?.seats || '',
-        body_type: vehicle.carDetails?.body_type || '',
-        transmission: vehicle.carDetails?.transmission || '',
-        fuel_type: vehicle.carDetails?.fuel_type || '',
-        // Add state for images if needed for editing (complex, maybe skip for now)
-        images: [] // Placeholder
-    });
+const bodyTypeOptions = [
+  'Sedan', 'SUV', 'Hatchback', 'Coupe', 'Convertible', 'Wagon', 'Van', 'Pickup'
+];
+const transmissionOptions = ['automatic', 'manual'];
+const fuelTypeOptions = ['petrol', 'diesel', 'electric', 'hybrid'];
+const availableFeatures = [
+  'Bản đồ', 'Bluetooth', 'Camera 360', 'Camera cập lề', 'Camera hành trình', 'Camera lùi',
+  'Cảm biến lốp', 'Cảm biến va chạm', 'Cảnh báo tốc độ', 'Cửa sổ trời', 'Định vị GPS',
+  'Ghế trẻ em', 'Khe cắm USB', 'Lốp dự phòng', 'Màn hình DVD', 'Nắp thùng xe bán tải', 'ETC', 'Túi khí an toàn'
+];
 
-    // State for formatted numbers to display in inputs
-    const [formattedPrice, setFormattedPrice] = useState('');
-    const [formattedDeposit, setFormattedDeposit] = useState('');
+const EditVehicleForm = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999';
+  const [vehicle, setVehicle] = useState(null);
+  const [formData, setFormData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [message, setMessage] = useState(null);
+  const [mainImagePreview, setMainImagePreview] = useState(null);
+  const [galleryPreviews, setGalleryPreviews] = useState([]);
+  const [modalImage, setModalImage] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const galleryInputRef = useRef(null);
 
-    // Effect to update form state when vehicle prop changes
-    useEffect(() => {
-        if (vehicle) {
-            setFormData({
-                brand: vehicle.brand || '',
-                model: vehicle.model || '',
-                license_plate: vehicle.license_plate || '',
-                location: vehicle.location || '',
-                is_available: vehicle.is_available || false,
-                price_per_day_raw: vehicle.price_per_day || 0,
-                deposit_required_raw: vehicle.deposit_required || 0,
-                terms: vehicle.terms || '',
-                seats: vehicle.carDetails?.seats || '',
-                body_type: vehicle.carDetails?.body_type || '',
-                transmission: vehicle.carDetails?.transmission || '',
-                fuel_type: vehicle.carDetails?.fuel_type || '',
-                images: [] // Keep as placeholder for now
-            });
-            // Also update formatted numbers when vehicle data loads
-            // Ensure price_per_day and deposit_required are numbers before calling toLocaleString
-            setFormattedPrice(typeof vehicle.price_per_day === 'number' ? vehicle.price_per_day.toLocaleString('en-US') : '');
-            setFormattedDeposit(typeof vehicle.deposit_required === 'number' ? vehicle.deposit_required.toLocaleString('en-US') : '');
-        }
-    }, [vehicle]); // Rerun this effect when the vehicle prop changes
-
-    // Effect to format numbers when raw state changes
-    useEffect(() => {
-        // Ensure price_per_day_raw and deposit_required_raw are numbers before calling toLocaleString
-        setFormattedPrice(typeof formData.price_per_day_raw === 'number' ? formData.price_per_day_raw.toLocaleString('en-US') : '');
-        setFormattedDeposit(typeof formData.deposit_required_raw === 'number' ? formData.deposit_required_raw.toLocaleString('en-US') : '');
-    }, [formData.price_per_day_raw, formData.deposit_required_raw]);
-
-    const handleInputChange = (e) => {
-        const { name, value, type, checked } = e.target;
-
-        if (name === 'price_per_day' || name === 'deposit_required') {
-            // Remove non-digit characters except dot (if using decimals, though likely integers here)
-            const rawValue = value.replace(/[^0-9]/g, '');
-            const numberValue = parseInt(rawValue, 10) || 0; // Convert to integer
-
-            setFormData(prev => ({
-                ...prev,
-                [name === 'price_per_day' ? 'price_per_day_raw' : 'deposit_required_raw']: numberValue
-            }));
-
-        } else if (name === 'is_available' ) {
-             setFormData(prev => ({
-                 ...prev,
-                 [name]: type === 'checkbox' ? checked : value
-             }));
-        } else {
-             setFormData(prev => ({ ...prev, [name]: value }));
-        }
-    };
-
-    // Assume a function to handle image changes if image editing is implemented
-    // const handleImageChange = (e) => { ... };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Pass the raw number values to the onSubmit handler
-        onSubmit(vehicle._id, {
-            ...formData,
-            price_per_day: formData.price_per_day_raw,
-            deposit_required: formData.deposit_required_raw,
-            // Remove raw values from submission data
-            price_per_day_raw: undefined,
-            deposit_required_raw: undefined,
-            images: undefined // Or handle images properly if needed
+  useEffect(() => {
+    const fetchVehicle = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get(`${backendUrl}/api/vehicles/${id}`);
+        setVehicle(response.data.vehicle);
+        setFormData({
+          ...response.data.vehicle,
+          main_image: null,
+          gallery: [],
         });
+        setMainImagePreview(response.data.vehicle.primaryImage);
+        setGalleryPreviews(response.data.vehicle.gallery || []);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Không thể tải thông tin xe.');
+      } finally {
+        setLoading(false);
+      }
     };
+    if (id) fetchVehicle();
+  }, [id, backendUrl]);
 
-    return (
-        <div className="edit-vehicle-form">
-            
-            <form onSubmit={handleSubmit}>
-                {/* Vehicle Common Fields */}
-                <div className="form-group">
-                    <label>Brand:</label>
-                    <input type="text" name="brand" value={formData.brand} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                    <label>Model:</label>
-                    <input type="text" name="model" value={formData.model} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                    <label>License Plate:</label>
-                    <input type="text" name="license_plate" value={formData.license_plate} onChange={handleInputChange} required />
-                </div>
-                 <div className="form-group">
-                    <label>Location:</label>
-                    <input type="text" name="location" value={formData.location} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                    <label>Price per Day:</label>
-                    <input type="text" name="price_per_day" value={formattedPrice} onChange={handleInputChange} required />
-                </div>
-                 <div className="form-group">
-                    <label>Deposit Required:</label>
-                    <input type="text" name="deposit_required" value={formattedDeposit} onChange={handleInputChange} required />
-                </div>
-                 <div className="form-group">
-                    <label>Terms:</label>
-                    <textarea name="terms" value={formData.terms} onChange={handleInputChange}></textarea>
-                </div>
-                 <div className="form-group">
-                    <label>Available:</label>
-                    <input type="checkbox" name="is_available" checked={formData.is_available} onChange={handleInputChange} />
-                </div>
+  // Xử lý thay đổi input
+  const handleChange = (e) => {
+    const { name, value, files, type } = e.target;
+    if (name === 'main_image') {
+      const file = files[0] || null;
+      setFormData((prev) => ({ ...prev, main_image: file }));
+      setMainImagePreview(file ? URL.createObjectURL(file) : vehicle.primaryImage);
+    } else if (name === 'gallery') {
+      const newFiles = Array.from(files);
+      setFormData((prev) => ({
+        ...prev,
+        gallery: [...(prev.gallery || []), ...newFiles],
+      }));
+      setGalleryPreviews((prev) => [
+        ...prev,
+        ...newFiles.map((file) => URL.createObjectURL(file)),
+      ]);
+    } else if (type === 'checkbox') {
+      setFormData((prev) => {
+        const features = prev.features || [];
+        return {
+          ...prev,
+          features: features.includes(value)
+            ? features.filter((f) => f !== value)
+            : [...features, value],
+        };
+      });
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
 
-                {/* Car Specific Fields */}
-                 <div className="form-group">
-                    <label>Seats:</label>
-                    <input type="text" name="seats" value={formData.seats} onChange={handleInputChange} required />
-                </div>
-                 <div className="form-group">
-                    <label>Body Type:</label>
-                    <input type="text" name="body_type" value={formData.body_type} onChange={handleInputChange} />
-                </div>
-                 <div className="form-group">
-                    <label>Transmission:</label>
-                    <input type="text" name="transmission" value={formData.transmission} onChange={handleInputChange} />
-                </div>
-                 <div className="form-group">
-                    <label>Fuel Type:</label>
-                    <input type="text" name="fuel_type" value={formData.fuel_type} onChange={handleInputChange} />
-                </div>
+  // Xóa ảnh phụ khỏi preview và formData
+  const handleRemoveGalleryImage = (idx) => {
+    setGalleryPreviews((prev) => prev.filter((_, i) => i !== idx));
+    setFormData((prev) => ({
+      ...prev,
+      gallery: prev.gallery.filter((_, i) => i !== idx),
+    }));
+  };
 
-                {/* Image handling would go here */}
+  // Validate form
+  const validateForm = () => {
+    if (!formData.brand || !formData.model || !formData.licensePlate || !formData.location || !formData.pricePerDay || !formData.deposit || !formData.seatCount || !formData.bodyType || !formData.transmission || !formData.fuelType || !formData.description) {
+      setMessage({ type: 'error', text: 'Vui lòng nhập đầy đủ thông tin bắt buộc.' });
+      return false;
+    }
+    return true;
+  };
 
-                <button type="submit">Save Changes</button>
-                <button style={{backgroundColor: 'red'}} type="button" onClick={onCancel}>Cancel</button>
-            </form>
+  // Submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    setSaving(true);
+    setMessage(null);
+    const dataToSubmit = new FormData();
+    dataToSubmit.append('brand', formData.brand);
+    dataToSubmit.append('model', formData.model);
+    dataToSubmit.append('licensePlate', formData.licensePlate);
+    dataToSubmit.append('location', formData.location);
+    dataToSubmit.append('pricePerDay', formData.pricePerDay);
+    dataToSubmit.append('deposit', formData.deposit);
+    dataToSubmit.append('seatCount', formData.seatCount);
+    dataToSubmit.append('bodyType', formData.bodyType);
+    dataToSubmit.append('transmission', formData.transmission);
+    dataToSubmit.append('fuelType', formData.fuelType);
+    dataToSubmit.append('fuelConsumption', formData.fuelConsumption || '');
+    dataToSubmit.append('rentalPolicy', formData.rentalPolicy || '');
+    dataToSubmit.append('description', formData.description);
+    if (formData.main_image) dataToSubmit.append('main_image', formData.main_image);
+    if (formData.gallery && formData.gallery.length > 0) {
+      formData.gallery.forEach((file) => dataToSubmit.append('additional_images', file));
+    }
+    if (formData.features && formData.features.length > 0) {
+      formData.features.forEach((f) => dataToSubmit.append('features', f));
+    }
+    // Nếu user xóa hết ảnh phụ, gửi thêm flag
+    if ((formData.gallery && formData.gallery.length === 0) && galleryPreviews.length === 0) {
+      dataToSubmit.append('clear_gallery', 'true');
+    }
+    try {
+      const response = await axios.put(`${backendUrl}/api/vehicles/${id}`, dataToSubmit, { withCredentials: true });
+      setMessage({ type: 'success', text: response.data.message || 'Cập nhật xe thành công!' });
+      setTimeout(() => navigate(-1), 1500);
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Có lỗi khi cập nhật xe.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div className="owner-vehicle-detail-loading">Đang tải...</div>;
+  if (error) return <div className="owner-vehicle-detail-error">{error}</div>;
+  if (!formData) return null;
+
+  return (
+    <div className="owner-vehicle-detail-layout">
+      <div className="owner-vehicle-detail-main">
+        <div className="sidebar-owner-wrap">
+          <SidebarOwner />
         </div>
-    );
+        <div className="owner-vehicle-detail-content">
+          <h2>Chỉnh sửa thông tin xe</h2>
+          <form className="owner-vehicle-detail-card improved" onSubmit={handleSubmit}>
+            <div className="owner-vehicle-detail-images">
+              <label className="main-image-label">Ảnh chính:
+                <input type="file" name="main_image" accept="image/*" onChange={handleChange} style={{ display: 'none' }} id="mainImageInput" />
+                <img
+                  src={mainImagePreview}
+                  alt="Ảnh chính"
+                  className="main-image clickable"
+                  onClick={() => document.getElementById('mainImageInput').click()}
+                  title="Click để đổi/chọn lại ảnh chính"
+                />
+              </label>
+              <label className="gallery-label">Ảnh phụ:
+                <button type="button" className="btn-add-images" onClick={() => galleryInputRef.current.click()}>Thêm ảnh phụ</button>
+                <input type="file" name="gallery" accept="image/*" multiple ref={galleryInputRef} onChange={handleChange} style={{ display: 'none' }} />
+                <div className="gallery-images">
+                  {galleryPreviews.map((img, idx) => (
+                    <div key={idx} className="image-wrapper">
+                      <img
+                        src={img}
+                        alt={`Ảnh phụ ${idx + 1}`}
+                        className="gallery-image clickable"
+                        onClick={() => setModalImage(img)}
+                        title="Click để xem lớn"
+                      />
+                      <button type="button" className="btn-remove-image" onClick={() => handleRemoveGalleryImage(idx)}>×</button>
+                    </div>
+                  ))}
+                </div>
+              </label>
+            </div>
+            <div className="owner-vehicle-detail-info improved">
+              <table className="vehicle-info-table">
+                <tbody>
+                  <tr><td>Thương hiệu:</td><td><input type="text" name="brand" value={formData.brand} onChange={handleChange} /></td></tr>
+                  <tr><td>Dòng xe:</td><td><input type="text" name="model" value={formData.model} onChange={handleChange} /></td></tr>
+                  <tr><td>Biển số:</td><td><input type="text" name="licensePlate" value={formData.licensePlate} onChange={handleChange} /></td></tr>
+                  <tr><td>Địa điểm:</td><td><input type="text" name="location" value={formData.location} onChange={handleChange} /></td></tr>
+                  <tr><td>Giá thuê/ngày:</td><td><input type="number" name="pricePerDay" value={formData.pricePerDay} onChange={handleChange} /></td></tr>
+                  <tr><td>Tiền đặt cọc:</td><td><input type="number" name="deposit" value={formData.deposit} onChange={handleChange} /></td></tr>
+                  <tr><td>Số chỗ:</td><td><input type="number" name="seatCount" value={formData.seatCount} onChange={handleChange} /></td></tr>
+                  <tr><td>Thân xe:</td><td><select name="bodyType" value={formData.bodyType} onChange={handleChange}>{bodyTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></td></tr>
+                  <tr><td>Hộp số:</td><td><select name="transmission" value={formData.transmission} onChange={handleChange}>{transmissionOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></td></tr>
+                  <tr><td>Nhiên liệu:</td><td><select name="fuelType" value={formData.fuelType} onChange={handleChange}>{fuelTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></td></tr>
+                  <tr><td>Tiêu hao nhiên liệu:</td><td><input type="text" name="fuelConsumption" value={formData.fuelConsumption || ''} onChange={handleChange} /></td></tr>
+                  <tr><td>Tính năng:</td><td>
+                    <div className="features-grid">
+                      {availableFeatures.map((feature) => (
+                        <label key={feature} className="feature-checkbox">
+                          <input
+                            type="checkbox"
+                            name="features"
+                            value={feature}
+                            checked={formData.features && formData.features.includes(feature)}
+                            onChange={handleChange}
+                          /> {feature}
+                        </label>
+                      ))}
+                    </div>
+                  </td></tr>
+                  <tr><td>Điều khoản thuê:</td><td><textarea name="rentalPolicy" value={formData.rentalPolicy || ''} onChange={handleChange} rows="3" /></td></tr>
+                  <tr><td>Mô tả:</td><td><textarea name="description" value={formData.description} onChange={handleChange} rows="4" /></td></tr>
+                </tbody>
+              </table>
+              {message && <div className={`form-message ${message.type}`}>{message.text}</div>}
+              <div className="form-actions equal-buttons">
+                <button type="submit" className="btn-submit" disabled={saving}>{saving ? 'Đang lưu...' : 'Lưu thay đổi'}</button>
+                <button type="button" className="btn-cancel" onClick={() => navigate(-1)}>Hủy</button>
+              </div>
+            </div>
+          </form>
+          {modalImage && (
+            <div className="image-modal" onClick={() => setModalImage(null)}>
+              <img src={modalImage} alt="Xem lớn" className="modal-img" />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default EditVehicleForm; 

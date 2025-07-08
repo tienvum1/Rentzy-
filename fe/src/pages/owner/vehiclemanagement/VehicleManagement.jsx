@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './VehicleManagement.css'
-import AddCarForm from './AddVehicleForm';
 import axios from 'axios';
-import EditCarForm from './EditVehicleForm';
 import SidebarOwner from '../../../components/SidebarOwner/SidebarOwner';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,7 +18,7 @@ const VehicleManagement = () => {
         setError(null); // Reset lỗi trước khi fetch mới
         try {
             // Gọi đúng API lấy xe của chủ sở hữu (dựa vào route backend hiện tại GET /api/vehicles sử dụng getOwnerVehicles)
-            const response = await axios.get(`${backendUrl}/api/vehicles`, {
+            const response = await axios.get(`${backendUrl}/api/vehicles/owner`, {
                 withCredentials: true, // Quan trọng để gửi cookie chứa token xác thực
             });
             console.log('Fetched owner vehicles:', response.data.vehicles);
@@ -69,6 +67,11 @@ const VehicleManagement = () => {
         }
     };
 
+    // Thêm hàm chuyển sang trang chi tiết xe
+    const handleViewDetail = (vehicleId) => {
+        navigate(`/ownerpage/vehicle/${vehicleId}`);
+    };
+
     // Effect to automatically hide messages after a delay
     useEffect(() => {
         if (message) {
@@ -97,7 +100,7 @@ const VehicleManagement = () => {
                 {message && <p className={`message ${message.type}`}>{message.text}</p>}
                 {error && <p className="error">{error}</p>}
                 <div className="add-buttons">
-                    <button className="btn-add-car" onClick={handleNavigateToAddCar}>+ Add New Car</button>
+                    <button className="btn-add-car" onClick={handleNavigateToAddCar}>+ Thêm xe mới</button>
                 </div>
                 {loading && <p>Đang tải danh sách xe...</p>}
                 {!loading && ownerVehicles.length === 0 && !error && (
@@ -107,13 +110,12 @@ const VehicleManagement = () => {
                     <table className="vehicle-table">
                         <thead>
                             <tr>
-                                <th>Ảnh chính</th>
-                                <th>Thông tin xe</th>
+                                <th>Ảnh</th>
+                                <th>Xe</th>
                                 <th>Biển số</th>
-                                <th>Địa điểm</th>
                                 <th>Giá/Ngày</th>
                                 <th>Trạng thái</th>
-                                <th>Duyệt bởi Admin</th>
+                                <th>Duyệt</th>
                                 <th>Hành động</th>
                             </tr>
                         </thead>
@@ -122,26 +124,23 @@ const VehicleManagement = () => {
                                 <tr key={vehicle._id}>
                                     <td>
                                         {vehicle.primaryImage ? (
-                                            <img src={vehicle.primaryImage} alt={`${vehicle.brand} ${vehicle.model} primary`} style={{ width: '80px', height: 'auto', borderRadius: '4px' }} />
+                                            <img src={vehicle.primaryImage} alt={`${vehicle.brand} ${vehicle.model}`} style={{ width: '80px', height: 'auto', borderRadius: '4px' }} />
                                         ) : (
                                             <span>No Image</span>
                                         )}
                                     </td>
                                     <td>
-                                        <strong>{vehicle.brand} {vehicle.model}</strong>
-                                        <br />Số chỗ: {vehicle.seatCount}
-                                        <br />Thân xe: {vehicle.bodyType}
-                                        <br />Hộp số: {vehicle.transmission}
-                                        <br />Nhiên liệu: {vehicle.fuelType}
+                                        <strong>{vehicle.brand}   {vehicle.model}</strong>
                                     </td>
                                     <td>{vehicle.licensePlate}</td>
-                                    <td>{vehicle.location}</td>
-                                    <td>{vehicle.pricePerDay} VND</td>
+                                    <td>{vehicle.pricePerDay?.toLocaleString()} VND</td>
                                     <td>{vehicle.status}</td>
                                     <td>{vehicle.approvalStatus}</td>
                                     <td>
-                                        <button className="edit-button" onClick={() => handleEdit(vehicle._id)}>Edit</button>
-                                        <button className="delete-button" onClick={() => handleDelete(vehicle._id)}>Delete</button>
+                                    <button className="detail-button" onClick={() => handleViewDetail(vehicle._id)}>Xem chi tiết</button>
+                                        <button className="edit-button" onClick={() => handleEdit(vehicle._id)}>Sửa</button>
+                                        <button className="delete-button" onClick={() => handleDelete(vehicle._id)}>Xoá</button>
+                            
                                     </td>
                                 </tr>
                             ))}

@@ -21,8 +21,11 @@ const SidebarAdmin = () => {
                 {/* <li onClick={() => handleMenuItemClick('/admin')}> */}
                 {/*     <MdDashboard className="menu-icon" /> Dashboard */}
                 {/* </li> */}
-
-                {/* Mục điều hướng Duyệt chủ xe */}
+                {/* Mục điều hướng Duyệt GPLX */}
+                 <li onClick={() => handleMenuItemClick('/admin/driver-license-requests')}>
+                    {/* <MdAssignmentInd className="menu-icon" /> */} Duyệt GPLX
+                </li>
+                {/* Mục điều hướng Duyệt    chủ xe */}
                 <li onClick={() => handleMenuItemClick('/admin/owner-requests')}> {/* Route ví dụ: /admin/owner-requests */}
                     {/* <MdPersonAdd className="menu-icon" /> */} Duyệt chủ xe
                 </li>
@@ -32,10 +35,7 @@ const SidebarAdmin = () => {
                     {/* <MdDirectionsCar className="menu-icon" /> */} Duyệt xe
                 </li>
 
-                {/* Mục điều hướng Duyệt GPLX */}
-                <li onClick={() => handleMenuItemClick('/admin/driver-license-requests')}>
-                    {/* <MdAssignmentInd className="menu-icon" /> */} Duyệt GPLX
-                </li>
+                
                 
                 {/* Mục điều hướng Quản lý rút tiền */}
                 <li onClick={() => handleMenuItemClick('/admin/withdrawals')}>

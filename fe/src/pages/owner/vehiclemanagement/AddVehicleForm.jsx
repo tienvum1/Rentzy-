@@ -265,7 +265,7 @@ const AddVehicleForm = () => {
             </div>
             <div className="form-actions">
               <button type="submit" className="btn-submit" disabled={loading}>{loading ? 'Đang thêm...' : 'Đăng xe cho thuê'}</button>
-              <button type="button" className="btn-cancel" onClick={() => navigate('/vehiclemanagement')}>Hủy</button>
+              <button type="button" className="btn-cancel" onClick={() => navigate('/ownerpage/vehicle-management')}>Hủy</button>
             </div>
           </form>
         </div>
