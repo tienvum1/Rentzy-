@@ -162,6 +162,12 @@ const bookingSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Transaction'
     }],
+
+    // --- Thông tin hoàn tiền khi huỷ (FE gửi lên, lưu lại để owner xem và backend dùng khi duyệt) ---
+    totalRefund: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

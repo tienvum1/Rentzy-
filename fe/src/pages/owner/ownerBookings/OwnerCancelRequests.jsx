@@ -70,6 +70,7 @@ const OwnerCancelRequests = () => {
                     <th>Khách thuê</th>
                     <th>Ngày thuê</th>
                     <th>Lý do huỷ</th>
+                    <th>Tiền hoàn</th>
                     <th>Hành động</th>
                   </tr>
                 </thead>
@@ -81,6 +82,11 @@ const OwnerCancelRequests = () => {
                       <td>{r.renter?.name || r.renter?.fullName || r.renter?.email}</td>
                       <td>{new Date(r.startDate).toLocaleDateString('vi-VN')} - {new Date(r.endDate).toLocaleDateString('vi-VN')}</td>
                       <td>{r.cancellationReason || '-'}</td>
+                      <td style={{ color: '#1976d2', fontWeight: 600 }}>
+                        {typeof r.totalRefund === 'number' && r.totalRefund > 0
+                          ? r.totalRefund.toLocaleString('vi-VN') + ' ₫'
+                          : '-'}
+                      </td>
                       <td>
                         <button
                           className="ocr-approve-btn"

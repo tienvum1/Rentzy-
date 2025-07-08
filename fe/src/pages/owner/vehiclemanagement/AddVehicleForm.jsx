@@ -122,7 +122,7 @@ const AddVehicleForm = () => {
       const response = await axios.post(apiUrl, dataToSubmit, { withCredentials: true });
       if (response.status === 201) {
         setMessage({ type: 'success', text: response.data.message || 'Xe đã được thêm thành công!' });
-        setTimeout(() => navigate('/vehiclemanagement'), 2000);
+        setTimeout(() => navigate('/ownerpage/vehicle-management'), 3000);
       } else {
         setMessage({ type: 'warning', text: response.data.message || 'Thêm xe thành công nhưng có cảnh báo.' });
       }

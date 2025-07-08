@@ -166,7 +166,10 @@ const BookingDetailsPage = () => {
       const config = { withCredentials: true };
       const res = await axios.post(
         `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}/request-cancel`,
-        { reason: cancelReason },
+        {
+          reason: cancelReason,
+          totalRefund: expectedRefund?.totalRefund ?? undefined
+        },
         config
       );
       if (res.data.success) {
