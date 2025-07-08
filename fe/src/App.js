@@ -54,6 +54,7 @@ import AdminWithdrawals from "./pages/admin/adminWithdrawals/AdminWithdrawals";
 import DriverLicenseRequestsPage from "./pages/admin/adminDriverLicenseRequestsPage/DriverLicenseRequestsPage";
 import AdminVehicleDetailPage from './pages/admin/adminAdminVehicleDetailPage/AdminVehicleDetailPage';
 import VehicleChangesPage from "./pages/admin/adminVehicleChangesPage/VehicleChangesPage";
+import AdminPayoutRequests from './pages/admin/payoutRequests/AdminPayoutRequests';
 
 
 import PaymentSuccess from './pages/payment/PaymentSuccess';
@@ -109,12 +110,9 @@ function App() {
               <Route path="vehicle-approvals" element={<VehiclesRequestPage />} />
               <Route path="vehicle-approvals/:id" element={<AdminVehicleDetailPage />} />
               <Route path="withdrawals" element={<AdminWithdrawals />} />
-              {/* </Route> */}
               <Route path="driver-license-requests" element={<DriverLicenseRequestsPage />} />
+              <Route path="payout-requests" element={<AdminPayoutRequests />} />
             </Route>
-            <Route path="/adminDashboard" element={<AdminDashboard />} />
-            <Route path="/admin/owner-requests" element={<OwnerRequestsPage />} />
-            <Route path="/admin/vehicle-approvals" element={<VehiclesRequestPage />} />
             <Route path="/admin/vehicle-changes" element={<VehicleChangesPage />} />
 
             {/* Route Guard owner  managemnt route */}

@@ -1,38 +1,31 @@
 const express = require('express');
 const router = express.Router();
 const { protect, adminOnly } = require('../middleware/authMiddleware');
-const { 
-    getOwnerRequests, 
-    updateOwnerRequestStatus, 
-    getDriverLicenseRequests,
-    updateDriverLicenseStatus,
-    getPendingVehicleApprovals,
-    getPendingVehicleDetail,
-    reviewVehicleApproval,
-    getVehiclesWithPendingChanges,
-    reviewVehicleChanges
-} = require('../controller/adminController');
+const adminController = require('../controller/adminController');
 
 // Route để lấy danh sách các yêu cầu trở thành chủ xe
-router.get('/owner-requests', protect, adminOnly, getOwnerRequests);
+router.get('/owner-requests', protect, adminOnly, adminController.getOwnerRequests);
 // Route để cập nhật trạng thái yêu cầu của chủ xe
-router.put('/owner-requests/:userId', protect, adminOnly, updateOwnerRequestStatus);
+router.put('/owner-requests/:userId', protect, adminOnly, adminController.updateOwnerRequestStatus);
 
 // Route để lấy danh sách các xe chờ duyệt
-router.get('/vehicle-approvals', protect, adminOnly, getPendingVehicleApprovals);
+router.get('/vehicle-approvals', protect, adminOnly, adminController.getPendingVehicleApprovals);
 // Route để lấy chi tiết xe chờ duyệt
-router.get('/vehicle-approvals/:id', protect, adminOnly, getPendingVehicleDetail);
+router.get('/vehicle-approvals/:id', protect, adminOnly, adminController.getPendingVehicleDetail);
 // Route để duyệt xe
-router.put('/vehicle-approvals/:vehicleId', protect, adminOnly, reviewVehicleApproval);
+router.put('/vehicle-approvals/:vehicleId', protect, adminOnly, adminController.reviewVehicleApproval);
 // Route để lấy danh sách xe chờ thay đổi
-router.get('/vehicle-pending-changes', protect, adminOnly, getVehiclesWithPendingChanges);
+router.get('/vehicle-pending-changes', protect, adminOnly, adminController.getVehiclesWithPendingChanges);
 // Route để duyệt thay đổi xe
-router.put('/vehicle-review-changes/:vehicleId', protect, adminOnly, reviewVehicleChanges);
+router.put('/vehicle-review-changes/:vehicleId', protect, adminOnly, adminController.reviewVehicleChanges);
 
 // Route để lấy danh sách các yêu cầu xác thực GPLX
-router.get('/driver-license-requests', protect, adminOnly, getDriverLicenseRequests);
+router.get('/driver-license-requests', protect, adminOnly, adminController.getDriverLicenseRequests);
 
 // Route để cập nhật trạng thái xác thực GPLX
-router.put('/driver-license-status/:userId', protect, adminOnly, updateDriverLicenseStatus);
+router.put('/driver-license-status/:userId', protect, adminOnly, adminController.updateDriverLicenseStatus);
+
+router.get('/payout-requests', adminController.getPayoutRequests);
+router.post('/approve-payout/:bookingId', adminController.approvePayout);
 
 module.exports = router;

@@ -96,6 +96,22 @@ const bookingSchema = new mongoose.Schema(
       default: 'pending'
     },
 
+    // Trạng thái giải ngân cho chủ xe.
+    payoutStatus: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none'
+    },
+    // Số tiền thực nhận (đã trừ phí dịch vụ, bồi thường...).
+    payoutAmount: {
+      type: Number,
+      default: 0
+    },
+    payoutNote: {
+      type: String,
+      default: ''
+    },
+
     // Địa chỉ nhận xe
     pickupLocation: {
       type: String,

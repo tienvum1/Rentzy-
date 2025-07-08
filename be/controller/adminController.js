@@ -1,6 +1,9 @@
 const User = require('../models/User');
 const Vehicle = require('../models/Vehicle');
 const Notification = require('../models/Notification');
+const Booking = require('../models/Booking');
+const Wallet = require('../models/Wallet');
+const Transaction = require('../models/Transaction');
 
 // Lấy danh sách yêu cầu làm chủ xe
 const getOwnerRequests = async (req, res) => {
@@ -206,6 +209,58 @@ const reviewVehicleChanges = async (req, res) => {
   }
 };
 
+// Lấy danh sách booking chờ duyệt giải ngân cho chủ xe
+const getPayoutRequests = async (req, res) => {
+  try {
+    const bookings = await Booking.find({ payoutStatus: 'pending' })
+      .populate('vehicle')
+      .populate({ path: 'vehicle', populate: { path: 'owner' } });
+    const data = bookings.map(b => ({
+      id: b._id,
+      vehicle: b.vehicle,
+      owner: b.vehicle?.owner,
+      payoutAmount: b.payoutAmount,
+      payoutStatus: b.payoutStatus,
+      payoutNote: b.payoutNote,
+      totalCost: b.totalCost,
+      status: b.status,
+      createdAt: b.createdAt
+    }));
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
+// Admin duyệt chuyển tiền cho chủ xe
+const approvePayout = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.bookingId).populate('vehicle');
+    if (!booking || booking.payoutStatus !== 'pending') {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy booking chờ duyệt' });
+    }
+    const ownerId = booking.vehicle.owner;
+    const wallet = await Wallet.findOne({ user: ownerId });
+    if (!wallet) return res.status(404).json({ success: false, message: 'Không tìm thấy ví chủ xe' });
+    wallet.balance += booking.payoutAmount;
+    await wallet.save();
+    booking.payoutStatus = 'approved';
+    await booking.save();
+    await Transaction.create({
+      booking: booking._id,
+      user: ownerId,
+      amount: booking.payoutAmount,
+      type: 'PAYOUT',
+      status: 'COMPLETED',
+      paymentMethod: 'WALLET',
+      description: 'Giải ngân cho chủ xe sau khi hoàn thành đơn thuê'
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
 // ✅ Export tất cả ở một chỗ duy nhất
 module.exports = {
     getOwnerRequests,
@@ -216,5 +271,7 @@ module.exports = {
     getPendingVehicleDetail,
     reviewVehicleApproval,
     getVehiclesWithPendingChanges,
-    reviewVehicleChanges
+    reviewVehicleChanges,
+    getPayoutRequests,
+    approvePayout
 };

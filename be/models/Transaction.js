@@ -27,6 +27,7 @@ const transactionSchema = new mongoose.Schema({
             'WALLET_WITHDRAW', // Rút tiền từ ví
             'PROMOTION',       // Nhận khuyến mãi
             'FEE',             // Phí dịch vụ
+            'PAYOUT'           // Giải ngân cho chủ xe
         ],
         required: true
     },
