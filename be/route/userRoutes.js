@@ -5,6 +5,7 @@ const { protect } = require("../middleware/authMiddleware");
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' }); // Thay đổi: Lưu file tạm thời vào thư mục 'uploads/'
 
+
 router.get("/profile", protect, userController.getProfile);
 router.post('/forgot-password', userController.forgotPassword);
 router.post('/reset-password', userController.resetPassword);
@@ -36,5 +37,6 @@ router.post('/verify-phone-otp', protect, userController.verifyPhoneOtp);
 
 // New route for resending phone OTP
 router.post('/resend-phone-otp', protect, userController.resendPhoneOtp);
+
 
 module.exports = router;

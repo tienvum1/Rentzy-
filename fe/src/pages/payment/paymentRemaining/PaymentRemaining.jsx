@@ -57,6 +57,9 @@ const PaymentRemaining = () => {
 
   const handlePayment = async () => {
     if (!booking) return;
+    // Xác nhận trước khi thanh toán
+    const confirmed = window.confirm('Bạn có chắc chắn muốn thanh toán số tiền này?');
+    if (!confirmed) return;
     
     setIsPaying(true);
     try {
@@ -64,9 +67,9 @@ const PaymentRemaining = () => {
         withCredentials: true,
       };
       
-      // Tính toán số tiền cần thanh toán
+      // Tính tổng số tiền đã thanh toán từ tất cả giao dịch COMPLETED
       const totalPaidAmount = booking.transactions.reduce((sum, transaction) => {
-        if (transaction.status === 'COMPLETED' && transaction.type === 'DEPOSIT') {
+        if (transaction.status === 'COMPLETED') {
           return sum + transaction.amount;
         }
         return sum;
@@ -123,8 +126,9 @@ const PaymentRemaining = () => {
     return <div className="payment-container">Không tìm thấy thông tin đơn hàng.</div>;
   }
 
+  // Tính tổng số tiền đã thanh toán từ tất cả giao dịch COMPLETED
   const totalPaidAmount = booking.transactions.reduce((sum, transaction) => {
-    if (transaction.status === 'COMPLETED' && transaction.type === 'DEPOSIT') {
+    if (transaction.status === 'COMPLETED') {
       return sum + transaction.amount;
     }
     return sum;
@@ -137,7 +141,6 @@ const PaymentRemaining = () => {
     <div className="payment-container">
       <div className="payment-card">
         <h2><FaMoneyBillWave /> Thanh toán phần còn lại</h2>
-        
         {/* Wallet Information */}
         {!walletLoading && wallet && (
           <div className="wallet-info-section">
@@ -158,7 +161,6 @@ const PaymentRemaining = () => {
             )}
           </div>
         )}
-        
         <div className="payment-details">
           <div className="detail-row">
             <span className="label">Mã đơn hàng:</span>
@@ -175,13 +177,7 @@ const PaymentRemaining = () => {
             </span>
           </div>
           <div className="detail-row">
-            <span className="label">Đã thanh toán (tiền cọc):</span>
-            <span className="value price">
-              -{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaidAmount)}
-            </span>
-          </div>
-          <div className="detail-row">
-            <span className="label">Hoàn trả tiền cọc:</span>
+            <span className="label">Đã thanh toán:</span>
             <span className="value price">
               -{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaidAmount)}
             </span>
@@ -189,11 +185,10 @@ const PaymentRemaining = () => {
           <div className="detail-row total">
             <span className="label">Số tiền cần thanh toán:</span>
             <span className="value price">
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount-totalPaidAmount)}
+              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount)}
             </span>
           </div>
         </div>
-
         <div className="payment-actions">
           <button 
             className="pay-button" 

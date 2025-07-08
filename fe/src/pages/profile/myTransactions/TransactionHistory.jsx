@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
-import { FaInfoCircle, FaCalendarAlt, FaWallet, FaEye } from 'react-icons/fa';
 import './TransactionHistory.css';
+import ProfileLayout from '../profileLayout/ProfileLayout';
 
 const TransactionHistory = () => {
   const [transactions, setTransactions] = useState([]);
@@ -160,6 +160,14 @@ const TransactionHistory = () => {
     return '';
   };
 
+  // Helper to get booking id for display
+  const getBookingId = (transaction) => {
+    if (typeof transaction.booking === 'string') return transaction.booking;
+    if (transaction.booking && transaction.booking._id) return transaction.booking._id;
+    if (transaction.paymentMetadata && transaction.paymentMetadata.originalBookingId) return transaction.paymentMetadata.originalBookingId;
+    return '-';
+  };
+
   const handleViewBooking = (bookingId) => {
     if (bookingId) {
       navigate(`/bookings/${bookingId}`);
@@ -167,7 +175,7 @@ const TransactionHistory = () => {
   };
 
   return (
-    <main className="profile-main-content">
+    <ProfileLayout>
       <div className="transaction-history-container">
         <h2>Lịch sử giao dịch</h2>
         <div className="filter-controls">
@@ -209,7 +217,6 @@ const TransactionHistory = () => {
           <div className="wallet-error">{error}</div>
         ) : transactions.length === 0 ? (
           <div className="no-transactions-message">
-            <FaInfoCircle size={24} />
             <p>Bạn chưa có giao dịch nào.</p>
           </div>
         ) : (
@@ -221,23 +228,16 @@ const TransactionHistory = () => {
                   <th>Số tiền</th>
                   <th>Trạng thái</th>
                   <th>Thời gian</th>
-                  <th>Hành động</th>
+                  <th>ID Booking</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.map((transaction) => (
                   <tr key={transaction._id}>
                     <td>
-                      <div className="transaction-type-cell">
-                        <span className="transaction-icon">{getTransactionIcon(transaction.type)}</span>
-                        <div className='transaction-type-text-container'>
-                          <span className="transaction-type-text">{getTransactionTypeText(transaction.type)}</span>
-                          <span className="transaction-id-text">
-                            MGD: {transaction.transactionCode}
-                          </span>
-                        </div>
-                      </div>
+                      <span className="transaction-type-text">{getTransactionTypeText(transaction.type)}</span>
                     </td>
+                   
                     <td>
                       <span className={`transaction-amount ${getAmountColor(transaction)}`}>
                         {getAmountSign(transaction)}
@@ -249,24 +249,11 @@ const TransactionHistory = () => {
                         {getStatusText(transaction.status)}
                       </span>
                     </td>
+
                     <td>
-                      <div className="transaction-date">
-                        <FaCalendarAlt />
-                        {moment(transaction.createdAt).format('DD/MM/YYYY HH:mm')}
-                      </div>
+                      {moment(transaction.createdAt).format('DD/MM/YYYY HH:mm')}
                     </td>
-                    <td>
-                      {transaction.booking?._id && (
-                        <div className="actions-cell">
-                          <button
-                            className="view-details-button"
-                            onClick={() => handleViewBooking(transaction.booking._id)}
-                          >
-                            <FaEye /> Xem chi tiết
-                          </button>
-                        </div>
-                      )}
-                    </td>
+                    <td>{getBookingId(transaction)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -274,8 +261,8 @@ const TransactionHistory = () => {
           </div>
         )}
       </div>
-    </main>
+    </ProfileLayout>
   );
 };
 
-export default TransactionHistory; 
+export default TransactionHistory;

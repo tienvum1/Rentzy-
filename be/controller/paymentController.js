@@ -249,16 +249,16 @@ const checkPayment = async (req, res) => {
             // Cập nhật trạng thái booking
             const booking = await Booking.findById(bookingId);
             if (booking) {
-                // Nếu giao dịch là DEPOSIT, cập nhật trạng thái booking thành DEPOSIT_PAID
+                // Nếu giao dịch là DEPOSIT, cập nhật trạng thái booking thành deposit_paid
                 if (transaction.type === 'DEPOSIT') {
                     if (booking.status === 'pending') { 
-                        booking.status = 'DEPOSIT_PAID';
+                        booking.status = 'deposit_paid';
                     }
                 }
-                // Nếu giao dịch là RENTAL, cập nhật trạng thái booking thành CONFIRMED
+                // Nếu giao dịch là RENTAL, cập nhật trạng thái booking thành confirmed
                 else if (transaction.type === 'RENTAL') {
-                    if (booking.status === 'DEPOSIT_PAID' || booking.status === 'CONFIRMED') {
-                        booking.status = 'CONFIRMED';
+                    if (booking.status === 'deposit_paid' || booking.status === 'confirmed') {
+                        booking.status = 'confirmed';
                     }
                 }
                 await booking.save();
@@ -344,11 +344,11 @@ const handleWebhook = async (req, res) => {
                 if (booking) {
                     if (transaction.type === 'DEPOSIT') {
                         if (booking.status === 'pending') {
-                            booking.status = 'DEPOSIT_PAID';
+                            booking.status = 'deposit_paid';
                         }
                     } else if (transaction.type === 'RENTAL') {
-                        if (booking.status === 'DEPOSIT_PAID' || booking.status === 'CONFIRMED') {
-                            booking.status = 'CONFIRMED';
+                        if (booking.status === 'deposit_paid' || booking.status === 'confirmed') {
+                            booking.status = 'confirmed';
                         }
                     }
                     await booking.save();
@@ -384,7 +384,7 @@ const handleWebhook = async (req, res) => {
                             }
                         }
                     } else if (transaction.type === 'RENTAL') {
-                        // Nếu giao dịch RENTAL thất bại, không thay đổi trạng thái booking (vẫn là DEPOSIT_PAID)
+                        // Nếu giao dịch RENTAL thất bại, không thay đổi trạng thái booking (vẫn là deposit_paid)
                         console.log('MoMo IPN Webhook: RENTAL payment failed, booking status remains as is:', bookingId);
                     }
                 }
@@ -465,7 +465,7 @@ const verifyMoMoPayment = async (req, res) => {
         // Cập nhật trạng thái booking
         const booking = await Booking.findById(transaction.booking);
         if (booking) {
-            booking.status = 'DEPOSIT_PAID';
+            booking.status = 'deposit_paid';
             await booking.save();
         }
 
@@ -511,10 +511,10 @@ const createRentalPayment = async (req, res) => {
         }
 
         // Kiểm tra trạng thái booking: đã thanh toán tiền giữ chỗ và chưa hoàn thành
-        if (booking.status !== 'DEPOSIT_PAID') {
+        if (booking.status !== 'deposit_paid') {
             return res.status(400).json({
                 success: false,
-                message: 'Booking is not in DEPOSIT_PAID status. Cannot proceed with rental payment.'
+                message: 'Booking is not in deposit_paid status. Cannot proceed with rental payment.'
             });
         }
 
@@ -668,7 +668,7 @@ const checkRentalPayment = async (req, res) => {
                 await transaction.save();
 
                 // Update booking status to RENTAL_PAID
-                booking.status = 'RENTAL_PAID';
+                booking.status = 'fully_paid';
                 await booking.save();
 
                 // Redirect to booking details page with success message
@@ -727,7 +727,7 @@ const checkRentalPayment = async (req, res) => {
                 await transaction.save();
 
                 // Update booking status to RENTAL_PAID
-                booking.status = 'RENTAL_PAID';
+                booking.status = 'fully_paid';
                 await booking.save();
 
                 return res.json({
@@ -850,7 +850,7 @@ const createWalletDepositPayment = async (req, res) => {
         const booking = await Booking.findById(orderCode);
         if (booking) {
             booking.transactions.push(transaction._id);
-            booking.status = 'DEPOSIT_PAID';
+            booking.status = 'deposit_paid';
             await booking.save();
         }
 
@@ -912,7 +912,7 @@ const createWalletRentalPayment = async (req, res) => {
         }
 
         // Kiểm tra trạng thái booking
-        if (booking.status !== 'DEPOSIT_PAID') {
+        if (booking.status !== 'deposit_paid') {
             return res.status(400).json({
                 success: false,
                 message: 'Đơn đặt xe chưa được thanh toán tiền cọc hoặc đã hoàn thành'
@@ -959,7 +959,7 @@ const createWalletRentalPayment = async (req, res) => {
 
         // Cập nhật booking
         booking.transactions.push(transaction._id);
-        booking.status = 'CONFIRMED';
+        booking.status = 'fully_paid';
         await booking.save();
 
         console.log(`Wallet rental payment completed: ${amount} VND for booking ${bookingId}`);
@@ -990,5 +990,5 @@ module.exports = {
     createRentalPayment,
     checkRentalPayment,
     createWalletDepositPayment,
-    createWalletRentalPayment,
+    createWalletRentalPayment
 };

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './WalletInfo.css';
+import ProfileLayout from '../profileLayout/ProfileLayout';
 
 const WalletInfo = () => {
   const [wallet, setWallet] = useState(null);
@@ -163,7 +164,8 @@ const WalletInfo = () => {
   };
 
   return (
-    <div className="profile-main-content">
+    <ProfileLayout>
+      {/* WalletInfo content starts here, remove the outermost <div className="profile-main-content"> */}
       <div className="wallet-header">
         <h2>Ví điện tử của tôi</h2>
         <p className="wallet-subtitle">Quản lý số dư và thực hiện giao dịch</p>
@@ -441,7 +443,7 @@ const WalletInfo = () => {
           </div>
         </div>
       )}
-    </div>
+    </ProfileLayout>
   );
 };
 

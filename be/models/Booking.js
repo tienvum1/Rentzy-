@@ -66,13 +66,6 @@ const bookingSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-    // Tiền giữ chỗ
-    reservationFee: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-
     // Tiền giảm giá
     discountAmount: {
       type: Number,
@@ -89,8 +82,18 @@ const bookingSchema = new mongoose.Schema(
     // Trạng thái đơn thuê
     status: {
       type: String,
-      enum: ['pending', 'DEPOSIT_PAID', 'CONFIRMED', 'RENTAL', 'RENTAL_PAID', 'in_progress', 'completed', 'canceled', 'rejected'],
-      default: 'pending',
+      enum: [
+        'pending',        // Đơn mới tạo, chưa thanh toán cọc
+        'deposit_paid',   // Đã thanh toán cọc, xác nhận tự động
+        'in_progress',    // Đang thuê xe
+        'fully_paid',     // Đã thanh toán toàn bộ
+        'completed',      // Đã trả xe, hoàn tất
+        'canceled',       // Đã hủy
+        'refunded',       // Đã hoàn tiền
+        'rejected',       // Bị từ chối (hiếm dùng)
+        'cancel_requested' // Đang chờ chủ xe duyệt huỷ
+      ],
+      default: 'pending'
     },
 
     // Địa chỉ nhận xe

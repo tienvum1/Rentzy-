@@ -9,7 +9,8 @@ import SidebarOwner from '../../components/SidebarOwner/SidebarOwner';
 
 // Import các component nội dung cho từng mục menu (bạn cần đảm bảo các file này tồn tại)
 import VehicleManagement from './vehiclemanagement/VehicleManagement';
-import NotificationPage from '../notification/NotificationPage';
+import NotificationPage from '../profile/myNotifications/NotificationPage';
+import OwnerCancelRequests from './ownerBookings/OwnerCancelRequests';
 // Import các component nội dung thực tế của bạn
 // import OverviewContent from './OverviewContent';
 // import BookingManagement from '../bookingmanagement/BookingManagement';
@@ -35,6 +36,7 @@ const contentComponents = {
     'booking-management': BookingManagement, // Sử dụng component BookingManagement thực tế khi có
     'notification': NotificationPage, // Sử dụng component NotificationPage thực tế
     'revenue': RevenuePage, // Sử dụng component RevenuePage thực tế khi có
+    'cancel-requests': OwnerCancelRequests, // Sử dụng component OwnerCancelRequests thực tế khi có
 };
 
 const OwnerPage = () => {

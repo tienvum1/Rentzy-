@@ -49,23 +49,37 @@ const UserBookings = () => {
   const getStatusText = (status) => {
     switch (status) {
       case 'PENDING':
+      case 'pending':
         return 'Đang chờ xử lý';
       case 'CONFIRMED':
+      case 'confirmed':
         return 'Đã xác nhận';
       case 'DEPOSIT_PAID':
+      case 'deposit_paid':
         return 'Đã thanh toán tiền giữ chỗ';
       case 'RENTAL_PAID':
+      case 'rental_paid':
+      case 'FULLY_PAID':
+      case 'fully_paid':
         return 'Đã thanh toán đầy đủ';
       case 'IN_PROGRESS':
+      case 'in_progress':
         return 'Đang sử dụng';
       case 'COMPLETED':
+      case 'completed':
         return 'Đã hoàn thành';
       case 'CANCELED':
+      case 'canceled':
         return 'Đã hủy';
       case 'REJECTED':
+      case 'rejected':
         return 'Đã từ chối';
       case 'EXPIRED':
+      case 'expired':
         return 'Đã hết hạn';
+      case 'REFUNDED':
+      case 'refunded':
+        return 'Đã hoàn tiền';
       default:
         return status;
     }
@@ -76,17 +90,34 @@ const UserBookings = () => {
   };
 
   const calculatePaymentDetails = (booking) => {
+    // Tổng tiền khách đã trả (không trừ hoàn tiền)
     const totalPaid = booking.transactions.reduce((sum, transaction) => {
-      if (transaction.status === 'COMPLETED') {
+      if (transaction.status === 'COMPLETED' && transaction.type !== 'REFUND') {
         return sum + transaction.amount;
       }
       return sum;
     }, 0);
 
-    const remainingAmount = booking.status === 'RENTAL_PAID' ? 0 : booking.totalAmount - totalPaid;
+    // Tổng tiền đã hoàn lại
+    const totalRefund = booking.transactions.reduce((sum, transaction) => {
+      if (transaction.status === 'COMPLETED' && transaction.type === 'REFUND') {
+        return sum + transaction.amount;
+      }
+      return sum;
+    }, 0);
+
+    // Số tiền còn lại phải trả (nếu đã hoàn tiền hoặc đã huỷ thì là 0)
+    let remainingAmount = booking.status === 'RENTAL_PAID' ? 0 : booking.totalAmount - totalPaid;
+    if (
+      booking.status === 'canceled' || booking.status === 'CANCELED' ||
+      booking.status === 'refunded' || booking.status === 'REFUNDED'
+    ) {
+      remainingAmount = 0;
+    }
 
     return {
       totalPaid,
+      totalRefund,
       remainingAmount
     };
   };
@@ -114,15 +145,15 @@ const UserBookings = () => {
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
                 <option value="">Tất cả</option>
-                <option value="PENDING">Đang chờ xử lý</option>
-                <option value="DEPOSIT_PAID">Đã thanh toán tiền giữ chỗ</option>
-                <option value="RENTAL_PAID">Đã thanh toán đầy đủ</option>
-                <option value="CONFIRMED">Đã xác nhận</option>
-                <option value="IN_PROGRESS">Đang sử dụng</option>
-                <option value="COMPLETED">Đã hoàn thành</option>
-                <option value="CANCELED">Đã hủy</option>
-                <option value="REJECTED">Đã từ chối</option>
-                <option value="EXPIRED">Đã hết hạn</option>
+                <option value="pending">Đang chờ xử lý</option>
+                <option value="deposit_paid">Đã thanh toán tiền giữ chỗ</option>
+                <option value="fully_paid">Đã thanh toán đầy đủ</option>
+                <option value="in_progress">Đang sử dụng</option>
+                <option value="completed">Đã hoàn thành</option>
+                <option value="canceled">Đã hủy</option>
+                <option value="rejected">Đã từ chối</option>
+                <option value="expired">Đã hết hạn</option>
+                <option value="refunded">Đã hoàn tiền</option>
               </select>
             </div>
 
@@ -145,60 +176,59 @@ const UserBookings = () => {
                   </thead>
                   <tbody>
                     {bookings.map((booking) => {
-                      const { totalPaid, remainingAmount } = calculatePaymentDetails(booking);
+                      const { totalPaid, remainingAmount, totalRefund } = calculatePaymentDetails(booking);
                       
                       return (
-                        <tr key={booking._id}>
-                          <td>
-                            <div className="vehicle-cell-content">
-                              {booking.vehicle?.primaryImage ? (
-                                <img 
-                                  src={booking.vehicle.primaryImage} 
-                                  alt={`${booking.vehicle.brand} ${booking.vehicle.model}`} 
-                                  className="vehicle-thumbnail" 
-                                />
-                              ) : (
-                                <div className="no-image-thumbnail">No Image</div>
-                              )}
-                              <div className="vehicle-details-text">
-                                <p className="vehicle-name-in-table">
-                                  {booking.vehicle?.brand} {booking.vehicle?.model || 'Xe không xác định'}
-                                </p>
-                                <p className="booking-dates">
-                                  <FaCalendarAlt /> {moment(booking.startDate).format('DD/MM/YYYY')} - {moment(booking.endDate).format('DD/MM/YYYY')}
-                                </p>
+                        <React.Fragment key={booking._id}>
+                          <tr>
+                            <td>
+                              <div className="vehicle-cell-content">
+                                <div className="vehicle-details-text">
+                                  <p className="vehicle-name-in-table">
+                                    {booking.vehicle?.brand} {booking.vehicle?.model || 'Xe không xác định'}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td>{moment(booking.startDate).format('DD/MM/YYYY HH:mm')}</td>
-                          <td>{moment(booking.endDate).format('DD/MM/YYYY HH:mm')}</td>
-                          <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalAmount)}</td>
-                          <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaid)}</td>
-                          <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount)}</td>
-                          <td>
-                            <span className={`status-badge ${getStatusClass(booking.status)}`}>
-                              {getStatusText(booking.status)}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="actions-cell">
-                              <button 
-                                className="view-details-button"
-                                onClick={() => navigate(`/bookings/${booking._id}`)}
-                              >
-                                <FaInfoCircle /> Xem chi tiết
-                              </button>
-                              {booking.status === 'DEPOSIT_PAID' && remainingAmount > 0 && (
+                            </td>
+                            <td>{moment(booking.startDate).format('DD/MM/YYYY HH:mm')}</td>
+                            <td>{moment(booking.endDate).format('DD/MM/YYYY HH:mm')}</td>
+                            <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalAmount)}</td>
+                            <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPaid)}</td>
+                            <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount)}</td>
+                            <td>
+                              <span className={`status-badge ${getStatusClass(booking.status)}`}>
+                                {getStatusText(booking.status)}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="actions-cell">
                                 <button 
-                                  className="pay-remaining-button"
-                                  onClick={() => navigate(`/payment-remaining/${booking._id}`)}
+                                  className="view-details-button"
+                                  onClick={() => navigate(`/bookings/${booking._id}`)}
                                 >
-                                  <FaCreditCard /> Thanh toán
+                                  <FaInfoCircle /> Xem chi tiết
                                 </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
+                                {booking.status === 'DEPOSIT_PAID' && remainingAmount > 0 && (
+                                  <button 
+                                    className="pay-remaining-button"
+                                    onClick={() => navigate(`/payment-remaining/${booking._id}`)}
+                                  >
+                                    <FaCreditCard /> Thanh toán
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                          {totalRefund > 0 && (
+                            <tr>
+                              <td colSpan={8}>
+                                <div className="refund-note" style={{ color: '#2563eb', background: '#f1f5f9', borderRadius: 6, padding: '6px 12px', margin: '4px 0', fontSize: 15 }}>
+                                  Đã hoàn tiền: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalRefund)} về ví của bạn.
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
                       );
                     })}
                   </tbody>

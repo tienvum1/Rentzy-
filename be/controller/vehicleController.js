@@ -256,11 +256,11 @@ exports.deleteVehicle = async (req, res) => {
     await Vehicle.findByIdAndDelete(id);
 
     // Delete associated specific details (Car or Motorbike)
-    if (vehicleToDelete.type === "car") {
-      await Car.deleteOne({ vehicle: id }); // Corrected foreignField to 'vehicle'
-    } else if (vehicleToDelete.type === "motorbike") {
-      await Motorbike.deleteOne({ vehicle: id }); // Corrected foreignField to 'vehicle'
-    }
+    // if (vehicleToDelete.type === "car") {
+    //   await Car.deleteOne({ vehicle: id }); // Corrected foreignField to 'vehicle'
+    // } else if (vehicleToDelete.type === "motorbike") {
+    //   await Motorbike.deleteOne({ vehicle: id }); // Corrected foreignField to 'vehicle'
+    // }
 
     res.status(200).json({ message: "Vehicle deleted successfully!" });
   } catch (error) {
@@ -739,27 +739,27 @@ exports.reviewVehicleChanges = async (req, res) => {
         updateOperations.$unset = { pendingChanges: "" }; 
 
         // Prepare updates for type-specific details
-        if (vehicle.type === "car" && changesToApply.specificDetails) {
-          carUpdate = Car.findOneAndUpdate(
-            { vehicle: objectVehicleId },
-            {
-              seatCount: changesToApply.specificDetails.seatCount,
-              bodyType: changesToApply.specificDetails.bodyType,
-              transmission: changesToApply.specificDetails.transmission,
-              fuelType: changesToApply.specificDetails.fuelType
-            },
-            { new: true, upsert: true } // Use upsert: true to create if not exists
-          );
-        } else if (vehicle.type === "motorbike" && changesToApply.specificDetails) {
-          motorbikeUpdate = Motorbike.findOneAndUpdate(
-            { vehicle_id: objectVehicleId }, // Corrected from 'vehicle' to 'vehicle_id'
-            {
-              engine_capacity: changesToApply.specificDetails.engineCapacity, // Corrected field name
-              has_gear: changesToApply.specificDetails.hasGear // Corrected field name
-            },
-            { new: true, upsert: true } // Use upsert: true to create if not exists
-          );
-        }
+        // if (vehicle.type === "car" && changesToApply.specificDetails) {
+        //   carUpdate = Car.findOneAndUpdate(
+        //     { vehicle: objectVehicleId },
+        //     {
+        //       seatCount: changesToApply.specificDetails.seatCount,
+        //       bodyType: changesToApply.specificDetails.bodyType,
+        //       transmission: changesToApply.specificDetails.transmission,
+        //       fuelType: changesToApply.specificDetails.fuelType
+        //     },
+        //     { new: true, upsert: true } // Use upsert: true to create if not exists
+        //   );
+        // } else if (vehicle.type === "motorbike" && changesToApply.specificDetails) {
+        //   motorbikeUpdate = Motorbike.findOneAndUpdate(
+        //     { vehicle_id: objectVehicleId }, // Corrected from 'vehicle' to 'vehicle_id'
+        //     {
+        //       engine_capacity: changesToApply.specificDetails.engineCapacity, // Corrected field name
+        //       has_gear: changesToApply.specificDetails.hasGear // Corrected field name
+        //     },
+        //     { new: true, upsert: true } // Use upsert: true to create if not exists
+        //   );
+        // }
 
     } else if (status === "rejected") {
         if (!rejectionReason) {
@@ -776,8 +776,8 @@ exports.reviewVehicleChanges = async (req, res) => {
     // Execute all updates in parallel
     const [finalUpdatedVehicle] = await Promise.all([
       Vehicle.findOneAndUpdate({ _id: objectVehicleId }, updateOperations, { new: true, runValidators: true }),
-      carUpdate, // This will be null or a promise
-      motorbikeUpdate // This will be null or a promise
+      // carUpdate, // This will be null or a promise
+      // motorbikeUpdate // This will be null or a promise
     ].filter(Boolean)); // Filter out nulls if carUpdate/motorbikeUpdate are not set
     
     console.log("DEBUG: Final updated Vehicle document:", finalUpdatedVehicle);

@@ -1,15 +1,15 @@
 // fe/src/components/SidebarOwner/SidebarOwner.jsx
 import React from 'react';
-import './SidebarOwner.css'; // File CSS riêng cho sidebar (bạn có thể cần tạo nó)
+import './SidebarOwner.css';
 import { NavLink } from 'react-router-dom';
-import { MdOutlineDashboard, MdDirectionsCar, MdCalendarMonth, MdNotifications, MdShowChart, MdLogout } from 'react-icons/md';
+import { MdOutlineDashboard, MdDirectionsCar, MdCalendarMonth, MdNotifications, MdShowChart, MdLogout, MdAccountCircle } from 'react-icons/md';
+import { FaCar, FaClipboardList, FaBell, FaMoneyCheckAlt, FaTimesCircle } from 'react-icons/fa';
 
-// Component SidebarOwner nhận các prop:
-// handleLogout: function - hàm được gọi khi click vào nút đăng xuất
+// SidebarOwner nhận prop handleLogout
 const SidebarOwner = ({ handleLogout }) => {
     return (
         <div className="sidebar">
-            <div className="sidebar-header">Owner dashboard</div>
+            <div className="sidebar-header">Bảng điều khiển chủ xe</div>
             <nav className="sidebar-nav">
                 <ul>
                     <li>
@@ -18,7 +18,7 @@ const SidebarOwner = ({ handleLogout }) => {
                             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                         >
                             <MdOutlineDashboard />
-                            Overview
+                            Tổng quan
                         </NavLink>
                     </li>
                     <li className="divider"></li>
@@ -28,7 +28,7 @@ const SidebarOwner = ({ handleLogout }) => {
                             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                         >
                             <MdDirectionsCar />
-                            Vehicle management
+                            Quản lý xe
                         </NavLink>
                     </li>
                     <li className="divider"></li>
@@ -38,17 +38,29 @@ const SidebarOwner = ({ handleLogout }) => {
                             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                         >
                             <MdCalendarMonth />
-                            Booking management
+                            Quản lý đơn thuê
                         </NavLink>
                     </li>
                     <li className="divider"></li>
                     <li>
                         <NavLink
-                            to="/ownerpage/notification"
+                            to="/ownerpage/cancel-requests"
+                            className={({ isActive }) =>
+                                isActive ? 'active' : ''
+                            }
+                        >
+                            <FaTimesCircle style={{ marginRight: 8, fontSize: 18 }} />
+                            Duyệt đơn huỷ
+                        </NavLink>
+                    </li>
+                    <li className="divider"></li>
+                    <li>
+                        <NavLink
+                            to="/ownerpage/notifications"
                             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                         >
                             <MdNotifications />
-                            Notification
+                            Thông báo
                         </NavLink>
                     </li>
                     <li className="divider"></li>
@@ -58,14 +70,25 @@ const SidebarOwner = ({ handleLogout }) => {
                             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                         >
                             <MdShowChart />
-                            Revenue
+                            Doanh thu
                         </NavLink>
                     </li>
                     <li className="divider"></li>
                     <li>
+                        <NavLink
+                            to="/ownerpage/profile"
+                            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                        >
+                            <MdAccountCircle />
+                            Hồ sơ cá nhân
+                        </NavLink>
+                    </li>
+                    <li className="divider"></li>
+                 
+                    <li>
                         <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); handleLogout(e); }}>
                             <MdLogout />
-                            Logout
+                            Đăng xuất
                         </a>
                     </li>
                     <li className="divider"></li>

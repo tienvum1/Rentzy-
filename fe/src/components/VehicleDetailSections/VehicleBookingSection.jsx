@@ -142,13 +142,11 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
     };
   }, [selectedDates.startDate, selectedDates.endDate, pickupTime, returnTime, pickupLocation, vehicle.pricePerDay]);
 
-  const holdFee = vehicle.holdFee || 500000;
-
   // Tính tổng tiền sau khi trừ giảm giá
   const totalBeforeDiscount = React.useMemo(() => {
-    const baseAmount = bookingDetails.rentalFee + bookingDetails.deliveryFee + otherCosts.deposit + holdFee;
+    const baseAmount = bookingDetails.rentalFee + bookingDetails.deliveryFee + otherCosts.deposit;
     return baseAmount;
-  }, [bookingDetails.rentalFee, bookingDetails.deliveryFee, otherCosts.deposit, holdFee]);
+  }, [bookingDetails.rentalFee, bookingDetails.deliveryFee, otherCosts.deposit]);
 
   // Tính giảm giá khi chọn mã
   const handleApplyPromo = (promo) => {
@@ -260,8 +258,11 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         return `${year}-${month}-${day}`;
       };
 
-      // Tính tổng tiền sau khi trừ giảm giá
-      const totalAmount = totalBeforeDiscount - discountAmount;
+      // Tổng tiền thực tế (chỉ để hiển thị, không thanh toán ngay)
+      const totalAmount = bookingDetails.rentalFee + bookingDetails.deliveryFee - discountAmount;
+
+      // Số tiền cần thanh toán ban đầu là tiền cọc
+      const depositToPay = vehicle.deposit;
 
       const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/createBooking`, {
         vehicleId: vehicle._id,
@@ -272,14 +273,13 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         pickupTime: pickupTime,
         returnTime: returnTime,
         totalDays: bookingDetails.totalDays,
-        totalCost: bookingDetails.rentalFee, // tiền thuê xe cơ bản
-        totalAmount: totalAmount, // tổng tiền sau khi trừ giảm giá
+        totalCost: bookingDetails.rentalFee,
+        totalAmount: totalAmount,
         promoCode: selectedPromo ? selectedPromo.code : null,
         discountAmount: discountAmount,
-        deposit: vehicle.deposit,
-        reservationFee: holdFee,
+        deposit: depositToPay, // Chỉ gửi tiền cọc
         isDelivery: pickupLocation !== vehicle.location,
-        deliveryFee: pickupLocation !== vehicle.location ? 200000 : 0 // Thêm deliveryFee
+        deliveryFee: bookingDetails.deliveryFee
       }, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -289,7 +289,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
 
       if (response.data.success) {
         if (onBookNow) {
-          onBookNow(response.data.data.booking._id, null, totalAmount);
+          onBookNow(response.data.data.booking._id, null, depositToPay);
         }
       } else {
         toast.error(response.data.message);
@@ -391,7 +391,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
             <div className="pickup-box-content">
               <b>Nhận xe tại vị trí xe</b>
               <div className="pickup-location-label">
-                <span role="img" aria-label="location">📍</span> {vehicle.location}
+                <span role="img" aria-label="location"></span> {vehicle.location}
               </div>
             </div>
           </div>
@@ -409,7 +409,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
             <div className="pickup-box-content">
               <b style={{ color: '#1abc9c' }}>Giao xe tận nơi</b>
               <div className="pickup-location-label">
-                <span role="img" aria-label="location">📍</span>
+                <span role="img" aria-label="location"></span>
                 <div className="address-input-wrapper">
                   {pickupLocation !== vehicle.location ? (
                     <input
@@ -441,20 +441,12 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
             <span>Giá thuê xe</span>
             <span>{bookingDetails.rentalFee.toLocaleString('vi-VN')} VND</span>
           </div>
-          <div className="cost-item">
-            <span>Tiền đặt cọc</span>
-            <span>{otherCosts.deposit.toLocaleString('vi-VN')} VND</span>
-          </div>
-          {otherCosts.deliveryFee > 0 && (
+          {bookingDetails.deliveryFee > 0 && (
             <div className="cost-item">
               <span>Phí giao xe (2 chiều)</span>
-              <span>{otherCosts.deliveryFee.toLocaleString('vi-VN')} VND</span>
+              <span>{bookingDetails.deliveryFee.toLocaleString('vi-VN')} VND</span>
             </div>
           )}
-          <div className="cost-item">
-            <span>Tiền giữ chỗ</span>
-            <span>{holdFee.toLocaleString('vi-VN')} VND</span>
-          </div>
           <div className="cost-item">
             <span>
               <b>Giảm giá</b>
@@ -466,10 +458,14 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
               -{discountAmount.toLocaleString('vi-VN')}đ
             </span>
           </div>
+          <div className="cost-item">
+            <span>Tiền cọc xe (thanh toán trước)</span>
+            <span>{vehicle.deposit.toLocaleString('vi-VN')} VND</span>
+          </div>
           <div className="cost-item total">
             <span>Tổng cộng</span>
             <span>
-              {(totalBeforeDiscount - discountAmount).toLocaleString('vi-VN')} VND
+              {(bookingDetails.rentalFee + vehicle.deposit + bookingDetails.deliveryFee - discountAmount).toLocaleString('vi-VN')} VND
             </span>
           </div>
         </div>

@@ -16,30 +16,36 @@ import ResetPassword from "./pages/login/ResetPassword";
 import ChangePassword from "./pages/changePassword/ChangePassword";
 import VehicleDetail from "./pages/vehicles/VehicleDetail"; // Import VehicleDetail
 import BookingDetailsPage from "./pages/bookings/BookingDetailsPage"; // Import BookingDetailsPage
-import PaymentRemaining from './pages/paymentRemaining/PaymentRemaining';
 
-// order booking 
-import OrderConfirmation from "./pages/payment/OrderConfirmation";
-import PaymentDeposit from "./pages/paymentDeposit/PaymentDeposit"
 
 import ConsignForm from "./pages/consignForm/ConsignForm";
+
+// order booking  payment
+import OrderConfirmation from "./pages/payment/paymentConfirm/OrderConfirmation";
+import PaymentDeposit from "./pages/payment/paymentDeposit/PaymentDeposit";
+import PaymentRemaining from './pages/payment/paymentRemaining/PaymentRemaining';
+
 
 
 
 // user
 import Profile from "./pages/profile/myAccount/Profile"; // IMPORT: New ProfilePage component
 import UserBookings from "./pages/profile/myBookings/UserBookings"; // Import UserBookings
-import TransactionHistory from './pages/profile/TransactionHistory';
-import WalletInfo from './pages/profile/WalletInfo';
+import TransactionHistory from './pages/profile/myTransactions/TransactionHistory';
+import WalletInfo from './pages/profile/myWallet/WalletInfo';
 import VehicleChangesPage from "./pages/admin/VehicleChangesPage";
+import NotificationPage from './pages/profile/myNotifications/NotificationPage';
 
 // owner
 import OwnerPage from "./pages/owner/Ownerpage";
 import VehicleManagement from "./pages/owner/vehiclemanagement/VehicleManagement";
 import AddVehicleForm from "./pages/owner/vehiclemanagement/AddVehicleForm";
-import NotificationPage from "./pages/notification/NotificationPage";
 import OwnerVehicleDetail from './pages/owner/vehiclemanagement/OwnerVehicleDetail';
 import EditVehicleForm from "./pages/owner/vehiclemanagement/EditVehicleForm";
+
+import OwnerNotificationPage from "./pages/owner/ownerNotifications/OwnerNotificationPage";
+import OwnerBookingManagement from "./pages/owner/ownerBookings/OwnerBookingManagement";
+import OwenerCancelRequest from "./pages/owner/ownerBookings/OwnerCancelRequests";
 
 // admin 
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -70,6 +76,7 @@ function App() {
             <Route path="/profile/account" element={<Profile />} />
             <Route path="/profile/favorites" element={<Profile />} />
             <Route path="/profile/my-bookings" element={<UserBookings />} /> {/* New route for user bookings */}
+            <Route path="/profile/my-notifications" element={<NotificationPage />} />
            
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -116,10 +123,14 @@ function App() {
             <Route path="/ownerpage" element={<OwnerRouteGuard />}>        
               <Route path="overview" element={<OwnerPage />} />
               <Route path="vehicle-management" element={<VehicleManagement />} />
-              <Route path="notification" element={<NotificationPage />} />
               <Route path="add-vehicle" element={<AddVehicleForm />} />
               <Route path="vehicle/:id" element={<OwnerVehicleDetail />} />
               <Route path="edit-vehicle/:id" element={<EditVehicleForm />} />
+              <Route path="notifications" element={<OwnerNotificationPage />} />
+              <Route path="booking-management" element={<OwnerBookingManagement />} />
+              <Route path="cancel-requests" element={<OwenerCancelRequest />} />
+              
+  
 
             </Route>
 

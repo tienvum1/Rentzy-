@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, verifyRenterRequirements } = require('../middleware/authMiddleware');
-const { getVehicleBookedDates, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking,cancelBookingWithRefund, getExpectedRefund  } = require('../controller/bookingController');
+const { getVehicleBookedDates, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingWithRefund, getExpectedRefund, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel } = require('../controller/bookingController');
 
 // Public routes
 router.get('/vehicle/:vehicleId/dates', getVehicleBookedDates);
@@ -15,6 +15,10 @@ router.get('/:id/expected-refund', protect, getExpectedRefund); // API lấy th�
 router.post('/:id/cancel-expired', protect, cancelBookingByFrontend);
 // huỷ đơn thue
 router.post('/:id/cancel-with-refund', protect, cancelBookingWithRefund);
+router.post('/:id/cancel', protect, cancelBookingByUser);
+router.post('/:id/request-cancel', protect, requestCancelBooking);
+router.post('/:id/owner-approve-cancel', protect, ownerApproveCancel);
+router.post('/:id/owner-reject-cancel', protect, ownerRejectCancel);
 
 // VAN KHAI : 
 // route for get all bookings of specific user : 
