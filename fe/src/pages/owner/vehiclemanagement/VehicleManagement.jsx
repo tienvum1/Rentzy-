@@ -90,6 +90,22 @@ const VehicleManagement = () => {
         // setMessage({ type: 'info', text: 'Navigate to Add Car page' }); // Remove placeholder message
     };
 
+    const handleToggleLock = async (vehicleId, newStatus) => {
+        if (window.confirm(`Bạn có chắc chắn muốn ${newStatus === "blocked" ? "khoá" : "mở khoá"} xe này?`)) {
+            try {
+                setLoading(true);
+                const apiUrl = `${backendUrl}/api/vehicles/${vehicleId}/status`;
+                const response = await axios.put(apiUrl, { status: newStatus }, { withCredentials: true });
+                setMessage({ type: 'success', text: response.data.message || 'Cập nhật trạng thái xe thành công!' });
+                fetchOwnerVehicles();
+            } catch (error) {
+                setMessage({ type: 'error', text: error.response?.data?.message || 'Không thể cập nhật trạng thái xe.' });
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
     return (
         <div className="vehicle-management-container">
             <SidebarOwner />
@@ -139,8 +155,11 @@ const VehicleManagement = () => {
                                     <td>
                                     <button className="detail-button" onClick={() => handleViewDetail(vehicle._id)}>Xem chi tiết</button>
                                         <button className="edit-button" onClick={() => handleEdit(vehicle._id)}>Sửa</button>
-                                        <button className="delete-button" onClick={() => handleDelete(vehicle._id)}>Xoá</button>
-                            
+                                        {vehicle.status === "blocked" ? (
+                                            <button className="unlock-button" onClick={() => handleToggleLock(vehicle._id, "available")}>Mở khoá</button>
+                                        ) : (
+                                            <button className="lock-button" onClick={() => handleToggleLock(vehicle._id, "blocked")}>Khoá</button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

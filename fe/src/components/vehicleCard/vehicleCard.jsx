@@ -1,6 +1,5 @@
 import React from 'react';
-import { FaGasPump, FaChair, FaLocationDot, FaHeart } from 'react-icons/fa6';
-import { IoSpeedometerOutline } from "react-icons/io5";
+import { Car, MapPin, Fuel, Users, Heart, Gauge } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './VehicleCard.css';
@@ -8,8 +7,6 @@ import './VehicleCard.css';
 const VehicleCard = ({ vehicle }) => {
     const navigate = useNavigate();
     const { user, isLoading, favorites, toggleFavorite } = useAuth();
-    
-    // Xác định trạng thái yêu thích từ context một cách an toàn
     const isFavorite = !isLoading && favorites.some(fav => fav._id === vehicle._id);
 
     const handleFavoriteClick = (e) => {
@@ -31,48 +28,40 @@ const VehicleCard = ({ vehicle }) => {
     };
 
     return (
-        <div className="vehicle-card" onClick={handleCardClick}>
-            <div className="vehicle-card__image-container">
+        <div className="vehicle-card-pro" onClick={handleCardClick} tabIndex={0}>
+            <div className="vehicle-card-pro-img-wrap">
                 <img 
-                    src={vehicle.primaryImage} 
+                    src={vehicle.primaryImage || "/default-car.jpg"} 
                     alt={`${vehicle.brand} ${vehicle.model}`} 
-                    className="vehicle-card__image"
+                    className="vehicle-card-pro-img"
+                    loading="lazy"
                 />
-                <div className="vehicle-card__image-overlay"></div>
                 <button
-                    className={`vehicle-card__favorite-btn${isFavorite ? ' favorited' : ''}`}
+                    className={`vehicle-card-pro-fav-btn${isFavorite ? ' favorited' : ''}`}
                     onClick={handleFavoriteClick}
                     disabled={isLoading}
                     title={isFavorite ? 'Bỏ yêu thích xe này' : 'Thêm vào xe yêu thích'}
                 >
-                    <FaHeart style={{ color: isFavorite ? '#ff4d4f' : '#bbb', fontSize: '1.8rem', transition: 'color 0.2s' }} />
+                    <Heart fill={isFavorite ? '#ff4d4f' : 'none'} color={isFavorite ? '#ff4d4f' : '#bbb'} size={22} />
                 </button>
             </div>
-
-            <div className="vehicle-card__details">
-                <h3 className="vehicle-card__title"> {vehicle.model}</h3>
-                <div className="vehicle-card__specs">
-                    <div className="vehicle-card__spec-item">
-                        <IoSpeedometerOutline className="vehicle-card__icon" />
-                        <span>{vehicle.transmission === 'automatic' ? 'Số tự động' : 'Số sàn'}</span>
-                    </div>
-                    <div className="vehicle-card__spec-item">
-                        <FaChair className="vehicle-card__icon" />
-                        <span>{vehicle.seatCount} chỗ</span>
-                    </div>
-                    <div className="vehicle-card__spec-item">
-                        <FaGasPump className="vehicle-card__icon" />
-                        <span>{vehicle.fuelType === 'electric' ? 'Điện' : 'Xăng'}</span>
-                    </div>
+            <div className="vehicle-card-pro-info">
+                <div className="vehicle-card-pro-title-row">
+                    <span className="vehicle-card-pro-brand">{vehicle.brand}</span>
+                    <span className="vehicle-card-pro-model">{vehicle.model}</span>
                 </div>
-                <div className="vehicle-card__location">
-                    <FaLocationDot className="vehicle-card__location-icon" />
+                <div className="vehicle-card-pro-location">
+                    <MapPin size={18} strokeWidth={2} />
                     <span>{vehicle.location}</span>
                 </div>
-                <div className="vehicle-card__pricing">
-                    <div className="vehicle-card__price-display">
-                        <span className="vehicle-card__original-price">{formatCurrency(vehicle.pricePerDay)}/ ngày</span>
-                    </div>
+                <div className="vehicle-card-pro-specs">
+                    <div><Users size={18} strokeWidth={2} /> {vehicle.seatCount} chỗ</div>
+                    <div><Gauge size={18} strokeWidth={2} /> {vehicle.transmission === 'automatic' ? 'Tự động' : 'Số sàn'}</div>
+                    <div><Fuel size={18} strokeWidth={2} /> {vehicle.fuelType === 'electric' ? 'Điện' : 'Xăng'}</div>
+                </div>
+                <div className="vehicle-card-pro-price-row">
+                    <span className="vehicle-card-pro-price">{formatCurrency(vehicle.pricePerDay)}</span>
+                    <span className="vehicle-card-pro-price-unit">/ngày</span>
                 </div>
             </div>
         </div>

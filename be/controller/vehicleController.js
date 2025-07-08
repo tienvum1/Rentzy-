@@ -213,7 +213,33 @@ exports.updateVehicle = async (req, res) => {
   }
 };
 
+// Chủ xe khoá/mở khoá xe của mình
+exports.updateVehicleStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const ownerId = req.user._id;
 
+  try {
+    // Kiểm tra tính hợp lệ của status
+    const allowedStatuses = ["available", "blocked"];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: "Trạng thái không hợp lệ." });
+    }
+
+    const vehicle = await Vehicle.findOne({ _id: id, owner: ownerId });
+
+    if (!vehicle) {
+      return res.status(404).json({ message: "Không tìm thấy xe hoặc bạn không phải chủ xe." });
+    }
+
+    vehicle.status = status;
+    await vehicle.save();
+
+    res.status(200).json({ message: `Xe đã được ${status === "blocked" ? "khoá" : "mở khoá"} thành công!`, vehicle });
+  } catch (error) {
+    res.status(500).json({ message: "Không thể cập nhật trạng thái xe.", error: error.message });
+  }
+};
 // Add function to delete a vehicle and associated data
 exports.deleteVehicle = async (req, res) => {
   try {
@@ -235,11 +261,6 @@ exports.deleteVehicle = async (req, res) => {
     } else if (vehicleToDelete.type === "motorbike") {
       await Motorbike.deleteOne({ vehicle: id }); // Corrected foreignField to 'vehicle'
     }
-
-    // Note: Images are now stored directly on the Vehicle model (primaryImage, gallery),
-    // so explicit deletion of VehicleImage model entries might not be needed if that model is deprecated.
-    // If VehicleImage is still used for other purposes or relationships, keep the line below.
-    // await VehicleImage.deleteMany({ vehicle_id: id });
 
     res.status(200).json({ message: "Vehicle deleted successfully!" });
   } catch (error) {
@@ -772,72 +793,13 @@ exports.reviewVehicleChanges = async (req, res) => {
   }
 };
 
-// lấy tất cả vehicles approved
-exports.updateVehicleStatus = async (req, res) => {
-  const { id } = req.params;
-  const { status, userId } = req.body;
-  const ownerId = req.user._id; // ID của chủ xe đã xác thực
 
-  try {
-    // Kiểm tra tính hợp lệ của status
-    const allowedStatuses = ["available", "reserved", "rented", "maintenance", "blocked"];
-    if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({ message: "Invalid status provided." });
-    }
 
-    const vehicle = await Vehicle.findOne({ _id: id, owner: ownerId });
-
-    if (!vehicle) {
-      return res.status(404).json({ message: "Vehicle not found or you are not the owner." });
-    }
-
-    // Cập nhật trạng thái xe và currentRenter
-    vehicle.status = status;
-    if (status === "rented" || status === "reserved") {
-      if (!userId) {
-        return res.status(400).json({ message: "userId is required when setting status to rented or reserved." });
-      }
-      vehicle.currentRenter = userId;
-    } else if (status === "available") {
-      vehicle.currentRenter = null;
-    }
-    // Các trạng thái khác giữ nguyên currentRenter
-
-    await vehicle.save();
-
-    res.status(200).json({ message: "Vehicle status updated successfully!", vehicle });
-  } catch (error) {
-    console.error("Error updating vehicle status:", error);
-    res.status(500).json({ message: "Failed to update vehicle status.", error: error.message });
-  }
-};
-
-// Lấy danh sách xe đã được duyệt, có filter
+// Lấy danh sách xe đã được duyệt và đang sẵn sàng cho thuê
 exports.getApprovedVehicles = async (req, res) => {
   try {
-    const {
-      brand,
-      model,
-      location,
-      seatCount,
-      fuelType,
-      transmission,
-      startDate,
-      endDate,
-    } = req.query;
-
-    // Xây dựng filter object
-    const filter = { approvalStatus: "approved" };
-    if (brand) filter.brand = brand;
-    if (model) filter.model = model;
-    if (location) filter.location = location;
-    if (seatCount) filter.seatCount = Number(seatCount);
-    if (fuelType) filter.fuelType = fuelType;
-    if (transmission) filter.transmission = transmission;
-
-    // TODO: Nếu có filter ngày, cần xử lý logic kiểm tra xe có available trong khoảng đó không
-
-    const vehicles = await Vehicle.find(filter).populate('owner', 'name email');
+    // Chỉ lấy xe đã duyệt và đang available
+    const vehicles = await Vehicle.find({ approvalStatus: "approved", status: "available" }).populate('owner', 'name email');
     res.status(200).json({ vehicles, count: vehicles.length });
   } catch (error) {
     res.status(500).json({ message: "Không thể lấy danh sách xe đã duyệt.", error: error.message });

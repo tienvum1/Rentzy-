@@ -31,7 +31,8 @@ router.get('/approved', getApprovedVehicles);
 
 // Add route to get a single vehicle by ID
 router.get('/:id', vehicleController.getVehicleById);
-
+// Route cập nhật trạng thái xe (khoá/mở khoá)
+router.put('/:id/status', protect, vehicleController.updateVehicleStatus);
 // Add route to delete a vehicle
 router.delete('/:id', vehicleController.deleteVehicle);
 
