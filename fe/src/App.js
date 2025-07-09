@@ -53,8 +53,8 @@ import VehiclesRequestPage from "./pages/admin/adminVehiclesRequestPage/Vehicles
 import AdminWithdrawals from "./pages/admin/adminWithdrawals/AdminWithdrawals";
 import DriverLicenseRequestsPage from "./pages/admin/adminDriverLicenseRequestsPage/DriverLicenseRequestsPage";
 import AdminVehicleDetailPage from './pages/admin/adminAdminVehicleDetailPage/AdminVehicleDetailPage';
-import VehicleChangesPage from "./pages/admin/adminVehicleChangesPage/VehicleChangesPage";
 import AdminPayoutRequests from './pages/admin/payoutRequests/AdminPayoutRequests';
+import AdminNotificationPage from './pages/admin/adminNotificationPage/AdminNotificationPage';
 
 
 import PaymentSuccess from './pages/payment/PaymentSuccess';
@@ -112,8 +112,9 @@ function App() {
               <Route path="withdrawals" element={<AdminWithdrawals />} />
               <Route path="driver-license-requests" element={<DriverLicenseRequestsPage />} />
               <Route path="payout-requests" element={<AdminPayoutRequests />} />
+              <Route path="notifications" element={<AdminNotificationPage />} />
             </Route>
-            <Route path="/admin/vehicle-changes" element={<VehicleChangesPage />} />
+
 
             {/* Route Guard owner  managemnt route */}
             {/*  Chỉ có user đăng kí chủ xe mới dăng nhập được  đăng nhập được */}

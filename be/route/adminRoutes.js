@@ -14,10 +14,6 @@ router.get('/vehicle-approvals', protect, adminOnly, adminController.getPendingV
 router.get('/vehicle-approvals/:id', protect, adminOnly, adminController.getPendingVehicleDetail);
 // Route để duyệt xe
 router.put('/vehicle-approvals/:vehicleId', protect, adminOnly, adminController.reviewVehicleApproval);
-// Route để lấy danh sách xe chờ thay đổi
-router.get('/vehicle-pending-changes', protect, adminOnly, adminController.getVehiclesWithPendingChanges);
-// Route để duyệt thay đổi xe
-router.put('/vehicle-review-changes/:vehicleId', protect, adminOnly, adminController.reviewVehicleChanges);
 
 // Route để lấy danh sách các yêu cầu xác thực GPLX
 router.get('/driver-license-requests', protect, adminOnly, adminController.getDriverLicenseRequests);

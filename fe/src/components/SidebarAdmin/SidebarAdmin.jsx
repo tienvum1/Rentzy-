@@ -30,9 +30,6 @@ const SidebarAdmin = () => {
                 {/* Vehicle Approvals */}
                 <li onClick={() => handleMenuItemClick('/admin/vehicle-approvals')}>Duyệt xe</li>
 
-                {/* Vehicle Change Requests */}
-                <li onClick={() => handleMenuItemClick('/admin/vehicle-changes')}>Duyệt thay đổi xe</li>
-
                 {/* Withdrawals Management */}
                 <li onClick={() => handleMenuItemClick('/admin/withdrawals')}>Quản lý rút tiền</li>
 

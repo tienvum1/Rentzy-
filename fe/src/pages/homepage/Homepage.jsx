@@ -6,16 +6,17 @@ import HeroSection from '../../components/HeroSection/HeroSection';
 import StatsSection from '../../components/StatsSection/StatsSection';
 import BrandsSection from '../../components/BrandsSection/BrandsSection';
 import VehicleList from './VehicleList';
+import VehicleFilter from '../../components/vehicleFilter/VehicleFilter';
 
 // Testimonial Section
 const testimonials = [
   {
-    name: 'Nguyễn Văn A',
+    name: 'Nguyễn Văn An',
     comment: 'Thuê xe ở đây rất nhanh chóng, xe mới và giá hợp lý. Sẽ quay lại!',
     avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
   },
   {
-    name: 'Trần Thị B',
+    name: 'Trần T',
     comment: 'Dịch vụ hỗ trợ tận tình, thủ tục đơn giản. Rất hài lòng!',
     avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
   },
@@ -67,6 +68,9 @@ function Homepage() {
         </section>
         <section className="brands-wrapper">
           <BrandsSection />
+        </section>
+        <section className="vehiclefilter-wrapper">
+          <VehicleFilter />
         </section>
         <section className="vehiclelist-wrapper">
           <VehicleList />

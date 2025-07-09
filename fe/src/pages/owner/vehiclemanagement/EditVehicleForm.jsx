@@ -8,7 +8,7 @@ const bodyTypeOptions = [
   'Sedan', 'SUV', 'Hatchback', 'Coupe', 'Convertible', 'Wagon', 'Van', 'Pickup'
 ];
 const transmissionOptions = ['automatic', 'manual'];
-const fuelTypeOptions = ['petrol', 'diesel', 'electric', 'hybrid'];
+const fuelTypeOptions = ['gasoline', 'diesel', 'electric', 'hybrid'];
 const availableFeatures = [
   'Bản đồ', 'Bluetooth', 'Camera 360', 'Camera cập lề', 'Camera hành trình', 'Camera lùi',
   'Cảm biến lốp', 'Cảm biến va chạm', 'Cảnh báo tốc độ', 'Cửa sổ trời', 'Định vị GPS',
@@ -39,8 +39,8 @@ const EditVehicleForm = () => {
         setVehicle(response.data.vehicle);
         setFormData({
           ...response.data.vehicle,
-          main_image: null,
-          gallery: [],
+          main_image: null, // file mới
+          gallery: [],      // file mới
         });
         setMainImagePreview(response.data.vehicle.primaryImage);
         setGalleryPreviews(response.data.vehicle.gallery || []);
@@ -85,7 +85,7 @@ const EditVehicleForm = () => {
     }
   };
 
-  // Xóa ảnh phụ khỏi preview và formData
+  // Xóa ảnh phụ khỏi preview và formData (chỉ xóa ảnh mới thêm, không xóa ảnh cũ đã có trên server)
   const handleRemoveGalleryImage = (idx) => {
     setGalleryPreviews((prev) => prev.filter((_, i) => i !== idx));
     setFormData((prev) => ({
@@ -123,17 +123,25 @@ const EditVehicleForm = () => {
     dataToSubmit.append('fuelConsumption', formData.fuelConsumption || '');
     dataToSubmit.append('rentalPolicy', formData.rentalPolicy || '');
     dataToSubmit.append('description', formData.description);
+
+    // Ảnh chính (nếu có chọn mới)
     if (formData.main_image) dataToSubmit.append('main_image', formData.main_image);
+
+    // Ảnh phụ (nếu có chọn mới)
     if (formData.gallery && formData.gallery.length > 0) {
       formData.gallery.forEach((file) => dataToSubmit.append('additional_images', file));
     }
+
+    // Tính năng
     if (formData.features && formData.features.length > 0) {
       formData.features.forEach((f) => dataToSubmit.append('features', f));
     }
+
     // Nếu user xóa hết ảnh phụ, gửi thêm flag
     if ((formData.gallery && formData.gallery.length === 0) && galleryPreviews.length === 0) {
       dataToSubmit.append('clear_gallery', 'true');
     }
+
     try {
       const response = await axios.put(`${backendUrl}/api/vehicles/${id}`, dataToSubmit, { withCredentials: true });
       setMessage({ type: 'success', text: response.data.message || 'Cập nhật xe thành công!' });

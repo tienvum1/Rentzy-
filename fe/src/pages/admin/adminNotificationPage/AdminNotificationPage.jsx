@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import moment from 'moment';
 import SidebarAdmin from '../../../components/SidebarAdmin/SidebarAdmin';
-import './AdminDashboard.css';
 import './AdminNotificationPage.css';
 moment.locale('vi');
 
@@ -19,7 +18,7 @@ const AdminNotificationPage = () => {
     setError(null);
     try {
       const response = await axios.get(`${backendUrl}/api/notifications`, { withCredentials: true });
-      // Sort newest first
+      // Không lọc forAdmin, hiển thị tất cả
       const sorted = (response.data.notifications || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setNotifications(sorted);
     } catch (err) {

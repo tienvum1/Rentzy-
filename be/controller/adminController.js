@@ -159,55 +159,30 @@ const reviewVehicleApproval = async (req, res) => {
     vehicle.approvalStatus = status;
     vehicle.rejectionReason = status === 'rejected' ? (rejectionReason || null) : null;
     await vehicle.save();
+
+    // Gửi notification cho owner về kết quả duyệt
+    let notifyTitle = 'Kết quả duyệt xe';
+    let notifyMessage = '';
+    if (status === 'approved') {
+      notifyMessage = `Xe ${vehicle.brand} ${vehicle.model} của bạn đã được duyệt và sẵn sàng cho thuê.`;
+    } else {
+      notifyMessage = `Xe ${vehicle.brand} ${vehicle.model} của bạn đã bị từ chối duyệt.${rejectionReason ? ' Lý do: ' + rejectionReason : ''}`;
+    }
+    await require('../models/Notification').create({
+      user: vehicle.owner,
+      type: 'vehicle',
+      title: notifyTitle,
+      message: notifyMessage,
+      vehicle: vehicle._id,
+      data: { approvalStatus: status, rejectionReason: status === 'rejected' ? rejectionReason : undefined },
+    });
+
     res.status(200).json({ message: `Vehicle ${vehicleId} has been ${status}.` });
   } catch (error) {
     res.status(500).json({ message: 'Failed to review vehicle approval.', error: error.message });
   }
 };
 
-// Lấy danh sách xe có pending changes
-const getVehiclesWithPendingChanges = async (req, res) => {
-  try {
-    const vehiclesWithPendingChanges = await Vehicle.find({ pendingChangeStatus: "pending" })
-      .populate('owner', 'name email');
-    res.status(200).json({ count: vehiclesWithPendingChanges.length, vehicles: vehiclesWithPendingChanges });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch vehicles with pending changes.', error: error.message });
-  }
-};
-
-// Duyệt hoặc từ chối thay đổi xe
-const reviewVehicleChanges = async (req, res) => {
-  const { vehicleId } = req.params;
-  const { status, rejectionReason } = req.body;
-  if (!['approved', 'rejected'].includes(status)) {
-    return res.status(400).json({ message: 'Invalid status provided.' });
-  }
-  try {
-    const vehicle = await Vehicle.findById(vehicleId);
-    if (!vehicle) {
-      return res.status(404).json({ message: 'Vehicle not found.' });
-    }
-    if (vehicle.pendingChangeStatus !== 'pending') {
-      return res.status(400).json({ message: 'No pending changes to review.' });
-    }
-    if (status === 'approved') {
-      // Áp dụng pendingChanges vào vehicle
-      Object.assign(vehicle, vehicle.pendingChanges);
-      vehicle.pendingChangeStatus = 'approved';
-      vehicle.changeRejectionReason = null;
-      vehicle.pendingChanges = undefined;
-    } else {
-      vehicle.pendingChangeStatus = 'rejected';
-      vehicle.changeRejectionReason = rejectionReason || null;
-      vehicle.pendingChanges = undefined;
-    }
-    await vehicle.save();
-    res.status(200).json({ message: `Vehicle changes ${status}.` });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to review vehicle changes.', error: error.message });
-  }
-};
 
 // Lấy danh sách booking chờ duyệt giải ngân cho chủ xe
 const getPayoutRequests = async (req, res) => {
@@ -270,8 +245,6 @@ module.exports = {
     getPendingVehicleApprovals,
     getPendingVehicleDetail,
     reviewVehicleApproval,
-    getVehiclesWithPendingChanges,
-    reviewVehicleChanges,
     getPayoutRequests,
     approvePayout
 };

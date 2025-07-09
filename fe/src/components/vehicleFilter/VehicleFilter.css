@@ -1,0 +1,88 @@
+/* VehicleFilter.css */
+.vehicle-filter-container {
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 20px 20px 20px;
+  margin-bottom: 32px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  max-width: 100%;
+}
+.vehicle-filter-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  color: #1a237e;
+}
+.vehicle-filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+}
+.vehicle-filter-form input,
+.vehicle-filter-form select {
+  padding: 8px 12px;
+  border: 1px solid #bdbdbd;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #fafbfc;
+  transition: border 0.2s;
+  min-width: 120px;
+}
+.vehicle-filter-form input:focus,
+.vehicle-filter-form select:focus {
+  border: 1.5px solid #1976d2;
+  outline: none;
+}
+.vehicle-filter-form button {
+  padding: 9px 20px;
+  background: linear-gradient(90deg, #1976d2 60%, #64b5f6 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.vehicle-filter-form button:hover {
+  background: linear-gradient(90deg, #1565c0 60%, #42a5f5 100%);
+}
+.vehicle-filter-results {
+  margin-top: 28px;
+}
+.vehicle-filter-results h3 {
+  font-size: 1.1rem;
+  color: #1976d2;
+  margin-bottom: 10px;
+}
+.vehicle-filter-results ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.vehicle-filter-results li {
+  background: #f5f7fa;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  font-size: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 700px) {
+  .vehicle-filter-form {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .vehicle-filter-container {
+    padding: 16px 6px 12px 6px;
+  }
+  .vehicle-filter-results li {
+    font-size: 0.97rem;
+    padding: 10px 8px;
+  }
+} 
