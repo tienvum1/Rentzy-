@@ -63,7 +63,7 @@ function App() {
               <Route path="vehicle-management" element={<VehicleManagement />} />
               <Route path="notification" element={<NotificationPage />} />
               <Route path="add-car" element={<AddCarForm />} />
-              <Route path="add-motorbike" element={<AddMotorbikeForm />} /> // NEW: Add route for AddMotorbikeForm
+              <Route path="add-motorbike" element={<AddMotorbikeForm />} />
               <Route path="edit-vehicle/:id" element={<EditVehicle />} />
             </Route>
           </Routes>
