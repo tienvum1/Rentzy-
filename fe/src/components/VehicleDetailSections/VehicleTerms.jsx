@@ -9,7 +9,6 @@ const VehicleTerms = () => {
         "Không chở hàng cấm, dễ cháy nổ hoặc thực phẩm nặng mùi.",
         "Thông báo ngay khi xảy ra tai nạn, hỏng hóc.",
         "Trả xe đúng giờ và đúng địa điểm đã thỏa thuận.",
-
     ];
 
     return (
@@ -28,34 +27,30 @@ const VehicleTerms = () => {
                     <thead>
                         <tr>
                             <th></th>
-                            <th>Ngày Thường</th>
-                            <th>Ngày Lễ, Tết</th>
+                            <th>Chính sách hoàn tiền cọc</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>
                                 <span className="cancel-icon success">✔️</span>
-                                <b> Hoàn 100% Tiền Giữ Chỗ</b>
+                                <b> Hoàn 70% Tiền Cọc</b>
                             </td>
-                            <td>Trước Chuyến Đi &gt; 10 Ngày</td>
-                            <td>Không Áp Dụng</td>
+                            <td>Huỷ trước chuyến đi &gt; 3 ngày</td>
                         </tr>
                         <tr>
                             <td>
-                                <span className="cancel-icon success">✔️</span>
-                                <b> Hoàn 30% Tiền Giữ Chỗ</b>
+                                <span className="cancel-icon warning">⚠️</span>
+                                <b> Hoàn 30% Tiền Cọc</b>
                             </td>
-                            <td>Trước Chuyến Đi &gt; 5 Ngày</td>
-                            <td>Trước Chuyến Đi &gt; 30 Ngày</td>
+                            <td>Huỷ trong vòng 3 ngày trước chuyến đi</td>
                         </tr>
                         <tr>
                             <td>
                                 <span className="cancel-icon fail">❌</span>
-                                <b> Không Hoàn Tiền Giữ Chỗ</b>
+                                <b> Không Hoàn Tiền Cọc</b>
                             </td>
-                            <td>Trong Vòng 5 Ngày Trước Chuyến Đi</td>
-                            <td>Trong Vòng 30 Ngày Trước Chuyến Đi</td>
+                            <td>Huỷ trong lúc thuê xe</td>
                         </tr>
                     </tbody>
                 </table>
