@@ -45,10 +45,18 @@ const Login = () => {
 
 
       const userRole = response.data.user?.role;
-      console.log(userRole);
+      console.log('User role:', userRole);
       let redirectPath = '/homepage';
-      if (userRole == 'owner') redirectPath = '/ownerpage';
-      else if (userRole =='admin') redirectPath = '/adminDashboard';
+      
+      // Check if role is an array and contains the specific role
+      if (Array.isArray(userRole)) {
+        if (userRole.includes('owner')) redirectPath = '/ownerpage/overview';
+        else if (userRole.includes('admin')) redirectPath = '/admin/dashboard';
+      } else if (typeof userRole === 'string') {
+        // Fallback for string role (backward compatibility)
+        if (userRole === 'owner') redirectPath = '/ownerpage/overview';
+        else if (userRole === 'admin') redirectPath = '/admin/dashboard';
+      }
 
       // Delay một chút để hiển thị thông báo
       setTimeout(() => navigate(redirectPath), 1000);

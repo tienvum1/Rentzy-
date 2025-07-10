@@ -36,7 +36,7 @@ import WalletInfo from './pages/profile/myWallet/WalletInfo';
 import NotificationPage from './pages/profile/myNotifications/NotificationPage';
 
 // owner
-import OwnerPage from "./pages/owner/Ownerpage";
+import OwnerPage from "./pages/owner/ownerpage";
 import VehicleManagement from "./pages/owner/vehiclemanagement/VehicleManagement";
 import AddVehicleForm from "./pages/owner/vehiclemanagement/AddVehicleForm";
 import OwnerVehicleDetail from './pages/owner/vehiclemanagement/OwnerVehicleDetail';
@@ -45,6 +45,7 @@ import EditVehicleForm from "./pages/owner/vehiclemanagement/EditVehicleForm";
 import OwnerNotificationPage from "./pages/owner/ownerNotifications/OwnerNotificationPage";
 import OwnerBookingManagement from "./pages/owner/ownerBookings/OwnerBookingManagement";
 import OwenerCancelRequest from "./pages/owner/ownerBookings/OwnerCancelRequests";
+import RevenuePage from "./pages/owner/ownerRevenue/RevenuePage";
 
 // admin 
 import AdminDashboard from "./pages/admin/ adminDashboard/AdminDashboard";
@@ -112,8 +113,8 @@ function App() {
               <Route path="withdrawals" element={<AdminWithdrawals />} />
               <Route path="driver-license-requests" element={<DriverLicenseRequestsPage />} />
               <Route path="payout-requests" element={<AdminPayoutRequests />} />
+              <Route path="vehicle-changes" element={<VehicleChangesPage />} />
             </Route>
-            <Route path="/admin/vehicle-changes" element={<VehicleChangesPage />} />
 
             {/* Route Guard owner  managemnt route */}
             {/*  Chỉ có user đăng kí chủ xe mới dăng nhập được  đăng nhập được */}
@@ -127,9 +128,7 @@ function App() {
               <Route path="notifications" element={<OwnerNotificationPage />} />
               <Route path="booking-management" element={<OwnerBookingManagement />} />
               <Route path="cancel-requests" element={<OwenerCancelRequest />} />
-              
-  
-
+              <Route path="revenue" element={<RevenuePage />} />
             </Route>
 
 
