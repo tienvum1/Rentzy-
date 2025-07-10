@@ -139,9 +139,66 @@ const getOwnerCancelRequests = async (req, res) => {
   }
 };
 
+// --- 4. Lấy doanh thu của chủ xe ---
+const getOwnerRevenue = async (req, res) => {
+  try {
+    const ownerId = req.user._id;
+    const { type = 'month', start, end } = req.query;
+
+    // Lấy tất cả xe của owner
+    const vehicles = await Vehicle.find({ owner: ownerId }).select('_id');
+    const vehicleIds = vehicles.map(v => v._id);
+
+    // Chỉ lấy booking đã hoàn thành
+    const match = {
+      vehicle: { $in: vehicleIds },
+      status: 'completed',
+    };
+    if (start || end) {
+      match.createdAt = {};
+      if (start) match.createdAt.$gte = new Date(start);
+      if (end) match.createdAt.$lte = new Date(end);
+    }
+
+    // Group theo type
+    let groupId = null;
+    if (type === 'day') {
+      groupId = { year: { $year: '$createdAt' }, month: { $month: '$createdAt' }, day: { $dayOfMonth: '$createdAt' } };
+    } else if (type === 'week') {
+      groupId = { year: { $year: '$createdAt' }, week: { $isoWeek: '$createdAt' } };
+    } else if (type === 'month') {
+      groupId = { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } };
+    } else if (type === 'year') {
+      groupId = { year: { $year: '$createdAt' } };
+    }
+
+    const revenue = await Booking.aggregate([
+      { $match: match },
+      { $group: {
+        _id: groupId,
+        totalRevenue: { $sum: '$totalAmount' },
+        count: { $sum: 1 },
+      }},
+      { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1, '_id.week': 1 } }
+    ]);
+
+    // Tổng doanh thu toàn bộ
+    const total = await Booking.aggregate([
+      { $match: match },
+      { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' }, count: { $sum: 1 } } }
+    ]);
+
+    res.json({ success: true, revenue, total: total[0] || { totalRevenue: 0, count: 0 } });
+  } catch (err) {
+    console.error('Error in getOwnerRevenue:', err);
+    res.status(500).json({ success: false, message: 'Không thể lấy doanh thu.' });
+  }
+};
+
 // --- Export tất cả ---
 module.exports = {
   becomeOwner,
   getOwnerBookings,
   getOwnerCancelRequests,
+  getOwnerRevenue,
 };
