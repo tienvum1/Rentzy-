@@ -1,5 +1,5 @@
 .vehicle-list-page-container {
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
   padding: 32px 16px;
 }
@@ -25,4 +25,27 @@
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 32px;
   margin-top: 16px;
+}
+
+/* Header cho trang danh sách xe */
+.vehicle-list-header {
+  text-align: center;
+  margin-bottom: 18px;
+}
+.vehicle-list-logo {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #3ec6b8;
+  letter-spacing: 1.5px;
+  font-family: 'Montserrat', 'Arial', sans-serif;
+}
+
+/* Footer cho trang danh sách xe */
+.vehicle-list-footer {
+  text-align: center;
+  margin-top: 28px;
+  color: #888;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.2px;
 }

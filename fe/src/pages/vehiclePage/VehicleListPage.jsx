@@ -4,6 +4,8 @@ import VehicleCard from "../../components/VehicleCard/VehicleCard";
 import "./VehicleListPage.css";
 import SearchBar from "../../components/vehicleFilter/SearchBar";
 import FilterBar from "../../components/vehicleFilter/FilterBar";
+import Header from "../../components/Header/Header";
+import Footer from "../../components/footer/Footer";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:4999";
 
@@ -34,6 +36,7 @@ const VehicleListPage = () => {
 
   return (
     <div className="vehicle-list-page-container">
+      <Header />
       <h2 className="vehicle-list-title">Danh sách xe đã được duyệt</h2>
       <SearchBar onSearch={handleSearch} />
       <FilterBar onSort={handleSort} />
@@ -48,6 +51,7 @@ const VehicleListPage = () => {
       ) : (
         <div className="vehicle-list-empty">Không có xe nào được duyệt.</div>
       )}
+      <Footer />
     </div>
   );
 };

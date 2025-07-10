@@ -1,42 +1,84 @@
+/* Thanh search tổng thể */
 .search-bar {
   display: flex;
   align-items: center;
+  justify-content: center;
+  gap: 24px;
   background: #fff;
-  border-radius: 8px;
-  padding: 12px 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  gap: 16px;
-  margin-bottom: 16px;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  padding: 22px 32px;
+  margin: 0 auto 24px auto;
+  max-width: 700px;
+  min-width: 320px;
 }
+
+/* Trường chọn thời gian */
 .search-bar-field {
   display: flex;
   align-items: center;
   background: #f6f6f6;
-  border-radius: 6px;
-  padding: 8px 12px;
-  gap: 8px;
+  border-radius: 14px;
+  padding: 16px 24px;
+  gap: 12px;
+  font-size: 1.18rem;
+  font-weight: 600;
+  color: #222;
+  cursor: pointer;
+  min-width: 260px;
+  transition: box-shadow 0.2s, border 0.2s;
+  border: 2px solid #e5e7eb;
 }
+.search-bar-field:hover, .search-bar-field:focus-within {
+  box-shadow: 0 2px 8px rgba(62,198,184,0.10);
+  border-color: #3ec6b8;
+}
+
 .search-bar-icon {
   color: #3ec6b8;
+  font-size: 1.5rem;
 }
+
 .search-bar input {
   border: none;
   background: transparent;
   outline: none;
   font-size: 1rem;
 }
+
 .search-bar-btn {
   background: #3ec6b8;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 12px 32px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  border-radius: 12px;
+  padding: 18px 48px;
+  font-size: 1.18rem;
+  font-weight: 700;
   cursor: pointer;
-  margin-left: 12px;
-  transition: background 0.2s;
+  margin-left: 18px;
+  box-shadow: 0 2px 8px rgba(62,198,184,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
 }
 .search-bar-btn:hover {
   background: #2ea89a;
+  box-shadow: 0 4px 16px rgba(62,198,184,0.13);
+}
+
+@media (max-width: 900px) {
+  .search-bar {
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px 8vw;
+    max-width: 98vw;
+  }
+  .search-bar-field {
+    min-width: 180px;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .search-bar-btn {
+    width: 100%;
+    margin-left: 0;
+    padding: 16px 0;
+  }
 }
