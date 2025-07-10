@@ -11,6 +11,11 @@ const upload = multer({ storage: storage }); // Keep storage config
 
 // Route to get vehicles owned by the authenticated user
 router.get('/owner', protect, vehicleController.getOwnerVehicles);
+// top 100 xe thuê nhiều nhất  hiển thị cho homepage
+router.get('/top-rented', vehicleController.getTopRentedVehicles);
+
+// Route lấy danh sách xe đã duyệt
+router.get('/approved', vehicleController.getApprovedVehicles);
 
 // tạo xe 
 router.post(
@@ -23,8 +28,7 @@ router.post(
   vehicleController.addVehicle
 );
 
-// Route lấy danh sách xe đã duyệt
-router.get('/approved', vehicleController.getApprovedVehicles);
+
 
 // Route lấy xe theo id (phải để sau các route cụ thể)
 router.get('/:id', vehicleController.getVehicleById);

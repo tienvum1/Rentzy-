@@ -7,6 +7,7 @@ import OwnerRouteGuard from './components/OwnerRouteGuard/OwnerRouteGuard'; // I
 import AdminRouteGuard from './components/AdminRouteGuard/AdminRouteGuard'; // Import AdminRouteGuard
 
 import Homepage from "./pages/homepage/Homepage";
+import VehiclePage from "./pages/vehiclePage/VehicleListPage";
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import VerifyEmail from "./pages/verifyEmail/VerifyEmail";
@@ -69,6 +70,7 @@ function App() {
           <Routes>
             {/* Profile*/}
             <Route path="/homepage" element={<Homepage />} />
+            <Route path="/vehicles" element={<VehiclePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />

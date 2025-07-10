@@ -284,3 +284,33 @@ exports.getVehicleById = async (req, res) => {
     });
   }
 };
+
+// tìm kiếm xe 
+exports.filterVehicles = async (req, res) => {
+  try {
+    const { brand, seatCount, bodyType, transmission, fuelType } = req.query;
+    let filter = {};
+    if (brand) filter.brand = brand;
+    if (seatCount) filter.seatCount = Number(seatCount);
+    if (bodyType) filter.bodyType = bodyType;
+    if (transmission) filter.transmission = transmission;
+    if (fuelType) filter.fuelType = fuelType;
+
+    const vehicles = await Vehicle.find(filter);
+    res.json(vehicles);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// API: Top 10 xe có rentalCount cao nhất
+exports.getTopRentedVehicles = async (req, res) => {
+  try {
+    const vehicles = await Vehicle.find()
+      .sort({ rentalCount: -1 })
+      .limit(10);
+    res.json(vehicles);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
