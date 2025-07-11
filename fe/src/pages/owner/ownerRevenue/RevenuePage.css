@@ -3,66 +3,91 @@
 .revenue-container {
   display: flex;
   min-height: 100vh;
-  background: #f7f8fa;
+  background: #f8f8f8;
 }
 
 .revenue-content {
-  flex: 1;
-  padding: 2.5rem 3.5rem;
-  background: #fff;
-  border-radius: 18px;
-  margin: 2.5rem auto;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.09);
-  max-width: 700px;
-  min-width: 320px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-grow: 1;
+  margin-left: 250px; /* Đảm bảo không bị sidebar che */
+  padding: 40px 32px 32px 32px;
+  background: #f8f8f8;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .revenue-content h1 {
   font-size: 2.2rem;
-  margin-bottom: 1.2rem;
-  color: #2d3a4b;
-  font-weight: 700;
+  font-weight: bold;
+  color: #222;
+  margin-bottom: 24px;
   letter-spacing: 0.5px;
 }
 
 .revenue-content label {
-  font-size: 1.1rem;
-  color: #444;
+  font-size: 1rem;
+  font-weight: 500;
   margin-right: 8px;
 }
 
 .revenue-content select {
-  font-size: 1.05rem;
-  padding: 6px 12px;
+  padding: 6px 16px;
   border-radius: 6px;
   border: 1px solid #d1d5db;
-  background: #f7f8fa;
-  margin-left: 4px;
-  margin-bottom: 8px;
-}
-
-.revenue-content strong {
-  font-size: 1.15rem;
+  font-size: 1rem;
+  background: #fff;
   color: #222;
+  transition: border 0.2s;
 }
 
-.revenue-content span {
+.revenue-content select:focus {
+  outline: none;
+  border: 1.5px solid #3498db;
+}
+
+.revenue-content .total-revenue-box {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.08);
+  padding: 20px 28px;
+  margin-bottom: 32px;
+  display: inline-block;
+}
+
+.revenue-content .total-revenue-box strong {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.revenue-content .total-revenue-box span {
   color: #007bff;
-  font-size: 1.35rem;
-  font-weight: 600;
-  margin-left: 6px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-left: 8px;
 }
 
-.recharts-responsive-container {
-  margin-top: 18px;
+.revenue-content .recharts-responsive-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.08);
+  padding: 16px 0 0 0;
 }
 
 @media (max-width: 900px) {
   .revenue-content {
-    padding: 1.2rem 0.5rem;
-    max-width: 98vw;
+    padding: 24px 8px 8px 8px;
+    margin-left: 0;
   }
-} 
+  .revenue-container {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 600px) {
+  .revenue-content h1 {
+    font-size: 1.3rem;
+  }
+  .revenue-content .total-revenue-box {
+    padding: 12px 8px;
+    font-size: 1rem;
+  }
+}

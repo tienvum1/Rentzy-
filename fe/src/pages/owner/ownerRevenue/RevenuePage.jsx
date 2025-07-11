@@ -80,20 +80,22 @@ const RevenuePage = () => {
           <p style={{ color: 'red' }}>{error}</p>
         ) : (
           <>
-            <div style={{ marginBottom: 24 }}>
+            <div className="total-revenue-box">
               <strong>Tổng doanh thu: </strong>
-              <span style={{ color: '#007bff', fontSize: 20 }}>{total.toLocaleString()} VND</span>
+              <span>{total.toLocaleString()} VND</span>
             </div>
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="label" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="revenue" stroke="#007bff" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="chart-container">
+              <ResponsiveContainer width="100%" height={350}>
+                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="label" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="revenue" stroke="#007bff" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </>
         )}
       </div>
