@@ -251,7 +251,7 @@ const AddVehicleForm = () => {
               {mainImagePreview && <img src={mainImagePreview} alt="Ảnh chính Preview" className="image-preview" />}
             </div>
             <div className="form-group full-width">
-              <label>Ảnh phụ</label>
+              <label>Ảnh phụ (Phải bao gồm giấy tờ xe) </label>
               <button type="button" onClick={() => additionalImagesInputRef.current.click()} className="btn-add-images">Thêm ảnh khác</button>
               <input type="file" multiple name="additional_images" accept="image/*" onChange={handleChange} ref={additionalImagesInputRef} style={{ display: 'none' }} />
               <div className="additional-images-preview">
