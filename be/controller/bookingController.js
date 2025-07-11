@@ -6,6 +6,7 @@ const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 const Wallet = require("../models/Wallet");
 const Notification = require("../models/Notification");
+const cloudinary = require('../utils/cloudinary');
 
 // Tạo booking mới
 const createBooking = async (req, res) => {
@@ -1108,7 +1109,197 @@ const completeBooking = async (req, res) => {
 
 // Tương tự, khi huỷ mà chủ xe vẫn được nhận tiền, cũng gọi setBookingPayoutPending(booking)
 
+// Xác nhận giao xe (handover)
+const confirmHandover = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id).populate('vehicle');
+    if (!booking) return res.status(404).json({ message: 'Không tìm thấy booking' });
+    let changed = false;
+    // Chủ xe xác nhận
+    if (booking.vehicle.owner.toString() === req.user._id.toString()) {
+      if (!booking.ownerHandoverConfirmed) {
+        booking.ownerHandoverConfirmed = true;
+        changed = true;
+      }
+    }
+    // Khách thuê xác nhận
+    if (booking.renter.toString() === req.user._id.toString()) {
+      if (!booking.renterHandoverConfirmed) {
+        booking.renterHandoverConfirmed = true;
+        changed = true;
+      }
+    }
+    if (!changed) return res.status(400).json({ message: 'Bạn đã xác nhận rồi hoặc không có quyền.' });
+    // Nếu cả hai bên đã xác nhận, chuyển trạng thái sang in_progress
+    if (booking.ownerHandoverConfirmed && booking.renterHandoverConfirmed) {
+      booking.status = 'in_progress';
+    }
+    await booking.save();
+    // Gửi notification cho bên còn lại
+    const notifyUser = (booking.vehicle.owner.toString() === req.user._id.toString()) ? booking.renter : booking.vehicle.owner;
+    await Notification.create({
+      user: notifyUser,
+      type: 'booking',
+      title: 'Xác nhận giao xe',
+      message: `${req.user.name || req.user.email} đã xác nhận giao/nhận xe.`,
+      booking: booking._id,
+      vehicle: booking.vehicle._id,
+    });
+    res.json({ success: true, booking });
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server khi xác nhận giao xe', error: err.message });
+  }
+};
+
+// Xác nhận trả xe (return)
+const confirmReturn = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id).populate('vehicle');
+    if (!booking) return res.status(404).json({ message: 'Không tìm thấy booking' });
+    let changed = false;
+    // Chủ xe xác nhận
+    if (booking.vehicle.owner.toString() === req.user._id.toString()) {
+      if (!booking.ownerReturnConfirmed) {
+        booking.ownerReturnConfirmed = true;
+        changed = true;
+      }
+    }
+    // Khách thuê xác nhận
+    if (booking.renter.toString() === req.user._id.toString()) {
+      if (!booking.renterReturnConfirmed) {
+        booking.renterReturnConfirmed = true;
+        changed = true;
+      }
+    }
+    if (!changed) return res.status(400).json({ message: 'Bạn đã xác nhận rồi hoặc không có quyền.' });
+    // Nếu cả hai bên đã xác nhận, chuyển trạng thái sang completed
+    if (booking.ownerReturnConfirmed && booking.renterReturnConfirmed) {
+      booking.status = 'completed';
+    }
+    await booking.save();
+    // Gửi notification cho bên còn lại
+    const notifyUser = (booking.vehicle.owner.toString() === req.user._id.toString()) ? booking.renter : booking.vehicle.owner;
+    await Notification.create({
+      user: notifyUser,
+      type: 'booking',
+      title: 'Xác nhận trả xe',
+      message: `${req.user.name || req.user.email} đã xác nhận trả/nhận lại xe.`,
+      booking: booking._id,
+      vehicle: booking.vehicle._id,
+    });
+    res.json({ success: true, booking });
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server khi xác nhận trả xe', error: err.message });
+  }
+};
+
+
+const getBookingByIdForOwner = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ownerId = req.user._id;
+
+    // Tìm booking và populate các trường cần thiết
+    const booking = await Booking.findById(id)
+      .populate({
+        path: 'renter',
+        select: 'name email phone avatar_url driver_license_full_name driver_license_number driver_license_birth_date driver_license_image driver_license_verification_status'
+      })
+      .populate({
+        path: 'vehicle',
+        select: 'brand model year licensePlate owner',
+      })
+      .populate({
+        path: 'transactions',
+        select: 'amount type status paymentMethod paymentMetadata createdAt',
+      });
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+    }
+
+    // Kiểm tra quyền: chỉ chủ xe mới được xem
+    if (booking.vehicle.owner.toString() !== ownerId.toString()) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền xem đơn này.' });
+    }
+
+    res.json({ success: true, booking });
+  } catch (err) {
+    console.error('getBookingByIdForOwner error:', err);
+    res.status(500).json({ success: false, message: 'Lỗi server khi lấy chi tiết đơn thuê.' });
+  }
+};
+
+const streamUpload = (buffer, folder) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder },
+      (error, result) => {
+        if (result) resolve(result);
+        else reject(error);
+      }
+    );
+    stream.end(buffer);
+  });
+};
+// API: Upload ảnh trước khi nhận/giao xe
+const uploadPreDeliveryImages = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findById(id).populate('vehicle');
+    if (!booking) return res.status(404).json({ success: false, message: 'Không tìm thấy booking.' });
+    // Chỉ chủ xe được upload
+    if (booking.vehicle.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền upload ảnh cho booking này.' });
+    }
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, message: 'Vui lòng chọn ít nhất một ảnh.' });
+    }
+    // Upload từng ảnh từ buffer lên cloudinary
+    const urls = [];
+    for (const file of req.files) {
+      const result = await streamUpload(file.buffer, 'rentzy/preRentalImages');
+      urls.push(result.secure_url);
+    }
+    // Lưu vào booking
+    booking.preRentalImages = urls;
+    await booking.save();
+    res.json({ success: true, urls });
+  } catch (err) {
+    console.error('uploadPreDeliveryImages error:', err);
+    res.status(500).json({ success: false, message: 'Lỗi server khi upload ảnh.' });
+  }
+};
+// API: Upload ảnh sau khi nhận lại xe (postRentalImages)
+const uploadPostDeliveryImages = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findById(id).populate('vehicle');
+    if (!booking) return res.status(404).json({ success: false, message: 'Không tìm thấy booking.' });
+    // Chỉ chủ xe được upload
+    if (booking.vehicle.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền upload ảnh cho booking này.' });
+    }
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, message: 'Vui lòng chọn ít nhất một ảnh.' });
+    }
+    // Upload từng ảnh từ buffer lên cloudinary
+    const urls = [];
+    for (const file of req.files) {
+      const result = await streamUpload(file.buffer, 'rentzy/postRentalImages');
+      urls.push(result.secure_url);
+    }
+    // Lưu vào booking
+    booking.postRentalImages = urls;
+    await booking.save();
+    res.json({ success: true, urls });
+  } catch (err) {
+    console.error('uploadPostDeliveryImages error:', err);
+    res.status(500).json({ success: false, message: 'Lỗi server khi upload ảnh.' });
+  }
+};
 module.exports = {
+  getBookingByIdForOwner,
   createBooking,
   getVehicleBookedDates,
   getUserBookings,
@@ -1126,5 +1317,9 @@ module.exports = {
   cancelBookingByUser,
   requestCancelBooking,
   ownerApproveCancel,
-  ownerRejectCancel
+  ownerRejectCancel,
+  confirmHandover,
+  confirmReturn,
+  uploadPreDeliveryImages,
+  uploadPostDeliveryImages
 };

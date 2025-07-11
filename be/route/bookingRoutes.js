@@ -2,10 +2,14 @@
 const express = require('express');
 const router = express.Router();
 const { protect, verifyRenterRequirements } = require('../middleware/authMiddleware');
-const { getVehicleBookedDates, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingWithRefund, getExpectedRefund, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel } = require('../controller/bookingController');
+const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingWithRefund, getExpectedRefund, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages } = require('../controller/bookingController');
+const upload = require('../middleware/upload');
 
 // Public routes
 router.get('/vehicle/:vehicleId/dates', getVehicleBookedDates);
+
+// Lấy chi tiết đơn thuê cho chủ xe
+router.get('/getBookingById/:id', protect, getBookingByIdForOwner);
 
 // Routes cho người dùng thông thường
 router.get('/my-bookings', protect, getUserBookings);
@@ -19,6 +23,16 @@ router.post('/:id/cancel', protect, cancelBookingByUser);
 router.post('/:id/request-cancel', protect, requestCancelBooking);
 router.post('/:id/owner-approve-cancel', protect, ownerApproveCancel);
 router.post('/:id/owner-reject-cancel', protect, ownerRejectCancel);
+
+// Xác nhận giao xe
+router.post('/:id/confirm-handover', protect, confirmHandover);
+// Xác nhận trả xe
+router.post('/:id/confirm-return', protect, confirmReturn);
+
+// Upload ảnh trước khi nhận/giao xe
+router.post('/:id/upload-pre-delivery-images', upload.array('images', 5), protect, uploadPreDeliveryImages);
+// Upload ảnh sau khi nhận lại xe
+router.post('/:id/upload-post-delivery-images', upload.array('images', 5), protect, uploadPostDeliveryImages);
 
 // VAN KHAI : 
 // route for get all bookings of specific user : 
