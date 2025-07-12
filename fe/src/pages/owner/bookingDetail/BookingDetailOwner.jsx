@@ -1,35 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import 'moment/locale/vi';
-import { FaArrowLeft, FaTruck, FaHandshake, FaCalendarAlt, FaUser, FaMapMarkerAlt, FaMoneyBillWave, FaCar, FaCheck, FaCamera, FaTimes } from 'react-icons/fa';
-import { useRef } from 'react';
+import { FaArrowLeft, FaTruck, FaHandshake, FaCar, FaCheck, FaCamera, FaTimes, FaUser, FaMoneyBillWave } from 'react-icons/fa';
 import SidebarOwner from '../../../components/SidebarOwner/SidebarOwner';
 import styles from './BookingDetailOwner.module.css';
 import { useAuth } from '../../../context/AuthContext';
 
 moment.locale('vi');
 
-// Component con: ImageUploaderCard (dùng chung cho cả 2 bước)
-function ImageUploaderCard({ title, images, setImages, savedImages, setSavedImages, disabled, onSave, max = 5, canEdit, ownerHandoverConfirmed }) {
+function ImageUploaderCard({ title, images, setImages, savedImages, setSavedImages, disabled, onSave, max = 5, canEdit }) {
   const fileInputRef = useRef();
-  // Không cho chỉnh sửa sau khi đã upload đủ 5 ảnh và đã lưu (chỉ cho upload/lưu 1 lần duy nhất)
   const isUploaded = savedImages && savedImages.length === max;
-  // Chỉ cho phép upload/lưu khi chưa upload đủ 5 ảnh
   const allowEdit = canEdit && !disabled && !isUploaded;
 
-  // Khi bấm "Chỉnh sửa ảnh", load toàn bộ ảnh đã upload vào editImages
-  const handleEdit = () => {
-    // savedImages có thể là URL string hoặc object {preview}
-    const imgs = (savedImages || []).map(img =>
-      typeof img === 'string' ? { url: img } : img
-    );
-    setImages(imgs); // Use setImages to update the main images state
-  };
-
-  // Xử lý upload thêm ảnh mới
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     if (images.length + files.length > max) {
@@ -39,7 +25,6 @@ function ImageUploaderCard({ title, images, setImages, savedImages, setSavedImag
     const newImages = files.map(file => ({ file, preview: URL.createObjectURL(file) }));
     setImages(prev => [...prev, ...newImages]);
   };
-  // Xoá ảnh (cả cũ và mới)
   const removeImage = (idx) => {
     setImages(prev => {
       const newArr = [...prev];
@@ -48,28 +33,22 @@ function ImageUploaderCard({ title, images, setImages, savedImages, setSavedImag
       return newArr;
     });
   };
-  // Lưu lại danh sách ảnh mới
   const handleSave = () => {
     if (images.length !== max) {
       toast.error(`Bạn phải chọn đủ ${max} ảnh để lưu!`);
       return;
     }
     setSavedImages(images);
-    if (onSave) {
-      console.log('Gọi onSave với images:', images);
-      onSave(images);
-    }
+    if (onSave) onSave(images);
     toast.success('Đã lưu ảnh!');
   };
 
   return (
     <div className={styles.card} style={{marginBottom: 24}}>
       <div className={styles.cardTitle}><FaCamera /> {title}</div>
-      {/* Lời nhắc chỉ upload 1 lần */}
       {!isUploaded && (
         <div style={{color: '#e67e22', fontWeight: 500, marginBottom: 10}}>Bạn chỉ được upload ảnh 1 lần. Sau khi lưu sẽ không thể chỉnh sửa ảnh nữa.</div>
       )}
-      {/* Grid ảnh preview */}
       <div style={{display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 12}}>
         {(isUploaded ? savedImages : images).map((img, idx) => (
           <div key={idx} style={{ position: 'relative' }}>
@@ -80,7 +59,6 @@ function ImageUploaderCard({ title, images, setImages, savedImages, setSavedImag
           </div>
         ))}
       </div>
-      {/* Nút upload/lưu */}
       {allowEdit && (
         <>
           {images.length < max && (
@@ -93,7 +71,6 @@ function ImageUploaderCard({ title, images, setImages, savedImages, setSavedImag
           </div>
         </>
       )}
-      {/* Nếu đã upload, chỉ hiển thị grid ảnh đã upload (nếu có) */}
       {isUploaded && savedImages && savedImages.length > 0 && (
         <div style={{color: '#64748b', marginBottom: 8}}>Ảnh đã upload:</div>
       )}
@@ -107,18 +84,14 @@ const BookingDetailOwner = () => {
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [deliveryImages, setDeliveryImages] = useState([]);
-  const [isUploading, setIsUploading] = useState(false);
-  // State cho 2 bước
   const [preDeliveryImages, setPreDeliveryImages] = useState([]);
   const [savedPreDeliveryImages, setSavedPreDeliveryImages] = useState([]);
   const [postDeliveryImages, setPostDeliveryImages] = useState([]);
   const [savedPostDeliveryImages, setSavedPostDeliveryImages] = useState([]);
-  const fileInputRef = useRef();
   const { user } = useAuth();
   const [uploadingPre, setUploadingPre] = useState(false);
-  // Thêm state cho postRentalImages
   const [uploadingPost, setUploadingPost] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => { fetchBookingDetails(); }, [id]);
 
@@ -130,7 +103,6 @@ const BookingDetailOwner = () => {
       );
       if (response.data.success) {
         setBooking(response.data.booking);
-        // Nếu đã có 5 ảnh trên backend, đồng bộ lại state FE
         if (response.data.booking.preRentalImages && response.data.booking.preRentalImages.length === 5) {
           setSavedPreDeliveryImages(response.data.booking.preRentalImages);
         }
@@ -152,50 +124,6 @@ const BookingDetailOwner = () => {
     }
   };
 
-  const handleImageUpload = (event) => {
-    const files = Array.from(event.target.files);
-    const newImages = files.map(file => ({ file, preview: URL.createObjectURL(file) }));
-    setDeliveryImages(prev => [...prev, ...newImages]);
-  };
-  const removeImage = (index) => {
-    setDeliveryImages(prev => {
-      const newImages = [...prev];
-      URL.revokeObjectURL(newImages[index].preview);
-      newImages.splice(index, 1);
-      return newImages;
-    });
-  };
-
-  // Xử lý upload ảnh trước khi giao xe
-  const handlePreDeliveryImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    if (preDeliveryImages.length + files.length > 5) {
-      toast.error('Chỉ được tải lên tối đa 5 ảnh.');
-      return;
-    }
-    const newImages = files.map(file => ({ file, preview: URL.createObjectURL(file) }));
-    setPreDeliveryImages(prev => [...prev, ...newImages]);
-  };
-  const removePreDeliveryImage = (idx) => {
-    setPreDeliveryImages(prev => {
-      const newArr = [...prev];
-      URL.revokeObjectURL(newArr[idx].preview);
-      newArr.splice(idx, 1);
-      return newArr;
-    });
-  };
-
-  // Nút lưu ảnh xe
-  const handleSaveDeliveryImages = () => {
-    if (preDeliveryImages.length === 0) {
-      toast.error('Vui lòng chọn ít nhất một ảnh để lưu!');
-      return;
-    }
-    setSavedPreDeliveryImages(preDeliveryImages);
-    toast.success('Đã lưu ảnh xe!');
-  };
-
-  // Hàm upload ảnh lên backend khi bấm Lưu ảnh xe trước khi giao
   const handleUploadPreDeliveryImages = async (images) => {
     if (!images || images.length === 0) {
       toast.error('Vui lòng chọn ít nhất một ảnh để lưu!');
@@ -211,7 +139,7 @@ const BookingDetailOwner = () => {
         { withCredentials: true, headers: { 'Content-Type': 'multipart/form-data' } }
       );
       if (res.data.success && res.data.urls) {
-        setSavedPreDeliveryImages(res.data.urls); // Lưu URL trả về
+        setSavedPreDeliveryImages(res.data.urls);
         toast.success('Đã upload ảnh xe thành công!');
       } else {
         toast.error(res.data.message || 'Lưu ảnh thất bại.');
@@ -223,9 +151,7 @@ const BookingDetailOwner = () => {
     }
   };
 
-  // Hàm upload ảnh nhận lại xe lên backend
   const handleUploadPostDeliveryImages = async (images) => {
-    console.log('FE chuẩn bị gọi API upload-post-delivery-images', images);
     if (!images || images.length !== 5) {
       toast.error('Bạn phải upload đủ 5 ảnh xe khi nhận lại!');
       return false;
@@ -241,7 +167,7 @@ const BookingDetailOwner = () => {
       );
       if (res.data.success && res.data.urls) {
         setSavedPostDeliveryImages(res.data.urls);
-        fetchBookingDetails(); // <-- thêm dòng này
+        fetchBookingDetails();
         toast.success('Đã upload ảnh nhận lại xe thành công!');
         return true;
       } else {
@@ -249,7 +175,6 @@ const BookingDetailOwner = () => {
         return false;
       }
     } catch (err) {
-      console.log('Lỗi khi gọi API upload-post-delivery-images:', err);
       toast.error(err.response?.data?.message || 'Lỗi khi upload ảnh.');
       return false;
     } finally {
@@ -257,9 +182,7 @@ const BookingDetailOwner = () => {
     }
   };
 
-  // Sửa handleConfirmHandover: kiểm tra đã có ảnh đã lưu
   const handleConfirmHandover = async () => {
-    // Cho phép xác nhận nếu đã có 5 ảnh trên backend (preRentalImages)
     if (!(booking.preRentalImages && booking.preRentalImages.length === 5)) {
       toast.error('Bạn phải upload đủ 5 ảnh xe trước khi giao!');
       return;
@@ -285,18 +208,14 @@ const BookingDetailOwner = () => {
       setIsUploading(false);
     }
   };
-  // Sửa handleConfirmReturn: kiểm tra đã upload đủ 5 ảnh postRentalImages trước khi xác nhận
+
   const handleConfirmReturn = async () => {
-    console.log('Bấm nút Đã nhận lại xe');
-    console.log('savedPostDeliveryImages:', savedPostDeliveryImages);
     if (!savedPostDeliveryImages || savedPostDeliveryImages.length !== 5) {
       toast.error('Bạn phải upload đủ 5 ảnh xe khi nhận lại trước khi xác nhận!');
       return;
     }
     setIsUploading(true);
     try {
-      // Đảm bảo ảnh đã được upload lên backend
-      // (Nếu chưa upload, gọi upload trước)
       if (postDeliveryImages.length === 5 && (!savedPostDeliveryImages || savedPostDeliveryImages.length !== 5)) {
         const ok = await handleUploadPostDeliveryImages(postDeliveryImages);
         if (!ok) {
@@ -311,7 +230,6 @@ const BookingDetailOwner = () => {
       );
       if (res.data.success) {
         toast.success('Bạn đã xác nhận nhận lại xe!');
-        // Gọi lại fetchBookingDetails để cập nhật status và ảnh mới nhất
         fetchBookingDetails();
       } else {
         toast.error(res.data.message || 'Xác nhận thất bại.');
@@ -339,7 +257,6 @@ const BookingDetailOwner = () => {
       default: return status;
     }
   };
-
   const getStatusClass = (status) => {
     switch (status) {
       case 'COMPLETED': return styles.statusBadge + ' ' + styles.completed;
@@ -357,7 +274,6 @@ const BookingDetailOwner = () => {
 
   return (
     <>
-   
       <div className={styles.container}>
         <SidebarOwner />
         <div className={styles.header}>
@@ -376,29 +292,22 @@ const BookingDetailOwner = () => {
           </div>
           <div className={styles.headerRight}>
             <span className={getStatusClass(booking.status)}>{getStatusText(booking.status)}</span>
-            {/* Nút xác nhận giao xe/trả xe cho chủ xe */}
             {user && booking.vehicle?.owner === user._id && (
               <div style={{marginTop: 18, display: 'flex', gap: 18}}>
-                {/* Đã giao xe */}
-                {!booking.ownerHandoverConfirmed && (
+                {!booking.ownerHandoverConfirmed && booking.status && booking.status.toLowerCase() === 'fully_paid' && (
                   <button
                     onClick={handleConfirmHandover}
-                    style={{
-                      background: '#2b7a78', color: '#fff', fontWeight: 600, fontSize: 18, border: 'none', borderRadius: 10, padding: '14px 32px', boxShadow: '0 2px 8px #e3e8ef', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10
-                    }}
+                    style={{ background: '#2b7a78', color: '#fff', fontWeight: 600, fontSize: 18, border: 'none', borderRadius: 10, padding: '14px 32px', boxShadow: '0 2px 8px #e3e8ef', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}
                     disabled={isUploading}
                   >
                     <FaTruck style={{fontSize: 20}} />
                     {isUploading ? 'Đang xử lý...' : 'Đã giao xe'}
                   </button>
                 )}
-                {/* Đã nhận lại xe */}
                 {booking.ownerHandoverConfirmed && !booking.ownerReturnConfirmed && (
                   <button
                     onClick={handleConfirmReturn}
-                    style={{
-                      background: '#f76c6c', color: '#fff', fontWeight: 600, fontSize: 18, border: 'none', borderRadius: 10, padding: '14px 32px', boxShadow: '0 2px 8px #e3e8ef', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10
-                    }}
+                    style={{ background: '#f76c6c', color: '#fff', fontWeight: 600, fontSize: 18, border: 'none', borderRadius: 10, padding: '14px 32px', boxShadow: '0 2px 8px #e3e8ef', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}
                     disabled={booking.ownerReturnConfirmed}
                   >
                     <FaHandshake style={{fontSize: 20}} />
@@ -409,8 +318,6 @@ const BookingDetailOwner = () => {
             )}
           </div>
         </div>
-
-        {/* Thêm card ảnh xe trước khi giao với 2 nút riêng biệt */}
         {user && booking.vehicle?.owner === user._id && (!booking.preRentalImages || booking.preRentalImages.length < 5) && !booking.ownerHandoverConfirmed && (
           <ImageUploaderCard
             title="Ảnh xe trước khi giao"
@@ -422,10 +329,8 @@ const BookingDetailOwner = () => {
             onSave={handleUploadPreDeliveryImages}
             canEdit={!booking.renterHandoverConfirmed}
             max={5}
-            ownerHandoverConfirmed={booking.ownerHandoverConfirmed}
           />
         )}
-        {/* Nếu đã upload đủ 5 ảnh (preRentalImages), luôn hiển thị grid ảnh này cho cả chủ xe và người thuê */}
         {booking.preRentalImages && booking.preRentalImages.length === 5 && (
           <div className={styles.card} style={{marginBottom: 24}}>
             <div className={styles.cardTitle}><FaCamera /> Ảnh xe trước khi giao (đã upload)</div>
@@ -447,7 +352,6 @@ const BookingDetailOwner = () => {
             onSave={handleUploadPostDeliveryImages}
             canEdit={!uploadingPost && (!savedPostDeliveryImages || savedPostDeliveryImages.length < 5)}
             max={5}
-            ownerHandoverConfirmed={booking.ownerHandoverConfirmed}
           />
         )}
         {booking.postRentalImages && booking.postRentalImages.length === 5 && (
@@ -460,34 +364,14 @@ const BookingDetailOwner = () => {
             </div>
           </div>
         )}
-
-        {/* Ảnh preview khi upload giao xe */}
-        {deliveryImages.length > 0 && (
-          <div className={styles.card}>
-            <div className={styles.cardTitle}><FaCamera /> Ảnh xe chuẩn bị giao</div>
-            <div className={styles.imageGrid}>
-              {deliveryImages.map((img, idx) => (
-                <div key={idx} style={{ position: 'relative' }}>
-                  <img src={img.preview} alt={`Ảnh xe ${idx + 1}`} className={styles.imagePreview} />
-                  <button className={styles.uploadBtn} style={{ position: 'absolute', top: 2, right: 2, padding: 2, fontSize: 12 }} onClick={() => removeImage(idx)}><FaTimes /></button>
-                </div>
-              ))}
-            </div>
-            <div className={styles.uploadHint}>Tối đa 5 ảnh. Ảnh sẽ được lưu khi xác nhận giao xe.</div>
-          </div>
-        )}
-
-        {/* Hiện nút 'Đã hoàn thành giao dịch' nếu booking đã completed */}
         {booking.status && booking.status.toLowerCase() === 'completed' && (
           <div style={{margin: '24px 0', textAlign: 'center'}}>
             <button style={{background: '#38b000', color: '#fff', fontWeight: 700, fontSize: 20, border: 'none', borderRadius: 12, padding: '16px 48px', boxShadow: '0 2px 8px #e3e8ef', cursor: 'default'}} disabled>
-              <FaCheck style={{fontSize: 22, marginRight: 10}} />Đã hoàn thành giao dịch
+            Đã hoàn thành giao dịch
             </button>
           </div>
         )}
-
         <div className={styles.grid}>
-          {/* Thông tin xe + thời gian thuê */}
           <div className={styles.card}>
             <div className={styles.cardTitle}><FaCar /> Thông tin xe</div>
             {booking.vehicle?.primaryImage && (
@@ -497,7 +381,6 @@ const BookingDetailOwner = () => {
             <div className={styles.infoRow}><span className={styles.infoLabel}>Biển số:</span><span className={styles.infoValue}>{booking.vehicle?.licensePlate}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Năm:</span><span className={styles.infoValue}>{booking.vehicle?.year || 'N/A'}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Tiền cọc:</span><span className={styles.infoValue}>{formatCurrency(booking.deposit)}</span></div>
-            {/* Thời gian thuê */}
             <div className={styles.infoRow}><span className={styles.infoLabel}>Nhận xe:</span><span className={styles.infoValue}>{moment(booking.startDate).format('HH:mm DD/MM/YYYY')}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Địa chỉ nhận xe:</span><span className={styles.infoValue}>{booking.pickupLocation || '—'}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Trả xe:</span><span className={styles.infoValue}>{moment(booking.endDate).format('HH:mm DD/MM/YYYY')}</span></div>
@@ -505,11 +388,8 @@ const BookingDetailOwner = () => {
             <div className={styles.infoRow}><span className={styles.infoLabel}>Số ngày thuê:</span><span className={styles.infoValue}>{booking.totalDays}</span></div>
             {booking.note && <div className={styles.infoRow}><span className={styles.infoLabel}>Ghi chú:</span><span className={styles.infoValue}>{booking.note}</span></div>}
           </div>
-
-          {/* Thông tin người thuê */}
           <div className={styles.card}>
             <div className={styles.cardTitle}><FaUser /> Người thuê</div>
-          
             <div className={styles.infoRow}><span className={styles.infoLabel}>Họ tên:</span><span className={styles.infoValue}>{booking.renter?.name}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Email:</span><span className={styles.infoValue}>{booking.renter?.email}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>SĐT:</span><span className={styles.infoValue}>{booking.renter?.phone}</span></div>
@@ -523,12 +403,9 @@ const BookingDetailOwner = () => {
                   <img src={booking.renter.driver_license_image} alt="Ảnh GPLX" style={{width: 180, borderRadius: 10, boxShadow: '0 2px 8px #e3e8ef'}} />
                 </div>
               )}
-            
             </div>
           </div>
         </div>
-
-        {/* Thanh toán & giao dịch */}
         <div className={styles.grid}>
           <div className={styles.card}>
             <div className={styles.cardTitle}><FaMoneyBillWave /> Thanh toán</div>
@@ -539,7 +416,6 @@ const BookingDetailOwner = () => {
             <div className={styles.infoRow}><span className={styles.infoLabel}>Giảm giá:</span><span className={styles.infoValue}>{formatCurrency(booking.discountAmount)}</span></div>
             {booking.promoCode && <div className={styles.infoRow}><span className={styles.infoLabel}>Mã KM:</span><span className={styles.infoValue}>{booking.promoCode}</span></div>}
           </div>
-
           <div className={styles.card}>
             <div className={styles.cardTitle}><FaMoneyBillWave /> Lịch sử giao dịch</div>
             <table className={styles.paymentTable}>

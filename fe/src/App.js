@@ -46,7 +46,7 @@ import EditVehicleForm from "./pages/owner/vehiclemanagement/EditVehicleForm";
 import OwnerNotificationPage from "./pages/owner/ownerNotifications/OwnerNotificationPage";
 import OwnerBookingManagement from "./pages/owner/ownerBookings/OwnerBookingManagement";
 import OwenerCancelRequest from "./pages/owner/ownerBookings/OwnerCancelRequests";
-import OwnerBookingDetail from "./pages/owner/bookingDetail/BookingDetailOwner"
+import OwnerBookingDetail from "./pages/owner/bookingDetail/BookingDetailOwner";
 // admin 
 import AdminDashboard from "./pages/admin/ adminDashboard/AdminDashboard";
 import OwnerRequestsPage from "./pages/admin/adminOwnerRequestsPage/OwnerRequestsPage";

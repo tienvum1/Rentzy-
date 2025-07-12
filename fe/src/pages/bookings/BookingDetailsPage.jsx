@@ -13,7 +13,7 @@ import Modal from 'react-modal';
 import { useAuth } from '../../context/AuthContext';
 
 // Component: Hiển thị ảnh xe trước lúc nhận và nút xác nhận nhận xe cho người thuê (đẹp, hiện đại, có phóng to)
-function PreRentalImagesViewer({ preRentalImages, renterHandoverConfirmed, onConfirmHandover, loading, booking }) {
+function PreRentalImagesViewer({ preRentalImages, renterHandoverConfirmed, onConfirmHandover, loading, booking, canShowButton }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalImg, setModalImg] = useState(null);
 
@@ -66,25 +66,26 @@ function PreRentalImagesViewer({ preRentalImages, renterHandoverConfirmed, onCon
         </div>
       )}
       {/* Nút xác nhận đã nhận xe */}
-      <div style={{marginTop: 18, display: 'flex', gap: 18, justifyContent: 'center'}}>
-        <button
-          className="pre-rental-btn"
-          onClick={onConfirmHandover}
-          disabled={!canConfirmHandover}
-        >
-          {loading ? (
-            <span style={{display: 'flex', alignItems: 'center', gap: 10}}>
-              <span className="pre-rental-spinner" />
-              Đang xác nhận...
-            </span>
-          ) : (
-            <>
-              <FaTruck style={{ fontSize: 26 }} />
-              {renterHandoverConfirmed ? 'Đã xác nhận nhận xe' : 'Đã nhận xe'}
-            </>
-          )}
-        </button>
-      </div>
+      {canShowButton && (
+        <div style={{marginTop: 18, display: 'flex', gap: 18, justifyContent: 'center'}}>
+          <button
+            className="pre-rental-btn"
+            onClick={onConfirmHandover}
+            disabled={!canConfirmHandover}
+          >
+            {loading ? (
+              <span style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                <span className="pre-rental-spinner" />
+                Đang xác nhận...
+              </span>
+            ) : (
+              <>
+                {renterHandoverConfirmed ? 'Đã xác nhận nhận xe' : 'Đã nhận xe'}
+              </>
+            )}
+          </button>
+        </div>
+      )}
       {/* Modal phóng to ảnh */}
       <Modal
         isOpen={modalOpen}
@@ -112,7 +113,7 @@ function PreRentalImagesViewer({ preRentalImages, renterHandoverConfirmed, onCon
 }
 
 // Component: Hiển thị ảnh xe khi nhận lại (sau khi hoàn tất)
-function PostRentalImagesViewer({ postRentalImages }) {
+function PostRentalImagesViewer({ postRentalImages, renterReturnConfirmed, onConfirmReturn, loading, booking, canShowButton }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalImg, setModalImg] = useState(null);
 
@@ -120,6 +121,16 @@ function PostRentalImagesViewer({ postRentalImages }) {
     setModalImg(url);
     setModalOpen(true);
   };
+
+  // Điều kiện enable nút "Đã trả xe"
+  const canConfirmReturn =
+    booking.status && booking.status.toLowerCase() === 'in_progress' &&
+    booking.ownerHandoverConfirmed &&
+    booking.renterHandoverConfirmed &&
+    booking.ownerReturnConfirmed &&
+    !booking.renterReturnConfirmed &&
+    postRentalImages && postRentalImages.length === 5 &&
+    !loading;
 
   return (
     <div className="pre-rental-card">
@@ -147,6 +158,27 @@ function PostRentalImagesViewer({ postRentalImages }) {
           </div>
         ))}
       </div>
+      {/* Nút xác nhận đã trả xe */}
+      {canShowButton && (
+        <div style={{marginTop: 18, display: 'flex', gap: 18, justifyContent: 'center'}}>
+          <button
+            className="pre-rental-btn"
+            onClick={onConfirmReturn}
+            disabled={!canConfirmReturn}
+          >
+            {loading ? (
+              <span style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                <span className="pre-rental-spinner" />
+                Đang xác nhận...
+              </span>
+            ) : (
+              <>
+                {renterReturnConfirmed ? 'Đã xác nhận trả xe' : 'Đã trả xe'}
+              </>
+            )}
+          </button>
+        </div>
+      )}
       {/* Modal phóng to ảnh */}
       <Modal
         isOpen={modalOpen}
@@ -405,29 +437,20 @@ const BookingDetailsPage = () => {
         onConfirmHandover={handleConfirmHandover}
         loading={handoverLoading}
         booking={booking}
+        canShowButton={booking.status && booking.status.toLowerCase() === 'fully_paid' && booking.ownerHandoverConfirmed && !booking.renterHandoverConfirmed && booking.preRentalImages && booking.preRentalImages.length === 5}
       />
     )}
-    {/* Hiển thị ảnh xe khi nhận lại (postRentalImages) nếu đã hoàn tất */}
     {booking.status  && booking.postRentalImages && booking.postRentalImages.length === 5 && (
-      <PostRentalImagesViewer postRentalImages={booking.postRentalImages} />
+      <PostRentalImagesViewer 
+        postRentalImages={booking.postRentalImages}
+        renterReturnConfirmed={booking.renterReturnConfirmed}
+        onConfirmReturn={user && booking.renter && user._id === booking.renter._id ? handleConfirmReturn : undefined}
+        loading={handoverLoading}
+        booking={booking}
+        canShowButton={user && booking.renter && user._id === booking.renter._id && booking.status && booking.status.toLowerCase() === 'in_progress' && booking.ownerHandoverConfirmed && booking.renterHandoverConfirmed && booking.ownerReturnConfirmed && !booking.renterReturnConfirmed && booking.postRentalImages && booking.postRentalImages.length === 5}
+      />
     )}
-    {/* Nút "Đã trả xe" (disabled, khi cả hai bên đã xác nhận trả xe) */}
-    {user && booking.renter && user._id === booking.renter._id &&
-      booking.status && booking.status.toLowerCase() === 'in_progress' &&
-      booking.ownerHandoverConfirmed &&
-      booking.renterHandoverConfirmed &&
-      booking.ownerReturnConfirmed && // Chủ xe đã xác nhận nhận lại xe (đã upload đủ 5 ảnh)
-      !booking.renterReturnConfirmed && (
-        <div style={{marginTop: 32, display: 'flex', gap: 18, justifyContent: 'center'}}>
-          <button
-            className="pre-rental-btn"
-            onClick={handleConfirmReturn}
-          >
-            <FaHandshake style={{ fontSize: 26 }} />
-            Xác nhận hoàn thành đơn thuê
-          </button>
-        </div>
-    )}
+
     <div className="booking-details-container">
       <h2>Chi tiết Đơn hàng #{booking._id}</h2>
 
@@ -436,11 +459,13 @@ const BookingDetailsPage = () => {
         <div className="info-grid">
           <p><strong>Ngày nhận:</strong> {moment(booking.startDate).format('DD/MM/YYYY HH:mm')}</p>
           <p><strong>Ngày trả:</strong> {moment(booking.endDate).format('DD/MM/YYYY HH:mm')}</p>
-          <p><strong>Tổng số ngày thuê:</strong> {booking.totalDays} ngày</p>
-          <p><strong>Trạng thái:</strong> <span className={`status-${booking.status.toLowerCase()}`}>{getStatusText(booking.status)}</span></p>
           <p><strong>Địa điểm nhận xe:</strong> {booking.pickupLocation}</p>
           <p><strong>Địa điểm trả xe:</strong> {booking.returnLocation}</p>
-          {booking.note && <p><strong>Ghi chú:</strong> {booking.note}</p>}
+          <p><strong>Tổng số ngày thuê:</strong> {booking.totalDays} ngày</p>
+          <p><strong>Trạng thái:</strong> <span className={`status-${booking.status.toLowerCase()}`}>{getStatusText(booking.status)}</span></p>
+          
+         
+         {booking.note && <p><strong>Ghi chú:</strong> {booking.note}</p>}
         </div>
       </div>
 
@@ -585,46 +610,10 @@ const BookingDetailsPage = () => {
       </div>
 
       <div className="booking-details-actions">
-        <button className="back-button" onClick={() => navigate(-1)}>
+        <button className="back-button" onClick={() => navigate('/profile/my-bookings')}>
           Quay lại
         </button>
-        {/* --- Nút xác nhận của NGƯỜI THUÊ --- */}
-        {user && booking.renter && user._id === booking.renter._id && (
-          <>
-            {/* Badge/trạng thái đã xác nhận nhận xe */}
-            {booking.renterHandoverConfirmed && (
-              <div style={{marginTop: 32, display: 'flex', gap: 18, justifyContent: 'center'}}>
-                <span className="confirmed-badge" style={{background: 'linear-gradient(90deg,#38b000 0%,#70e000 100%)', color: '#fff', fontWeight: 600, fontSize: 18, borderRadius: 12, padding: '12px 32px', display: 'flex', alignItems: 'center', gap: 10}}>
-                  <FaTruck style={{ fontSize: 22 }} /> Đã xác nhận nhận xe
-                </span>
-              </div>
-            )}
-            {/* Nút "Đã trả xe" */}
-            {booking.status && booking.status.toLowerCase() === 'in_progress' &&
-              booking.ownerHandoverConfirmed &&
-              booking.renterHandoverConfirmed &&
-              booking.ownerReturnConfirmed &&
-              !booking.renterReturnConfirmed && (
-                <div style={{marginTop: 32, display: 'flex', gap: 18, justifyContent: 'center'}}>
-                  <button
-                    className="pre-rental-btn"
-                    onClick={handleConfirmReturn}
-                  >
-                    <FaHandshake style={{ fontSize: 26 }} />
-                    Xác nhận hoàn thành đơn thuê
-                  </button>
-                </div>
-            )}
-            {/* Badge/trạng thái đã xác nhận trả xe */}
-            {booking.renterReturnConfirmed && (
-              <div style={{marginTop: 32, display: 'flex', gap: 18, justifyContent: 'center'}}>
-                <span className="confirmed-badge" style={{background: 'linear-gradient(90deg,#38b000 0%,#70e000 100%)', color: '#fff', fontWeight: 600, fontSize: 18, borderRadius: 12, padding: '12px 32px', display: 'flex', alignItems: 'center', gap: 10}}>
-                  <FaHandshake style={{ fontSize: 22 }} /> Đã xác nhận trả xe
-                </span>
-              </div>
-            )}
-          </>
-        )}
+
         {/* --- END nút xác nhận giao xe/trả xe --- */}
         {(() => {
           const now = new Date();
@@ -788,7 +777,7 @@ const BookingDetailsPage = () => {
           } else if (booking.status === 'completed') {
             return (
               <div className="completed-info">
-                <span style={{ color: '#27ae60', fontWeight: 'bold' }}>
+                <span style={{ color: '#27ae60', fontWeight: 'bold' ,fontSize : '20px'}}>
                   ✓ Đơn đã hoàn thành
                 </span>
               </div>

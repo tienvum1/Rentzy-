@@ -6,30 +6,40 @@ const Wallet = require('../models/Wallet');
 exports.getTransactionHistory = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { 
-      status, 
-      type, 
-      paymentMethod, 
-      startDate, 
-      endDate, 
-      page = 1, 
+    const {
+      status,
+      type,
+      paymentMethod,
+      startDate,
+      endDate,
+      page = 1,
       limit = 10,
       sortBy = 'createdAt',
       sortOrder = 'desc'
     } = req.query;
 
-    // Build query
-    const query = {};
-    
-    // Tìm tất cả booking của user
-    const userBookings = await Booking.find({ renter: userId }).select('_id') || [];
-    const bookingIds = userBookings.map(booking => booking._id) || [];
-    
-    // Tìm tất cả wallet của user
-    const userWallets = await Wallet.find({ user: userId }).select('_id') || [];
-    const walletIds = userWallets.map(wallet => wallet._id) || [];
+    // 1. Lấy tất cả ví của user
+    const userWallets = await Wallet.find({ user: userId }).select('_id');
+    const walletIds = userWallets.map(w => w._id);
 
-    // Query transactions từ booking hoặc wallet của user
+    // 2. Lấy tất cả booking mà user là renter hoặc là owner của vehicle
+    const renterBookings = await Booking.find({ renter: userId }).select('_id');
+    const ownerBookings = await Booking.find().populate({
+      path: 'vehicle',
+      match: { owner: userId },
+      select: '_id owner'
+    }).select('_id vehicle');
+    // Lọc booking mà vehicle.owner === userId
+    const ownerBookingIds = ownerBookings
+      .filter(b => b.vehicle && String(b.vehicle.owner) === String(userId))
+      .map(b => b._id);
+    const bookingIds = [
+      ...renterBookings.map(b => b._id),
+      ...ownerBookingIds
+    ];
+
+    // 3. Xây dựng query
+    const query = {};
     if (bookingIds.length > 0 || walletIds.length > 0) {
       query.$or = [];
       if (bookingIds.length > 0) {
@@ -38,8 +48,10 @@ exports.getTransactionHistory = async (req, res) => {
       if (walletIds.length > 0) {
         query.$or.push({ wallet: { $in: walletIds } });
       }
+      // Ngoài ra, các transaction nạp/rút ví mà user là user luôn (user field)
+      query.$or.push({ user: userId });
     } else {
-      // Nếu user không có booking hoặc wallet nào, trả về mảng rỗng
+      // Không có booking hay ví nào, trả về rỗng
       return res.status(200).json({
         success: true,
         data: {
@@ -55,50 +67,36 @@ exports.getTransactionHistory = async (req, res) => {
       });
     }
 
-    // Apply filters
-    if (status) {
-      query.status = status;
-    }
-    
-    if (type) {
-      query.type = type;
-    }
-    
-    if (paymentMethod) {
-      query.paymentMethod = paymentMethod;
-    }
-    
+    // 4. Apply các filter
+    if (status) query.status = status;
+    if (type) query.type = type;
+    if (paymentMethod) query.paymentMethod = paymentMethod;
     if (startDate || endDate) {
       query.createdAt = {};
-      if (startDate) {
-        query.createdAt.$gte = new Date(startDate);
-      }
-      if (endDate) {
-        query.createdAt.$lte = new Date(endDate);
-      }
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
     }
 
-    // Calculate pagination
+    // 5. Pagination & sort
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
-    // Build sort object
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    // Execute query with pagination
+    // 6. Query transaction
     const transactions = await Transaction.find(query)
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit));
 
-    // Get total count for pagination
     const totalTransactions = await Transaction.countDocuments(query);
     const totalPages = Math.ceil(totalTransactions / parseInt(limit));
 
-    // Format response with exact structure requested
+    // 7. Format response
     const formattedTransactions = transactions.map(transaction => ({
       _id: transaction._id,
       booking: transaction.booking,
+      wallet: transaction.wallet,
+      user: transaction.user,
       amount: transaction.amount,
       type: transaction.type,
       status: transaction.status,
@@ -121,7 +119,6 @@ exports.getTransactionHistory = async (req, res) => {
         }
       }
     });
-
   } catch (error) {
     console.error('Error in getTransactionHistory:', error);
     res.status(500).json({

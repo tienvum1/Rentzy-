@@ -22,6 +22,7 @@ router.get('/driver-license-requests', protect, adminOnly, adminController.getDr
 router.put('/driver-license-status/:userId', protect, adminOnly, adminController.updateDriverLicenseStatus);
 
 router.get('/payout-requests', adminController.getPayoutRequests);
-router.post('/approve-payout/:bookingId', adminController.approvePayout);
+router.post('/approve-payout/:bookingId', protect, adminOnly, adminController.approvePayoutBooking);
+
 
 module.exports = router;

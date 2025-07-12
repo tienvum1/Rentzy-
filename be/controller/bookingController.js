@@ -1172,10 +1172,16 @@ const confirmReturn = async (req, res) => {
       }
     }
     if (!changed) return res.status(400).json({ message: 'Bạn đã xác nhận rồi hoặc không có quyền.' });
+    
     // Nếu cả hai bên đã xác nhận, chuyển trạng thái sang completed
     if (booking.ownerReturnConfirmed && booking.renterReturnConfirmed) {
       booking.status = 'completed';
+      // Nếu payoutStatus chưa phải là 'pending' hoặc 'approved', thì set thành 'pending'
+      if (booking.payoutStatus !== 'pending' && booking.payoutStatus !== 'approved') {
+        booking.payoutStatus = 'pending';
+      }
     }
+
     await booking.save();
     // Gửi notification cho bên còn lại
     const notifyUser = (booking.vehicle.owner.toString() === req.user._id.toString()) ? booking.renter : booking.vehicle.owner;

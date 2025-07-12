@@ -4,6 +4,7 @@ const Notification = require('../models/Notification');
 const Booking = require('../models/Booking');
 const Wallet = require('../models/Wallet');
 const Transaction = require('../models/Transaction');
+const mongoose = require('mongoose');
 
 // Lấy danh sách yêu cầu làm chủ xe
 const getOwnerRequests = async (req, res) => {
@@ -190,49 +191,122 @@ const getPayoutRequests = async (req, res) => {
     const bookings = await Booking.find({ payoutStatus: 'pending' })
       .populate('vehicle')
       .populate({ path: 'vehicle', populate: { path: 'owner' } });
-    const data = bookings.map(b => ({
-      id: b._id,
-      vehicle: b.vehicle,
-      owner: b.vehicle?.owner,
-      payoutAmount: b.payoutAmount,
-      payoutStatus: b.payoutStatus,
-      payoutNote: b.payoutNote,
-      totalCost: b.totalCost,
-      status: b.status,
-      createdAt: b.createdAt
-    }));
+    const data = bookings.map(b => {
+      const totalAmount = b.totalAmount || 0;
+      let adminFee = b.adminFee;
+      let payoutAmount = b.payoutAmount;
+      if (!adminFee || !payoutAmount) {
+        adminFee = Math.round(totalAmount * 0.1);
+        payoutAmount = totalAmount - adminFee;
+      }
+      return {
+        id: b._id,
+        vehicle: b.vehicle,
+        owner: b.vehicle?.owner,
+        payoutAmount,
+        adminFee,
+        payoutStatus: b.payoutStatus,
+        payoutNote: b.payoutNote,
+        totalAmount,
+        status: b.status,
+        createdAt: b.createdAt
+      };
+    });
     res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
   }
 };
 
-// Admin duyệt chuyển tiền cho chủ xe
-const approvePayout = async (req, res) => {
+// Admin duyệt giải ngân cho chủ xe
+const approvePayoutBooking = async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.bookingId).populate('vehicle');
-    if (!booking || booking.payoutStatus !== 'pending') {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy booking chờ duyệt' });
+    const { bookingId } = req.params;
+    console.log('bookingId' , bookingId)
+    const adminId = req.user.id;
+   
+    // Tìm booking và populate vehicle
+    let booking = await Booking.findById(bookingId).populate('vehicle');
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy booking' });
     }
-    const ownerId = booking.vehicle.owner;
-    const wallet = await Wallet.findOne({ user: ownerId });
-    if (!wallet) return res.status(404).json({ success: false, message: 'Không tìm thấy ví chủ xe' });
-    wallet.balance += booking.payoutAmount;
+    if (booking.payoutStatus !== 'pending') {
+      return res.status(400).json({ success: false, message: 'Đơn này chưa đến bước giải ngân hoặc đã giải ngân' });
+    }
+    if (!booking.vehicle) {
+      console.log('booking.vehicle is undefined or null:', booking.vehicle);
+      return res.status(404).json({ success: false, message: 'Không tìm thấy xe' });
+    }
+    if (!booking.vehicle.owner) {
+      console.log('booking.vehicle.owner is undefined or null:', booking.vehicle.owner);
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chủ xe' });
+    }
+    const owner = await User.findById(booking.vehicle.owner);
+    console.log('owner' , owner );
+    console.log('owner:', owner);
+    if (!owner || !owner._id) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy chủ xe' });
+    }
+
+    // Tìm ví của owner
+    const wallet = await Wallet.findOne({ user: owner._id });
+    if (!wallet) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy ví chủ xe' });
+    }
+    
+
+    // Kiểm tra số tiền tổng
+    const totalAmount = typeof booking.totalAmount === 'number' ? booking.totalAmount : 0;
+    if (totalAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Tổng tiền booking không hợp lệ' });
+    }
+
+    // Luôn tính lại adminFee và payoutAmount cho chắc chắn
+    const adminFee = Math.round(totalAmount * 0.1);
+    const payoutAmount = totalAmount - adminFee;
+
+    // Cộng tiền vào ví
+    wallet.balance += payoutAmount;
     await wallet.save();
-    booking.payoutStatus = 'approved';
-    await booking.save();
+
+    // Tạo transaction payout
     await Transaction.create({
       booking: booking._id,
-      user: ownerId,
-      amount: booking.payoutAmount,
+      user: owner._id,
+      amount: payoutAmount,
       type: 'PAYOUT',
       status: 'COMPLETED',
       paymentMethod: 'WALLET',
-      description: 'Giải ngân cho chủ xe sau khi hoàn thành đơn thuê'
+      description: 'Giải ngân cho chủ xe sau khi hoàn thành đơn thuê',
+      approvedBy: adminId,
+      approvedAt: new Date(),
+      adminFee,
+      totalAmount
     });
-    res.json({ success: true });
+
+    // Cập nhật trạng thái payout và các trường liên quan
+    booking.payoutStatus = 'approved';
+    booking.payoutApprovedAt = new Date();
+    booking.payoutApprovedBy = adminId;
+    booking.adminFee = adminFee;
+    booking.payoutAmount = payoutAmount;
+    await booking.save();
+
+    // Gửi notification cho owner
+    await Notification.create({
+      user: owner._id,
+      type: 'payment',
+      title: 'Đã nhận tiền giải ngân',
+      message: `Bạn đã nhận được ${payoutAmount.toLocaleString('vi-VN')} VND từ đơn thuê xe #${booking._id.toString().slice(-6)}. Số tiền đã được cộng vào ví của bạn.`,
+      booking: booking._id,
+      data: { payoutAmount },
+    });
+
+    res.json({ success: true, payoutAmount, adminFee, totalAmount });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+    console.error('Approve payout error:', err);
+    res.status(500).json({ success: false, message: 'Lỗi server khi duyệt giải ngân', error: err.message });
   }
 };
 
@@ -245,6 +319,8 @@ module.exports = {
     getPendingVehicleApprovals,
     getPendingVehicleDetail,
     reviewVehicleApproval,
+
+    
     getPayoutRequests,
-    approvePayout
+    approvePayoutBooking,
 };
