@@ -367,7 +367,7 @@ const BookingDetailOwner = () => {
         {booking.status && booking.status.toLowerCase() === 'completed' && (
           <div style={{margin: '24px 0', textAlign: 'center'}}>
             <button style={{background: '#38b000', color: '#fff', fontWeight: 700, fontSize: 20, border: 'none', borderRadius: 12, padding: '16px 48px', boxShadow: '0 2px 8px #e3e8ef', cursor: 'default'}} disabled>
-            Đã hoàn thành giao dịch
+            Đã hoàn thành đơn thuê
             </button>
           </div>
         )}

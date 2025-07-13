@@ -21,7 +21,11 @@ router.get('/driver-license-requests', protect, adminOnly, adminController.getDr
 // Route để cập nhật trạng thái xác thực GPLX
 router.put('/driver-license-status/:userId', protect, adminOnly, adminController.updateDriverLicenseStatus);
 
-router.get('/payout-requests', adminController.getPayoutRequests);
+// Route để lấy danh sách booking chờ duyệt giải ngân cho chủ xe
+router.get('/payout-requests', protect, adminOnly, adminController.getPendingPayoutRequests);
+// Route để lấy danh sách booking chờ hoàn tiền cọc cho người thuê
+router.get('/deposit-refund-requests', protect, adminOnly, adminController.getPendingDepositRefundRequests);
+
 router.post('/approve-payout/:bookingId', protect, adminOnly, adminController.approvePayoutBooking);
 
 

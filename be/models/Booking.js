@@ -102,6 +102,12 @@ const bookingSchema = new mongoose.Schema(
       enum: ['none', 'pending', 'approved', 'rejected'],
       default: 'none'
     },
+    // Trạng thái hoàn tiền cọc cho người thuê
+    depositRefundStatus: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none'
+    },
     // Số tiền thực nhận (đã trừ phí dịch vụ, bồi thường...).
     payoutAmount: {
       type: Number,

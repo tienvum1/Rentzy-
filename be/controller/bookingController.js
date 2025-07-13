@@ -314,6 +314,7 @@ const getUserBookings = async (req, res) => {
 // Lấy chi tiết booking theo ID
 const getBookingDetails = async (req, res) => {
   try {
+
     const booking = await Booking.findById(req.params.id)
       .populate({
         path: "renter",
@@ -1089,9 +1090,10 @@ async function setBookingPayoutPending(booking) {
   // Ví dụ: phí dịch vụ 10%
   const serviceFeeRate = 0.1;
   // Số tiền thực nhận của chủ xe (chỉ tính tiền thuê, không tính cọc)
-  const payoutAmount = Math.round((booking.totalCost || 0) * (1 - serviceFeeRate));
+  const payoutAmount = Math.round((booking.totalCost || 0) * (1 - serviceFeeRate) - booking.deposit);
   booking.payoutAmount = payoutAmount;
   booking.payoutStatus = 'pending';
+  booking.depositRefundStatus = 'pending'; // <--- add this line
   booking.payoutNote = '';
   await booking.save();
 }
@@ -1179,6 +1181,10 @@ const confirmReturn = async (req, res) => {
       // Nếu payoutStatus chưa phải là 'pending' hoặc 'approved', thì set thành 'pending'
       if (booking.payoutStatus !== 'pending' && booking.payoutStatus !== 'approved') {
         booking.payoutStatus = 'pending';
+      }
+      // Nếu depositRefundStatus chưa phải là 'pending' hoặc 'approved', thì set thành 'pending'
+      if (booking.depositRefundStatus !== 'pending' && booking.depositRefundStatus !== 'approved') {
+        booking.depositRefundStatus = 'pending';
       }
     }
 
@@ -1415,6 +1421,30 @@ const uploadPostDeliveryImages = async (req, res) => {
     res.status(500).json({ success: false, message: 'Lỗi server khi upload ảnh.' });
   }
 };
+// API lấy hợp đồng booking: trả về đầy đủ thông tin booking, renter, owner
+const getBookingContract = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate({
+        path: 'renter',
+        select: 'name phone driver_license_number ',
+      })
+      .populate({
+        path: 'vehicle',
+        select: 'brand model licensePlate seatCount bodyType transmission fuelType fuelConsumption location pricePerDay deposit features rentalPolicy primaryImage gallery description approvalStatus status owner',
+        populate: {
+          path: 'owner',
+          select: 'name email phone cccd_number',
+        },
+      });
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+    }
+    res.json({ success: true, booking });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Lỗi server khi lấy hợp đồng.', error: error.message });
+  }
+};
 module.exports = {
   getBookingByIdForOwner,
   createBooking,
@@ -1440,5 +1470,6 @@ module.exports = {
   uploadPreDeliveryImages,
   uploadPostDeliveryImages,
   reviewBooking,
-  getOwnerReviews
+  getOwnerReviews,
+  getBookingContract
 };

@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, verifyRenterRequirements } = require('../middleware/authMiddleware');
-const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingWithRefund, getExpectedRefund, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages, reviewBooking ,getOwnerReviews} = require('../controller/bookingController');
+const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingWithRefund, getExpectedRefund, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages, reviewBooking ,getOwnerReviews, getBookingContract} = require('../controller/bookingController');
 const upload = require('../middleware/upload');
 
 // Public routes
@@ -15,6 +15,7 @@ router.get('/getBookingById/:id', protect, getBookingByIdForOwner);
 router.get('/my-bookings', protect, getUserBookings);
 router.post('/createBooking', protect, verifyRenterRequirements, createBooking);
 router.get('/:id', protect, getBookingDetails);
+router.get('/contract/:id', protect, getBookingContract);
 router.get('/:id/expected-refund', protect, getExpectedRefund); // API lấy thông tin hoàn tiền dự kiến
 router.post('/:id/cancel-expired', protect, cancelBookingByFrontend);
 // huỷ đơn thue

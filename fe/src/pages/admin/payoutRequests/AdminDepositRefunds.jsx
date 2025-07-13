@@ -3,11 +3,11 @@ import axios from 'axios';
 import SidebarAdmin from '../../../components/SidebarAdmin/SidebarAdmin';
 import './AdminPayoutRequests.css';
 
-const AdminPayoutRequests = () => {
+const AdminDepositRefunds = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [actionLoading, setActionLoading] = useState({}); // { [bookingId]: 'payout' | null }
+  const [actionLoading, setActionLoading] = useState({});
 
   useEffect(() => {
     fetchRequests();
@@ -17,47 +17,45 @@ const AdminPayoutRequests = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/admin/payout-requests`, { withCredentials: true });
+      const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/admin/deposit-refund-requests`, { withCredentials: true });
       setRequests(res.data.data || []);
     } catch (err) {
-      setError('Không thể tải danh sách giải ngân.');
+      setError('Không thể tải danh sách hoàn cọc.');
     }
     setLoading(false);
   };
 
-  const handleApprovePayout = async (bookingId) => {
-    setActionLoading(prev => ({ ...prev, [bookingId]: 'payout' }));
+  const handleApproveDeposit = async (bookingId) => {
+    setActionLoading(prev => ({ ...prev, [bookingId]: 'deposit' }));
     try {
-      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/admin/approve-payout/${bookingId}`, {}, { withCredentials: true });
-      setRequests(prev => prev.map(r => r.id === bookingId ? { ...r, payoutStatus: 'approved' } : r));
+      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/admin/approve-deposit-refund/${bookingId}`, {}, { withCredentials: true });
+      setRequests(prev => prev.map(r => r.id === bookingId ? { ...r, depositRefundStatus: 'approved' } : r));
     } catch (err) {
-      alert('Duyệt giải ngân thất bại!');
+      alert('Duyệt hoàn cọc thất bại!');
     }
     setActionLoading(prev => ({ ...prev, [bookingId]: null }));
   };
 
-  const calcPayout = (r) => {
+  const calcDepositRefund = (r) => {
     const deposit = r.vehicle?.deposit || 0;
-    const total = r.totalAmount || 0;
-    const payout = Math.round((total - deposit) * 0.9);
-    return payout;
+    return deposit;
   };
 
-  // Only keep payout requests
-  const payoutRequests = requests.filter(r => r.payoutStatus !== 'approved');
+  // Only keep deposit refund requests
+  const depositRefundRequests = requests.filter(r => (r.vehicle?.deposit || 0) > 0 && r.depositRefundStatus !== 'approved');
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f6f8fa' }}>
       <SidebarAdmin />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="admin-payout-requests-container">
-          <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Duyệt giải ngân cho chủ xe</h2>
+          <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Duyệt hoàn tiền cọc cho người thuê</h2>
           {loading ? (
             <div className="apr-loading">Đang tải...</div>
           ) : error ? (
             <div className="apr-error">{error}</div>
-          ) : payoutRequests.length === 0 ? (
-            <div className="apr-empty">Không có yêu cầu giải ngân nào cần duyệt.</div>
+          ) : depositRefundRequests.length === 0 ? (
+            <div className="apr-empty">Không có yêu cầu hoàn cọc nào cần duyệt.</div>
           ) : (
             <div className="apr-table-wrapper">
               <table className="apr-table">
@@ -68,23 +66,23 @@ const AdminPayoutRequests = () => {
                     <th>Người thuê</th>
                     <th>Xe</th>
                     <th>Tổng tiền thuê</th>
-                    <th>Thực nhận của chủ xe (90% còn lại)</th>
-                    <th>Trạng thái giải ngân</th>
+                    <th>Hoàn cọc cho người thuê (100%)</th>
+                    <th>Trạng thái hoàn cọc</th>
                     <th>Hành động</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {payoutRequests.map(r => (
+                  {depositRefundRequests.map(r => (
                     <tr key={r.id}>
                       <td style={{ fontWeight: 600 }}>{r.id.slice(-6).toUpperCase()}</td>
                       <td>{r.owner?.name || r.owner?.email}</td>
                       <td>{r.renter?.name || r.renter?.email}</td>
                       <td>{r.vehicle?.brand} {r.vehicle?.model}</td>
                       <td>{r.totalAmount?.toLocaleString('vi-VN')} ₫</td>
-                      <td style={{ color: '#1976d2', fontWeight: 700 }}>{calcPayout(r).toLocaleString('vi-VN')} ₫</td>
+                      <td style={{ color: '#388e3c', fontWeight: 600 }}>{calcDepositRefund(r).toLocaleString('vi-VN')} ₫</td>
                       <td>
-                        {r.payoutStatus === 'approved' ? (
-                          <span className="apr-status apr-status-approved">Đã giải ngân</span>
+                        {r.depositRefundStatus === 'approved' ? (
+                          <span className="apr-status apr-status-approved">Đã hoàn cọc</span>
                         ) : (
                           <span className="apr-status apr-status-pending">Chờ duyệt</span>
                         )}
@@ -92,10 +90,10 @@ const AdminPayoutRequests = () => {
                       <td>
                         <button
                           className="apr-approve-btn"
-                          disabled={r.payoutStatus === 'approved' || actionLoading[r.id] === 'payout'}
-                          onClick={() => handleApprovePayout(r.id)}
+                          disabled={r.depositRefundStatus === 'approved' || actionLoading[r.id] === 'deposit'}
+                          onClick={() => handleApproveDeposit(r.id)}
                         >
-                          {actionLoading[r.id] === 'payout' ? 'Đang giải ngân...' : (r.payoutStatus === 'approved' ? 'Đã giải ngân' : 'Duyệt giải ngân')}
+                          {actionLoading[r.id] === 'deposit' ? 'Đang hoàn cọc...' : (r.depositRefundStatus === 'approved' ? 'Đã hoàn cọc' : 'Duyệt hoàn cọc')}
                         </button>
                       </td>
                     </tr>
@@ -110,4 +108,4 @@ const AdminPayoutRequests = () => {
   );
 };
 
-export default AdminPayoutRequests; 
+export default AdminDepositRefunds; 

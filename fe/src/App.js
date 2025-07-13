@@ -29,6 +29,7 @@ import OwnerProfilePage from "./pages/owner/ownerProfilePage/OwnerProfilePage"
 import OrderConfirmation from "./pages/payment/paymentConfirm/OrderConfirmation";
 import PaymentDeposit from "./pages/payment/paymentDeposit/PaymentDeposit";
 import PaymentRemaining from './pages/payment/paymentRemaining/PaymentRemaining';
+import ContractPage from './pages/bookings/ContractPage';
 
 
 
@@ -58,6 +59,7 @@ import VehiclesRequestPage from "./pages/admin/adminVehiclesRequestPage/Vehicles
 import AdminWithdrawals from "./pages/admin/adminWithdrawals/AdminWithdrawals";
 import DriverLicenseRequestsPage from "./pages/admin/adminDriverLicenseRequestsPage/DriverLicenseRequestsPage";
 import AdminVehicleDetailPage from './pages/admin/adminAdminVehicleDetailPage/AdminVehicleDetailPage';
+import AdminDepositRefunds from './pages/admin/payoutRequests/AdminDepositRefunds';
 import AdminPayoutRequests from './pages/admin/payoutRequests/AdminPayoutRequests';
 import AdminNotificationPage from './pages/admin/adminNotificationPage/AdminNotificationPage';
 
@@ -100,6 +102,8 @@ function App() {
             {/* Add VehicleDetail route */}
             <Route path="/confirm/:bookingId" element={<OrderConfirmation />} />
             <Route path="/payment-deposit/:bookingId" element={<PaymentDeposit />} />
+            <Route path="/contracts/:bookingId" element={<ContractPage />} />
+            
             <Route path="/bookings/:id" element={<BookingDetailsPage />} /> {/* New route for Booking Details */}
             <Route path="/payment-remaining/:id" element={<PaymentRemaining />} />
             <Route path="/payment/success" element={<PaymentSuccess />} />
@@ -123,6 +127,7 @@ function App() {
               <Route path="driver-license-requests" element={<DriverLicenseRequestsPage />} />
               <Route path="payout-requests" element={<AdminPayoutRequests />} />
               <Route path="notifications" element={<AdminNotificationPage />} />
+              <Route path="deposit-refunds" element={<AdminDepositRefunds />} />
             </Route>
 
 
