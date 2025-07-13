@@ -53,7 +53,7 @@ import OwnerBookingManagement from "./pages/owner/ownerBookings/OwnerBookingMana
 import OwenerCancelRequest from "./pages/owner/ownerBookings/OwnerCancelRequests";
 import OwnerBookingDetail from "./pages/owner/bookingDetail/BookingDetailOwner";
 // admin 
-import AdminDashboard from "./pages/admin/ adminDashboard/AdminDashboard";
+import AdminDashboard from "./pages/admin/adminDashboard/AdminDashboard";
 import OwnerRequestsPage from "./pages/admin/adminOwnerRequestsPage/OwnerRequestsPage";
 import VehiclesRequestPage from "./pages/admin/adminVehiclesRequestPage/VehiclesRequestPage";
 import AdminWithdrawals from "./pages/admin/adminWithdrawals/AdminWithdrawals";

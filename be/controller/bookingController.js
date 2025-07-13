@@ -702,6 +702,7 @@ const cancelBookingWithRefund = async (req, res) => {
           cancellationReason: reason || "User canceled",
           refundType: "DEPOSIT",
         },
+        user: booking.renter, // Ensure user is the renter
       });
       await refundDepositTransaction.save();
       booking.transactions.push(refundDepositTransaction._id);
@@ -1021,6 +1022,7 @@ const ownerApproveCancel = async (req, res) => {
           cancellationReason: booking.cancellationReason,
           refundType: 'TOTAL',
         },
+        user: booking.renter, // Ensure user is the renter
       });
       await refundTransaction.save();
       booking.transactions.push(refundTransaction._id);

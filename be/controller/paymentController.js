@@ -829,6 +829,7 @@ const createWalletDepositPayment = async (req, res) => {
         const transaction = new Transaction({
             booking: orderCode,
             amount: amount,
+            user: userId , 
             type: 'DEPOSIT',
             status: 'COMPLETED', // Thanh toán ngay lập tức
             paymentMethod: 'WALLET',
@@ -940,6 +941,7 @@ const createWalletRentalPayment = async (req, res) => {
         const transaction = new Transaction({
             booking: bookingId,
             amount: amount,
+            user: userId , 
             type: 'RENTAL',
             status: 'COMPLETED', // Thanh toán ngay lập tức
             paymentMethod: 'WALLET',

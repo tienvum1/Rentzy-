@@ -71,10 +71,7 @@ const OwnerProfilePage = () => {
               <span>Thời gian phản hồi: <b>{ownerInfo.responseTime}</b></span>
               <span>Tỉ lệ đồng ý: <b>{ownerInfo.acceptanceRate}%</b></span>
             </div>
-            <div className="owner-profile-highlight">
-              <FaCrown color="#fbbf24" style={{ marginRight: 6 }} />
-              Chủ xe <b>5★</b> có thời gian phản hồi nhanh, tỉ lệ đồng ý cao, giá cạnh tranh & dịch vụ nhận nhiều đánh giá tốt.
-            </div>
+           
           </div>
         </div>
 
