@@ -13,8 +13,9 @@ import './BookingDetailOwner.css';
 moment.locale('vi');
 
 const BookingDetailOwner = () => {
-  const { id } = useParams();
-  console.log("idd" , id);
+  const { bookingId } = useParams();
+  console.log("idd" , bookingId);
+  console.log("bookingId" , bookingId);
   const navigate = useNavigate();
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,12 +25,12 @@ const BookingDetailOwner = () => {
 
   useEffect(() => {
     fetchBookingDetails();
-  }, [id]);
+  }, [bookingId]);
 
   const fetchBookingDetails = async () => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/owner/getBookingById/${id}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/owner/booking/${bookingId}`,
         { withCredentials: true }
       );
       if (response.data.success) {
@@ -84,7 +85,7 @@ const BookingDetailOwner = () => {
       });
 
       const uploadResponse = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/upload/delivery-images/${id}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/upload/delivery-images/${bookingId}`,
         formData,
         {
           headers: {
@@ -100,7 +101,7 @@ const BookingDetailOwner = () => {
 
       // Then update delivery status
       const response = await axios.put(
-        `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${id}/deliver`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${bookingId}/deliver`,
         {},
         { withCredentials: true }
       );
@@ -120,7 +121,7 @@ const BookingDetailOwner = () => {
   const handleCollectVehicle = async () => {
     try {
       const response = await axios.put(
-        `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${id}/collect`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${bookingId}/collect`,
         {},
         { withCredentials: true }
       );
@@ -178,7 +179,7 @@ const BookingDetailOwner = () => {
   if (loading) {
     return (
       <>
-        <Header />
+        
         <div className="booking-detail-container">
           <SidebarOwner />
           <div className="loading-message">Đang tải thông tin đơn đặt xe...</div>
@@ -190,7 +191,7 @@ const BookingDetailOwner = () => {
   if (error) {
     return (
       <>
-        <Header />
+        
         <div className="booking-detail-container">
           <SidebarOwner />
           <div className="error-message">{error}</div>
@@ -202,7 +203,7 @@ const BookingDetailOwner = () => {
   if (!booking) {
     return (
       <>
-        <Header />
+        
         <div className="booking-detail-container">
           <SidebarOwner />
           <div className="error-message">Không tìm thấy thông tin đơn đặt xe</div>
@@ -213,7 +214,7 @@ const BookingDetailOwner = () => {
 
   return (
     <>
-      <Header />
+      
       <div className="booking-detail-container">
         <SidebarOwner />
         <div className="booking-detail-content">

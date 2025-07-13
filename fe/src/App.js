@@ -46,6 +46,7 @@ import OwnerNotificationPage from "./pages/owner/ownerNotifications/OwnerNotific
 import OwnerBookingManagement from "./pages/owner/ownerBookings/OwnerBookingManagement";
 import OwenerCancelRequest from "./pages/owner/ownerBookings/OwnerCancelRequests";
 import RevenuePage from "./pages/owner/ownerRevenue/RevenuePage";
+import OwnerViewBookingDetail from './pages/owner/BookingDetailOwner';
 
 // admin 
 import AdminDashboard from "./pages/admin/ adminDashboard/AdminDashboard";
@@ -129,6 +130,7 @@ function App() {
               <Route path="booking-management" element={<OwnerBookingManagement />} />
               <Route path="cancel-requests" element={<OwenerCancelRequest />} />
               <Route path="revenue" element={<RevenuePage />} />
+              <Route path="booking-detail/:bookingId" element={<OwnerViewBookingDetail />} />
             </Route>
 
 

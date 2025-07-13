@@ -29,6 +29,7 @@ router.put(
 
 // Lấy tất cả đơn thuê của chủ xe hiện tại
 router.get('/owner-bookings', protect, ownerController.getOwnerBookings);
+router.get('/booking/:id', protect, ownerController.getOwnerBookingDetail);
 router.get('/cancel-requests', protect, getOwnerCancelRequests);
 router.get('/revenue', protect, getOwnerRevenue);
 

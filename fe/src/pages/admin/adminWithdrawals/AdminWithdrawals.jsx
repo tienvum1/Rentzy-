@@ -125,7 +125,7 @@ const AdminWithdrawals = () => {
               <div className="empty-state">
                 <div className="empty-icon">💰</div>
                 <h3>Không có yêu cầu rút tiền nào</h3>
-                <p>Tất cả yêu cầu rút tiền đã được xử lý.</p>
+                
               </div>
             ) : (
               <div className="withdrawals-table-container">

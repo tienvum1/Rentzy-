@@ -195,10 +195,47 @@ const getOwnerRevenue = async (req, res) => {
   }
 };
 
+// Lấy chi tiết 1 booking của chủ xe
+const getOwnerBookingDetail = async (req, res) => {
+  try {
+    const ownerId = req.user._id;
+    const bookingId = req.params.id;
+
+    // Tìm booking và populate thông tin cần thiết
+    const booking = await Booking.findById(bookingId)
+      .populate({
+        path: "vehicle",
+        select: "brand model licensePlate pricePerDay owner",
+        populate: { path: "owner", select: "name email phone" }
+      })
+      .populate({
+        path: "renter",
+        select: "name email phone"
+      })
+      .populate({
+        path: "transactions"
+      });
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy đơn đặt xe" });
+    }
+
+    // Kiểm tra booking này có thuộc xe của owner không
+    if (!booking.vehicle || booking.vehicle.owner._id.toString() !== ownerId.toString()) {
+      return res.status(403).json({ success: false, message: "Bạn không có quyền xem đơn này" });
+    }
+
+    res.json({ success: true, booking });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+};
+
 // --- Export tất cả ---
 module.exports = {
   becomeOwner,
   getOwnerBookings,
   getOwnerCancelRequests,
   getOwnerRevenue,
+  getOwnerBookingDetail,
 };
