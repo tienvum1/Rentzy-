@@ -48,6 +48,7 @@ const OwnerBookingManagement = () => {
                   <th>Khách thuê</th>
                   <th>Trạng thái</th>
                   <th>Giờ & Ngày  thuê</th>
+                  <th>Giải ngân</th>
                   <th>Hành động</th>
                 </tr>
               </thead>
@@ -60,6 +61,12 @@ const OwnerBookingManagement = () => {
                     <td>{b.status}</td>
                     <td>
                     {b.pickupTime} {moment(b.startDate).format('DD/MM/YYYY')} - {b.returnTime} {moment(b.endDate).format('DD/MM/YYYY')}
+                    </td>
+                    <td>
+                      {b.payoutStatus === 'none' && <span className="payout-status payout-status-none">Chưa đến bước</span>}
+                      {b.payoutStatus === 'pending' && <span className="payout-status payout-status-pending">Chờ duyệt</span>}
+                      {b.payoutStatus === 'approved' && <span className="payout-status payout-status-approved">Đã giải ngân</span>}
+                      {b.payoutStatus === 'rejected' && <span className="payout-status payout-status-rejected">Từ chối</span>}
                     </td>
                     <td>
                       <a className="owner-booking-view-link" href={`/ownerpage/booking-detail/${b._id}`}>Xem</a>

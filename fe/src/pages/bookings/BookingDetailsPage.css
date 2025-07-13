@@ -387,20 +387,150 @@
   margin-top: 24px;
 } 
 
-/* Cancel Modal Overlay */
-.beautiful-cancel-modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(30, 41, 59, 0.32);
-  z-index: 1000;
+/* PreRentalImagesViewer styles */
+.pre-rental-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(49,130,206,0.10);
+  padding: 32px;
+  margin: 32px auto;
+  max-width: 900px;
+  position: relative;
+}
+.pre-rental-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
+  gap: 12px;
+  margin-bottom: 18px;
 }
+.pre-rental-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #222;
+}
+.pre-rental-desc {
+  color: #64748b;
+  font-size: 15px;
+  margin-bottom: 18px;
+}
+.pre-rental-count {
+  margin-bottom: 18px;
+  color: #2563eb;
+  font-weight: 500;
+  font-size: 15px;
+}
+.pre-rental-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.pre-rental-img-box {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px #e3e8ef;
+  border: 2px solid #e3e8ef;
+  background: #f8fafc;
+  position: relative;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.pre-rental-img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  display: block;
+}
+.pre-rental-img-index {
+  position: absolute;
+  bottom: 6px;
+  right: 10px;
+  background: rgba(49,130,206,0.85);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 2px 10px;
+  font-weight: 500;
+}
+.pre-rental-warning {
+  color: #e67e22;
+  font-weight: 500;
+  margin-bottom: 18px;
+  font-size: 15px;
+  background: #fffbe6;
+  border-radius: 8px;
+  padding: 10px 18px;
+  border: 1px solid #ffe58f;
+}
+.pre-rental-btn {
+  background: linear-gradient(90deg,#3182ce 0%,#63b3ed 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 22px;
+  border: none;
+  border-radius: 16px;
+  padding: 18px 56px;
+  box-shadow: 0 4px 16px rgba(49,130,206,0.10);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: background 0.2s;
+  opacity: 1;
+  position: relative;
+}
+.pre-rental-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.pre-rental-spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #fff;
+  border-top: 3px solid #3182ce;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.pre-rental-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 0;
+  border: none;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.pre-rental-modal-img {
+  max-width: 540px;
+  max-height: 80vh;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(49,130,206,0.15);
+}
+.pre-rental-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 18px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 2;
+} 
 
-/* Cancel Modal Card */
-.beautiful-cancel-modal {
+/* --- Cancel Modal Styles --- */
+.cancel-modal, .beautiful-cancel-modal {
   outline: none;
   border: none;
   background: transparent;
@@ -410,8 +540,17 @@
   min-height: 100vh;
   z-index: 1001;
 }
-
-.beautiful-cancel-modal > div {
+.cancel-modal-overlay, .beautiful-cancel-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30, 41, 59, 0.32);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.cancel-modal > div, .beautiful-cancel-modal > div {
   width: 100%;
   max-width: 400px;
   background: #fff;
@@ -424,8 +563,7 @@
   gap: 18px;
   position: relative;
 }
-
-.beautiful-cancel-modal h2 {
+.cancel-modal h2, .beautiful-cancel-modal h2 {
   text-align: center;
   font-weight: 700;
   font-size: 22px;
@@ -433,7 +571,6 @@
   color: #1a202c;
   letter-spacing: 0.5px;
 }
-
 .cancel-reason-textarea {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -450,14 +587,12 @@
   border: 1.5px solid #3182ce;
   background: #fff;
 }
-
 .cancel-error {
   color: #e53e3e;
   font-size: 14px;
   margin-bottom: 4px;
   text-align: left;
 }
-
 .expected-refund-info {
   background: #f7fafc;
   border-radius: 8px;
@@ -478,7 +613,6 @@
   color: #3182ce;
   font-size: 16px;
 }
-
 .cancel-modal-actions {
   display: flex;
   gap: 12px;
@@ -515,13 +649,24 @@
 .close-cancel-btn:hover {
   background: #cbd5e1;
 }
-
+.cancel-info {
+  color: #e74c3c;
+  font-weight: bold;
+}
+.completed-info {
+  color: #27ae60;
+  font-weight: bold;
+}
+.started-info {
+  color: #f39c12;
+  font-weight: bold;
+}
 @media (max-width: 600px) {
-  .beautiful-cancel-modal > div {
+  .beautiful-cancel-modal > div, .cancel-modal > div {
     max-width: 98vw;
     padding: 16px 4vw 16px 4vw;
   }
-  .beautiful-cancel-modal h2 {
+  .beautiful-cancel-modal h2, .cancel-modal h2 {
     font-size: 18px;
   }
   .submit-cancel-btn, .close-cancel-btn {

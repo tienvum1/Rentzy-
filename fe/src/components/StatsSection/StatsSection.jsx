@@ -11,31 +11,40 @@ const stats = [
 
 function useCountUp(ref, end, duration = 1200, decimals = 0) {
   useEffect(() => {
-    if (!ref.current) return;
+    let frame;
     let start = 0;
     let startTime = null;
+    let isUnmounted = false;
     function animateCount(ts) {
+      if (isUnmounted || !ref.current) return;
       if (!startTime) startTime = ts;
       const progress = Math.min((ts - startTime) / duration, 1);
       const value = start + (end - start) * progress;
-      ref.current.innerText = decimals ? value.toFixed(decimals) : Math.floor(value);
-      if (progress < 1) requestAnimationFrame(animateCount);
+      if (ref.current) {
+        ref.current.innerText = decimals ? value.toFixed(decimals) : Math.floor(value);
+      }
+      if (progress < 1) {
+        frame = requestAnimationFrame(animateCount);
+      }
     }
-    requestAnimationFrame(animateCount);
+    if (ref.current) {
+      frame = requestAnimationFrame(animateCount);
+    }
+    return () => {
+      isUnmounted = true;
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, [end, duration, decimals, ref]);
 }
 
 const StatsSection = () => {
   // Khởi tạo refs một lần duy nhất
-  const ref0 = useRef();
-  const ref1 = useRef();
-  const ref2 = useRef();
-  const ref3 = useRef();
-  useCountUp(ref0, stats[0].value, 1200, 0);
-  useCountUp(ref1, stats[1].value, 1200, 0);
-  useCountUp(ref2, stats[2].value, 1200, 0);
-  useCountUp(ref3, stats[3].value, 1200, 2);
-  const refs = [ref0, ref1, ref2, ref3];
+  const refs = [useRef(), useRef(), useRef(), useRef()];
+  useCountUp(refs[0], stats[0].value, 1200, 0);
+  useCountUp(refs[1], stats[1].value, 1200, 0);
+  useCountUp(refs[2], stats[2].value, 1200, 0);
+  useCountUp(refs[3], stats[3].value, 1200, 2);
+
   return (
     <section className="stats-section-pro">
       {stats.map((stat, idx) => (

@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
-import { FaInfoCircle, FaCreditCard, FaCalendarAlt } from 'react-icons/fa';
+import { FaInfoCircle, FaCreditCard, FaStar } from 'react-icons/fa';
 import './UserBookings.css';
 import ProfileLayout from '../profileLayout/ProfileLayout';
+import { reviewBooking } from '../../../services/vehicleService';
 
 const UserBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState('');
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewBookingId, setReviewBookingId] = useState(null);
+  const [reviewStars, setReviewStars] = useState(5);
+  const [reviewContent, setReviewContent] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   const navigate = useNavigate();
 
@@ -122,8 +129,41 @@ const UserBookings = () => {
     };
   };
 
+  const handleOpenReview = (bookingId) => {
+    setReviewBookingId(bookingId);
+    setShowReviewModal(true);
+    setReviewStars(5);
+    setReviewContent("");
+  };
+
+  const handleCloseReview = () => {
+    setShowReviewModal(false);
+    setReviewBookingId(null);
+    setReviewStars(5);
+    setReviewContent("");
+  };
+
+  const handleSubmitReview = async () => {
+    if (!reviewStars || !reviewContent.trim()) {
+      toast.error("Vui lòng chọn số sao và nhập nội dung đánh giá.");
+      return;
+    }
+    setReviewSubmitting(true);
+    try {
+      await reviewBooking(reviewBookingId, reviewStars, reviewContent);
+      toast.success("Đánh giá của bạn đã được gửi!");
+      handleCloseReview();
+      fetchBookings(); // Reload lại danh sách để ẩn nút đánh giá
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Gửi đánh giá thất bại. Vui lòng thử lại.");
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
   return (
     <ProfileLayout>
+      <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="light" />
       {loading ? (
         <div className="user-bookings-container">
           <div className="loading-message">Đang tải danh sách đặt xe...</div>
@@ -216,6 +256,14 @@ const UserBookings = () => {
                                     <FaCreditCard /> Thanh toán
                                   </button>
                                 )}
+                                { booking.status === 'completed' && !booking.rating && !booking.review && (
+                                  <button
+                                    className="review-button"
+                                    onClick={() => handleOpenReview(booking._id)}
+                                  >
+                                    Đánh giá
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -235,6 +283,42 @@ const UserBookings = () => {
                 </table>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Review Modal Popup */}
+      {showReviewModal && (
+        <div className="review-modal-overlay">
+          <div className="review-modal">
+            <button className="review-modal-close" onClick={handleCloseReview}>×</button>
+            <h3>Đánh giá chuyến đi</h3>
+            <div className="review-stars">
+              {[1,2,3,4,5].map((star) => (
+                <FaStar
+                  key={star}
+                  size={28}
+                  style={{ cursor: 'pointer', marginRight: 4 }}
+                  color={star <= reviewStars ? '#fbbf24' : '#e5e7eb'}
+                  onClick={() => setReviewStars(star)}
+                />
+              ))}
+            </div>
+            <textarea
+              className="review-textarea"
+              rows={4}
+              placeholder="Hãy chia sẻ trải nghiệm của bạn..."
+              value={reviewContent}
+              onChange={e => setReviewContent(e.target.value)}
+              disabled={reviewSubmitting}
+            />
+            <div className="review-modal-actions">
+              <button className="review-submit-btn" onClick={handleSubmitReview} disabled={reviewSubmitting}>
+                {reviewSubmitting ? 'Đang gửi...' : 'Gửi đánh giá'}
+              </button>
+              <button className="review-cancel-btn" onClick={handleCloseReview} disabled={reviewSubmitting}>
+                Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -8,9 +8,20 @@ const multer = require('multer');
 const storage = multer.memoryStorage(); // Store file in memory for processing
 const upload = multer({ storage: storage }); // Keep storage config
 
-
 // Route to get vehicles owned by the authenticated user
 router.get('/owner', protect, vehicleController.getOwnerVehicles);
+router.get('/ownerVehicles/:ownerId', vehicleController.getVehiclesByOwnerId);
+
+// top 100 xe thuê nhiều nhất  hiển thị cho homepage
+router.get('/top-rented', vehicleController.getTopRentedVehicles);
+
+// Route lấy danh sách xe đã duyệt
+router.get('/approved', vehicleController.getApprovedVehicles);
+
+
+// Route tìm xe theo thời gian (API đơn giản)
+router.post('/search/by-time', vehicleController.searchVehiclesByTime);
+
 
 // tạo xe 
 router.post(
@@ -23,15 +34,11 @@ router.post(
   vehicleController.addVehicle
 );
 
-// Route lấy danh sách xe đã duyệt
-router.get('/approved', vehicleController.getApprovedVehicles);
-
 // Route lấy xe theo id (phải để sau các route cụ thể)
 router.get('/:id', vehicleController.getVehicleById);
 
 // Route cập nhật trạng thái xe (khoá/mở khoá)
 router.put('/:id/status', protect, vehicleController.updateVehicleStatus);
-
 
 // Route to update a vehicle
 router.put(

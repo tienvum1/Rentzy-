@@ -102,6 +102,12 @@ const bookingSchema = new mongoose.Schema(
       enum: ['none', 'pending', 'approved', 'rejected'],
       default: 'none'
     },
+    // Trạng thái hoàn tiền cọc cho người thuê
+    depositRefundStatus: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none'
+    },
     // Số tiền thực nhận (đã trừ phí dịch vụ, bồi thường...).
     payoutAmount: {
       type: Number,
@@ -143,9 +149,7 @@ const bookingSchema = new mongoose.Schema(
     },
 
     // Hình ảnh xe trước khi thuê
-    preRentalImages: [{
-      type: String,
-    }],
+    preRentalImages: [{ type: String }], // Ảnh xe trước khi nhận/giao
 
     // Hình ảnh xe sau khi thuê
     postRentalImages: [{
@@ -183,6 +187,22 @@ const bookingSchema = new mongoose.Schema(
     totalRefund: {
       type: Number,
       default: 0,
+    },
+    ownerHandoverConfirmed: {
+      type: Boolean,
+      default: false
+    },
+    renterHandoverConfirmed: {
+      type: Boolean,
+      default: false
+    },
+    ownerReturnConfirmed: {
+      type: Boolean,
+      default: false
+    },
+    renterReturnConfirmed: {
+      type: Boolean,
+      default: false
     },
   },
   { timestamps: true }

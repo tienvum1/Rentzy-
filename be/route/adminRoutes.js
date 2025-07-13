@@ -64,7 +64,15 @@ router.put(
   adminController.updateDriverLicenseStatus
 );
 
-router.get("/payout-requests", adminController.getPayoutRequests);
-router.post("/approve-payout/:bookingId", adminController.approvePayout);
+
+// Route để lấy danh sách booking chờ hoàn tiền cọc cho người thuê
+router.get('/deposit-refund-requests', protect, adminOnly, adminController.getPendingDepositRefundRequests);
+router.post('/approve-deposit-refund/:bookingId', protect, adminOnly, adminController.approveDepositRefund);
+
+// Route để lấy danh sách booking chờ duyệt giải ngân cho chủ xe
+router.get('/payout-requests', protect, adminOnly, adminController.getPendingPayoutRequests);
+router.post('/approve-payout/:bookingId', protect, adminOnly, adminController.approvePayoutBooking);
+
+
 
 module.exports = router;

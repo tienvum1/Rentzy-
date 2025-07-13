@@ -1,15 +1,209 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import './BookingDetailsPage.css'; // We will create this CSS file next
-import { FaCalendarAlt, FaDollarSign, FaCar, FaUser, FaMapMarkerAlt, FaInfoCircle, FaClipboardList, FaMoneyBillWave, FaCreditCard, FaTimesCircle } from 'react-icons/fa';
+import { FaCalendarAlt, FaDollarSign, FaCar, FaUser, FaMapMarkerAlt, FaInfoCircle, FaClipboardList, FaMoneyBillWave, FaCreditCard, FaTimesCircle, FaHandshake, FaTruck, FaCamera, FaTimes } from 'react-icons/fa';
 import Header from '../../components/Header/Header';
 import Footer from '../../components/footer/Footer';
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import Modal from 'react-modal';
+import { useAuth } from '../../context/AuthContext';
+
+// Component: Hiển thị ảnh xe trước lúc nhận và nút xác nhận nhận xe cho người thuê (đẹp, hiện đại, có phóng to)
+function PreRentalImagesViewer({ preRentalImages, renterHandoverConfirmed, onConfirmHandover, loading, booking, canShowButton }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalImg, setModalImg] = useState(null);
+
+  const handleImgClick = (url) => {
+    setModalImg(url);
+    setModalOpen(true);
+  };
+
+  // Điều kiện enable nút "Đã nhận xe"
+  const canConfirmHandover =
+    booking.status && booking.status.toLowerCase() === 'fully_paid' &&
+    booking.ownerHandoverConfirmed &&
+    !booking.renterHandoverConfirmed &&
+    preRentalImages && preRentalImages.length === 5 &&
+    !loading;
+
+  return (
+    <div className="pre-rental-card">
+      <div className="pre-rental-header">
+        <FaCamera style={{fontSize: 28, color: '#3182ce'}} />
+        <span className="pre-rental-title">Ảnh xe trước lúc nhận (do chủ xe upload)</span>
+      </div>
+      <div className="pre-rental-desc">
+        Vui lòng kiểm tra kỹ tình trạng xe thực tế và đối chiếu với ảnh trước khi xác nhận nhận xe. Nếu có vấn đề, hãy liên hệ chủ xe hoặc hỗ trợ trước khi xác nhận!
+      </div>
+      {preRentalImages && preRentalImages.length > 0 && (
+        <div className="pre-rental-count">
+          Đã upload {preRentalImages.length}/5 ảnh
+        </div>
+      )}
+      {preRentalImages && preRentalImages.length > 0 && (
+        <div className="pre-rental-grid">
+          {preRentalImages.map((url, idx) => (
+            <div key={idx} className="pre-rental-img-box" onClick={() => handleImgClick(url)} title="Nhấn để phóng to">
+              <img
+                src={url}
+                alt={`Ảnh xe trước khi nhận ${idx + 1}`}
+                className="pre-rental-img"
+              />
+              <div className="pre-rental-img-index">
+                #{idx + 1}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {preRentalImages && preRentalImages.length < 5 && (
+        <div className="pre-rental-warning">
+          Chủ xe chưa upload đủ ảnh xe. Vui lòng chờ chủ xe upload đủ <b>5 ảnh</b> trước khi xác nhận nhận xe.
+        </div>
+      )}
+      {/* Nút xác nhận đã nhận xe */}
+      {canShowButton && (
+        <div style={{marginTop: 18, display: 'flex', gap: 18, justifyContent: 'center'}}>
+          <button
+            className="pre-rental-btn"
+            onClick={onConfirmHandover}
+            disabled={!canConfirmHandover}
+          >
+            {loading ? (
+              <span style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                <span className="pre-rental-spinner" />
+                Đang xác nhận...
+              </span>
+            ) : (
+              <>
+                {renterHandoverConfirmed ? 'Đã xác nhận nhận xe' : 'Đã nhận xe'}
+              </>
+            )}
+          </button>
+        </div>
+      )}
+      {/* Modal phóng to ảnh */}
+      <Modal
+        isOpen={modalOpen}
+        onRequestClose={() => setModalOpen(false)}
+        contentLabel="Xem ảnh lớn"
+        ariaHideApp={false}
+        style={{
+          overlay: { background: 'rgba(0,0,0,0.7)', zIndex: 1000 },
+          content: {
+            top: '50%', left: '50%', right: 'auto', bottom: 'auto',
+            marginRight: '-50%', transform: 'translate(-50%, -50%)',
+            padding: 0, border: 'none',
+            background: 'none',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+          }
+        }}
+      >
+        <button onClick={() => setModalOpen(false)} className="pre-rental-modal-close">×</button>
+        {modalImg && (
+          <img src={modalImg} alt="Ảnh phóng to" className="pre-rental-modal-img" />
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+// Component: Hiển thị ảnh xe khi nhận lại (sau khi hoàn tất)
+function PostRentalImagesViewer({ postRentalImages, renterReturnConfirmed, onConfirmReturn, loading, booking, canShowButton }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalImg, setModalImg] = useState(null);
+
+  const handleImgClick = (url) => {
+    setModalImg(url);
+    setModalOpen(true);
+  };
+
+  // Điều kiện enable nút "Đã trả xe"
+  const canConfirmReturn =
+    booking.status && booking.status.toLowerCase() === 'in_progress' &&
+    booking.ownerHandoverConfirmed &&
+    booking.renterHandoverConfirmed &&
+    booking.ownerReturnConfirmed &&
+    !booking.renterReturnConfirmed &&
+    postRentalImages && postRentalImages.length === 5 &&
+    !loading;
+
+  return (
+    <div className="pre-rental-card">
+      <div className="pre-rental-header">
+        <FaCamera style={{fontSize: 28, color: '#3182ce'}} />
+        <span className="pre-rental-title">Ảnh xe khi nhận lại (do chủ xe upload)</span>
+      </div>
+      <div className="pre-rental-desc">
+        Đây là ảnh xe khi chủ xe nhận lại, lưu trữ cho mục đích đối chiếu và giải quyết tranh chấp (nếu có).
+      </div>
+      <div className="pre-rental-count">
+        Đã upload {postRentalImages.length}/5 ảnh
+      </div>
+      <div className="pre-rental-grid">
+        {postRentalImages.map((url, idx) => (
+          <div key={idx} className="pre-rental-img-box" onClick={() => handleImgClick(url)} title="Nhấn để phóng to">
+            <img
+              src={url}
+              alt={`Ảnh xe khi nhận lại ${idx + 1}`}
+              className="pre-rental-img"
+            />
+            <div className="pre-rental-img-index">
+              #{idx + 1}
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Nút xác nhận đã trả xe */}
+      {canShowButton && (
+        <div style={{marginTop: 18, display: 'flex', gap: 18, justifyContent: 'center'}}>
+          <button
+            className="pre-rental-btn"
+            onClick={onConfirmReturn}
+            disabled={!canConfirmReturn}
+          >
+            {loading ? (
+              <span style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                <span className="pre-rental-spinner" />
+                Đang xác nhận...
+              </span>
+            ) : (
+              <>
+                {renterReturnConfirmed ? 'Đã xác nhận trả xe' : 'Đã trả xe'}
+              </>
+            )}
+          </button>
+        </div>
+      )}
+      {/* Modal phóng to ảnh */}
+      <Modal
+        isOpen={modalOpen}
+        onRequestClose={() => setModalOpen(false)}
+        contentLabel="Xem ảnh lớn"
+        ariaHideApp={false}
+        style={{
+          overlay: { background: 'rgba(0,0,0,0.7)', zIndex: 1000 },
+          content: {
+            top: '50%', left: '50%', right: 'auto', bottom: 'auto',
+            marginRight: '-50%', transform: 'translate(-50%, -50%)',
+            padding: 0, border: 'none',
+            background: 'none',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+          }
+        }}
+      >
+        <button onClick={() => setModalOpen(false)} className="pre-rental-modal-close">×</button>
+        {modalImg && (
+          <img src={modalImg} alt="Ảnh phóng to" className="pre-rental-modal-img" />
+        )}
+      </Modal>
+    </div>
+  );
+}
 
 const BookingDetailsPage = () => {
   const { id } = useParams(); // Get booking ID from URL
@@ -22,6 +216,8 @@ const BookingDetailsPage = () => {
   const [cancelReason, setCancelReason] = useState('');
   const [cancelError, setCancelError] = useState('');
   const [expectedRefund, setExpectedRefund] = useState(null);
+  const { user } = useAuth();
+  const [handoverLoading, setHandoverLoading] = useState(false);
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
@@ -186,9 +382,75 @@ const BookingDetailsPage = () => {
     }
   };
 
+  // --- Xác nhận giao xe/trả xe cho renter ---
+  const handleConfirmHandover = async () => {
+    setHandoverLoading(true);
+    try {
+      const res = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}/confirm-handover`,
+        {},
+        { withCredentials: true }
+      );
+      if (res.data.success) {
+        toast.success('Bạn đã xác nhận nhận xe!');
+        // Reload booking
+        const updated = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}`, { withCredentials: true });
+        setBooking(updated.data.booking);
+      } else {
+        toast.error(res.data.message || 'Xác nhận thất bại.');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Lỗi khi xác nhận nhận xe.');
+    } finally {
+      setHandoverLoading(false);
+    }
+  };
+  const handleConfirmReturn = async () => {
+    try {
+      const res = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}/confirm-return`,
+        {},
+        { withCredentials: true }
+      );
+      if (res.data.success) {
+        toast.success('Bạn đã xác nhận trả xe!');
+        // Reload booking
+        const updated = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}`, { withCredentials: true });
+        setBooking(updated.data.booking);
+      } else {
+        toast.error(res.data.message || 'Xác nhận thất bại.');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Lỗi khi xác nhận trả xe.');
+    }
+  };
+  // --- END nút xác nhận giao xe/trả xe ---
+
   return (
     <>
     <Header/>
+    {/* Chỉ hiển thị phần ảnh xe chủ xe upload ở đầu trang */}
+    {user && booking.renter && user._id === booking.renter._id && (
+      <PreRentalImagesViewer
+        preRentalImages={booking.preRentalImages}
+        renterHandoverConfirmed={booking.renterHandoverConfirmed}
+        onConfirmHandover={handleConfirmHandover}
+        loading={handoverLoading}
+        booking={booking}
+        canShowButton={booking.status && booking.status.toLowerCase() === 'fully_paid' && booking.ownerHandoverConfirmed && !booking.renterHandoverConfirmed && booking.preRentalImages && booking.preRentalImages.length === 5}
+      />
+    )}
+    {booking.status  && booking.postRentalImages && booking.postRentalImages.length === 5 && (
+      <PostRentalImagesViewer 
+        postRentalImages={booking.postRentalImages}
+        renterReturnConfirmed={booking.renterReturnConfirmed}
+        onConfirmReturn={user && booking.renter && user._id === booking.renter._id ? handleConfirmReturn : undefined}
+        loading={handoverLoading}
+        booking={booking}
+        canShowButton={user && booking.renter && user._id === booking.renter._id && booking.status && booking.status.toLowerCase() === 'in_progress' && booking.ownerHandoverConfirmed && booking.renterHandoverConfirmed && booking.ownerReturnConfirmed && !booking.renterReturnConfirmed && booking.postRentalImages && booking.postRentalImages.length === 5}
+      />
+    )}
+
     <div className="booking-details-container">
       <h2>Chi tiết Đơn hàng #{booking._id}</h2>
 
@@ -197,11 +459,13 @@ const BookingDetailsPage = () => {
         <div className="info-grid">
           <p><strong>Ngày nhận:</strong> {moment(booking.startDate).format('DD/MM/YYYY HH:mm')}</p>
           <p><strong>Ngày trả:</strong> {moment(booking.endDate).format('DD/MM/YYYY HH:mm')}</p>
-          <p><strong>Tổng số ngày thuê:</strong> {booking.totalDays} ngày</p>
-          <p><strong>Trạng thái:</strong> <span className={`status-${booking.status.toLowerCase()}`}>{getStatusText(booking.status)}</span></p>
           <p><strong>Địa điểm nhận xe:</strong> {booking.pickupLocation}</p>
           <p><strong>Địa điểm trả xe:</strong> {booking.returnLocation}</p>
-          {booking.note && <p><strong>Ghi chú:</strong> {booking.note}</p>}
+          <p><strong>Tổng số ngày thuê:</strong> {booking.totalDays} ngày</p>
+          <p><strong>Trạng thái:</strong> <span className={`status-${booking.status.toLowerCase()}`}>{getStatusText(booking.status)}</span></p>
+          
+         
+         {booking.note && <p><strong>Ghi chú:</strong> {booking.note}</p>}
         </div>
       </div>
 
@@ -346,9 +610,11 @@ const BookingDetailsPage = () => {
       </div>
 
       <div className="booking-details-actions">
-        <button className="back-button" onClick={() => navigate(-1)}>
+        <button className="back-button" onClick={() => navigate('/profile/my-bookings')}>
           Quay lại
         </button>
+
+        {/* --- END nút xác nhận giao xe/trả xe --- */}
         {(() => {
           const now = new Date();
           const startDate = new Date(booking.startDate);
@@ -511,7 +777,7 @@ const BookingDetailsPage = () => {
           } else if (booking.status === 'completed') {
             return (
               <div className="completed-info">
-                <span style={{ color: '#27ae60', fontWeight: 'bold' }}>
+                <span style={{ color: '#27ae60', fontWeight: 'bold' ,fontSize : '20px'}}>
                   ✓ Đơn đã hoàn thành
                 </span>
               </div>

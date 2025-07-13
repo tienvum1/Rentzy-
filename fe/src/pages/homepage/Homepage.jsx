@@ -6,7 +6,6 @@ import HeroSection from '../../components/HeroSection/HeroSection';
 import StatsSection from '../../components/StatsSection/StatsSection';
 import BrandsSection from '../../components/BrandsSection/BrandsSection';
 import VehicleList from './VehicleList';
-import VehicleFilter from '../../components/vehicleFilter/VehicleFilter';
 
 // Testimonial Section
 const testimonials = [
@@ -56,6 +55,12 @@ function CallToActionSection() {
 }
 
 function Homepage() {
+  const handleSearch = (searchParams) => {
+    // Gọi API tìm kiếm xe với searchParams
+    // hoặc chuyển searchParams sang trang kết quả
+    console.log(searchParams);
+  };
+
   return (
     <div className="homepage-root">
       <Header />
@@ -69,12 +74,10 @@ function Homepage() {
         <section className="brands-wrapper">
           <BrandsSection />
         </section>
-        <section className="vehiclefilter-wrapper">
-          <VehicleFilter />
-        </section>
         <section className="vehiclelist-wrapper">
           <VehicleList />
         </section>
+
         <TestimonialSection />
 
       </div>
