@@ -36,14 +36,14 @@ const VehicleTerms = () => {
                                 <span className="cancel-icon success">✔️</span>
                                 <b> Hoàn 70% Tiền Cọc</b>
                             </td>
-                            <td>Huỷ trước chuyến đi &gt; 3 ngày</td>
+                            <td>Huỷ trước chuyến đi &gt; 7 ngày</td>
                         </tr>
                         <tr>
                             <td>
                                 <span className="cancel-icon warning">⚠️</span>
                                 <b> Hoàn 30% Tiền Cọc</b>
                             </td>
-                            <td>Huỷ trong vòng 3 ngày trước chuyến đi</td>
+                            <td>Huỷ trong vòng 7 ngày trước chuyến đi</td>
                         </tr>
                         <tr>
                             <td>

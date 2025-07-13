@@ -15,9 +15,9 @@ import VehicleFeatures from '../../components/VehicleDetailSections/VehicleFeatu
 import VehicleDescription from '../../components/VehicleDetailSections/VehicleDescription';
 import VehicleAmenities from '../../components/VehicleDetailSections/VehicleAmenities';
 import VehicleTerms from '../../components/VehicleDetailSections/VehicleTerms';
-import VehicleOwnerInfo from '../../components/VehicleDetailSections/VehicleOwnerInfo';
 import VehicleBookingSection from '../../components/VehicleDetailSections/VehicleBookingSection';
 import DateTimeSelector from '../../components/DateTimeSelector/DateTimeSelector';
+import OwnerReviewSection from '../../components/VehicleDetailSections/OwnerReviewSection/OwnerReviewSection';
 
 const VehicleDetail = () => {
     // Hooks
@@ -37,6 +37,7 @@ const VehicleDetail = () => {
     const [selectedDates, setSelectedDates] = useState({ startDate: null, endDate: null });
     const [pickupTime, setPickupTime] = useState('');
     const [returnTime, setReturnTime] = useState('');
+    const [ownerReviewData, setOwnerReviewData] = useState(null);
 
     // Fetch vehicle details
     useEffect(() => {
@@ -80,6 +81,14 @@ const VehicleDetail = () => {
             fetchBookedDates();
         }
     }, [vehicle]); // Add vehicle to the dependency array
+
+    useEffect(() => {
+        if (vehicle && vehicle.owner && vehicle.owner._id) {
+            axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${vehicle.owner._id}/reviews`)
+                .then(res => setOwnerReviewData(res.data))
+                .catch(() => setOwnerReviewData(null));
+        }
+    }, [vehicle]);
 
     // Hàm xử lý sau khi đặt xe thành công từ VehicleBookingSection
     const handleBookingSuccess = (bookingId, transactionId, amount) => {
@@ -194,11 +203,23 @@ const VehicleDetail = () => {
                         <VehicleDescription description={vehicle.description} />
                         <VehicleAmenities features={vehicle.features} />
                         <VehicleTerms terms={vehicle.rentalPolicy} />
-                        <VehicleOwnerInfo 
-                            owner={vehicle.owner}
-                            rating={vehicle.ownerRating}
-                            responseTime={vehicle.ownerResponseTime}
-                        />
+                    
+                        {ownerReviewData && (
+                            <OwnerReviewSection
+                                ownerId ={vehicle.owner._id}
+                                ownerName={ownerReviewData.owner.name}
+                                ownerAvatar={ownerReviewData.owner.avatar}
+                                ownerBrand={ownerReviewData.owner.brand}
+                                avgRating={ownerReviewData.owner.avgRating}
+                                totalReviews={ownerReviewData.owner.totalReviews}
+                                responseRate={ownerReviewData.owner.responseRate}
+                                totalBookings={ownerReviewData.owner.totalBookings}
+                                responseTime={ownerReviewData.owner.responseTime}
+                                acceptanceRate={ownerReviewData.owner.acceptanceRate}
+                                reviews={ownerReviewData.reviews}
+                                onSeeMore={() => {/* logic mở modal hoặc chuyển trang xem thêm */}}
+                            />
+                        )}
                     </div>
 
                     {/* Right column - Booking section */}

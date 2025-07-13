@@ -1199,6 +1199,117 @@ const confirmReturn = async (req, res) => {
   }
 };
 
+// Gửi đánh giá cho booking
+const reviewBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating, review } = req.body;
+    // Validate input
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ success: false, message: 'Số sao không hợp lệ.' });
+    }
+    if (!review || review.trim().length < 5) {
+      return res.status(400).json({ success: false, message: 'Nội dung đánh giá quá ngắn.' });
+    }
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+    }
+    // Chỉ người thuê mới được đánh giá
+    if (booking.renter.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền đánh giá đơn này.' });
+    }
+    // Chỉ cho phép đánh giá khi đã completed và chưa có đánh giá
+    if (booking.status !== 'completed') {
+      return res.status(400).json({ success: false, message: 'Chỉ có thể đánh giá khi chuyến đi đã hoàn thành.' });
+    }
+    if (booking.rating || booking.review) {
+      return res.status(400).json({ success: false, message: 'Bạn đã đánh giá đơn này rồi.' });
+    }
+    booking.rating = rating;
+    booking.review = review;
+    await booking.save();
+
+    // Gửi thông báo cho chủ xe
+    const vehicle = await Vehicle.findById(booking.vehicle);
+    if (vehicle && vehicle.owner) {
+      await Notification.create({
+        user: vehicle.owner,
+        type: 'booking',
+        title: 'Đơn thuê đã được đánh giá',
+        message: `Khách thuê đã đánh giá đơn thuê #${booking._id} với ${rating} sao: \"${review.slice(0, 60)}${review.length > 60 ? '...' : ''}\"`,
+        booking: booking._id,
+        vehicle: vehicle._id,
+      });
+    }
+
+    return res.json({ success: true, message: 'Đánh giá thành công!', booking });
+  } catch (err) {
+    console.error('Review booking error:', err);
+    return res.status(500).json({ success: false, message: 'Lỗi server khi gửi đánh giá.' });
+  }
+};
+
+// lấy thông tin review xe và chủ xe của id owner
+const getOwnerReviews = async (req, res) => {
+  try {
+    const ownerId = req.params.ownerId;
+    // 1. Lấy các booking đã được đánh giá của các xe thuộc owner này
+    const bookings = await Booking.find({
+      rating: { $exists: true, $ne: null },
+      review: { $exists: true, $ne: "" }
+    })
+      .populate({
+        path: 'vehicle',
+        match: { owner: ownerId }
+      })
+      .populate('renter', 'name avatar_url');
+
+    // 2. Lọc booking có vehicle thuộc owner
+    const filtered = bookings.filter(b => b.vehicle);
+
+    // 3. Tính điểm trung bình, tổng số đánh giá
+    const avgRating = filtered.length
+      ? (filtered.reduce((sum, b) => sum + (b.rating || 0), 0) / filtered.length).toFixed(1)
+      : 0;
+
+    // 4. Chuẩn hóa danh sách review
+    const reviews = filtered.map(b => ({
+      name: b.renter?.name || 'Ẩn danh',
+      avatar: b.renter?.avatar_url || '/default-avatar.png',
+      rating: b.rating,
+      content: b.review,
+      date: new Date(b.updatedAt).toLocaleDateString('vi-VN')
+    }));
+
+    // 5. Lấy thông tin chủ xe
+    const owner = await User.findById(ownerId);
+    if (!owner) return res.status(404).json({ message: 'Không tìm thấy chủ xe.' });
+
+    // 6. Tổng số booking của owner
+    const totalBookings = await Booking.countDocuments({
+      vehicle: { $in: (await Vehicle.find({ owner: ownerId }).distinct('_id')) }
+    });
+
+    res.json({
+      owner: {
+        name: owner.name,
+        avatar: owner.avatar_url || '/default-avatar.png',
+        brand: owner.brand || owner.name,
+        responseRate: 100, // TODO: Tính toán thực tế nếu có
+        responseTime: '5 phút', // TODO: Tính toán thực tế nếu có
+        acceptanceRate: 100, // TODO: Tính toán thực tế nếu có
+        avgRating,
+        totalReviews: filtered.length,
+        totalBookings
+      },
+      reviews
+    });
+  } catch (err) {
+    console.error('getOwnerReviews error:', err);
+    res.status(500).json({ message: 'Lỗi server khi lấy đánh giá chủ xe' });
+  }
+};
 
 const getBookingByIdForOwner = async (req, res) => {
   try {
@@ -1327,5 +1438,7 @@ module.exports = {
   confirmHandover,
   confirmReturn,
   uploadPreDeliveryImages,
-  uploadPostDeliveryImages
+  uploadPostDeliveryImages,
+  reviewBooking,
+  getOwnerReviews
 };

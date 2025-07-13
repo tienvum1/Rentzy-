@@ -6,6 +6,8 @@ import { AuthProvider } from "./context/AuthContext"; // Import AuthProvider
 import OwnerRouteGuard from './components/OwnerRouteGuard/OwnerRouteGuard'; // Import OwnerRouteGuard
 import AdminRouteGuard from './components/AdminRouteGuard/AdminRouteGuard'; // Import AdminRouteGuard
 
+
+// page 
 import Homepage from "./pages/homepage/Homepage";
 import VehiclePage from "./pages/vehiclePage/VehicleListPage";
 import Login from "./pages/login/Login";
@@ -18,8 +20,10 @@ import ChangePassword from "./pages/changePassword/ChangePassword";
 import VehicleDetail from "./pages/vehicles/VehicleDetail"; // Import VehicleDetail
 import BookingDetailsPage from "./pages/bookings/BookingDetailsPage"; // Import BookingDetailsPage
 
-
 import ConsignForm from "./pages/consignForm/ConsignForm";
+// profile  owner 
+import OwnerProfilePage from "./pages/owner/ownerProfilePage/OwnerProfilePage"
+
 
 // order booking  payment
 import OrderConfirmation from "./pages/payment/paymentConfirm/OrderConfirmation";
@@ -71,9 +75,13 @@ function App() {
             {/* Profile*/}
             <Route path="/homepage" element={<Homepage />} />
             <Route path="/vehicles" element={<VehiclePage />} />
+            <Route path="/owner/:ownerId" element={<OwnerProfilePage />} />
+            
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+
+            
 
       {/* Profile*/}
             <Route path="/profile/account" element={<Profile />} />

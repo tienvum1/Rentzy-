@@ -5,6 +5,7 @@ const multer = require('multer');
 
 const Vehicle = require("../models/Vehicle");
 const User = require('../models/User');
+const Booking = require('../models/Booking');
 
 const cloudinary = require("../utils/cloudinary");
 const Notification = require('../models/Notification');
@@ -312,5 +313,140 @@ exports.getTopRentedVehicles = async (req, res) => {
     res.json(vehicles);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+
+// API đơn giản chỉ cần thời gian thuê để tìm xe có rảnh
+exports.searchVehiclesByTime = async (req, res) => {
+  try {
+    const {
+      pickupDate,
+      pickupTime,
+      returnDate,
+      returnTime
+    } = req.body;
+
+    // Validate required parameters
+    if (!pickupDate || !pickupTime || !returnDate || !returnTime) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng cung cấp đầy đủ thông tin thời gian thuê xe"
+      });
+    }
+
+    // Parse dates and times
+    const pickupDateTime = new Date(`${pickupDate}T${pickupTime}`);
+    const returnDateTime = new Date(`${returnDate}T${returnTime}`);
+
+    // Validate date logic
+    if (returnDateTime <= pickupDateTime) {
+      return res.status(400).json({
+        success: false,
+        message: "Thời gian trả xe phải sau thời gian nhận xe"
+      });
+    }
+
+    if (pickupDateTime < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "Thời gian nhận xe không thể trong quá khứ"
+      });
+    }
+
+    // Tìm tất cả xe đã được duyệt và có sẵn
+    const allVehicles = await Vehicle.find({
+      approvalStatus: "approved",
+      status: "available"
+    }).populate('owner', 'name email phone');
+
+    // Lọc ra xe có sẵn trong thời gian người dùng chọn
+    const availableVehicles = [];
+    
+    for (const vehicle of allVehicles) {
+      // Tìm tất cả booking của xe này có xung đột với thời gian yêu cầu
+      const conflictingBookings = await Booking.find({
+        vehicle: vehicle._id,
+        status: {
+          $in: ['pending', 'deposit_paid', 'in_progress', 'fully_paid']
+        },
+        $or: [
+          // Trường hợp 1: Booking hiện tại bắt đầu trước thời gian nhận xe và kết thúc sau thời gian nhận xe
+          {
+            startDate: { $lte: pickupDateTime },
+            endDate: { $gte: pickupDateTime }
+          },
+          // Trường hợp 2: Booking hiện tại bắt đầu trước thời gian trả xe và kết thúc sau thời gian trả xe
+          {
+            startDate: { $lte: returnDateTime },
+            endDate: { $gte: returnDateTime }
+          },
+          // Trường hợp 3: Booking hiện tại hoàn toàn nằm trong khoảng thời gian yêu cầu
+          {
+            startDate: { $gte: pickupDateTime },
+            endDate: { $lte: returnDateTime }
+          },
+          // Trường hợp 4: Khoảng thời gian yêu cầu hoàn toàn nằm trong booking hiện tại
+          {
+            startDate: { $lte: pickupDateTime },
+            endDate: { $gte: returnDateTime }
+          }
+        ]
+      });
+
+      // Nếu không có booking xung đột, xe có sẵn
+      if (conflictingBookings.length === 0) {
+        availableVehicles.push(vehicle);
+      }
+    }
+
+    // Tính toán thông tin giá và thời gian
+    const totalDays = Math.ceil((returnDateTime - pickupDateTime) / (1000 * 60 * 60 * 24));
+
+    // Thêm thông tin tính toán vào mỗi xe
+    const vehiclesWithPricing = availableVehicles.map(vehicle => {
+      const totalCost = vehicle.pricePerDay * totalDays;
+      return {
+        ...vehicle.toObject(),
+        totalDays,
+        totalCost,
+        pickupDateTime,
+        returnDateTime
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Tìm kiếm xe thành công",
+      data: {
+        vehicles: vehiclesWithPricing,
+        totalVehicles: vehiclesWithPricing.length,
+        searchCriteria: {
+          pickupDateTime,
+          returnDateTime,
+          totalDays
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Lỗi khi tìm kiếm xe:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Có lỗi xảy ra khi tìm kiếm xe',
+      error: error.message
+    });
+  }
+};
+
+// ... existing code ...
+// Lấy tất cả xe của một owner theo ownerId (public, chỉ lấy xe available)
+exports.getVehiclesByOwnerId = async (req, res) => {
+  try {
+    const { ownerId } = req.params;
+    const vehicles = await Vehicle.find({ owner: ownerId, status: 'available', approvalStatus: 'approved' });
+    res.status(200).json({ success: true, vehicles });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Không thể lấy danh sách xe của chủ xe.", error: error.message });
   }
 };

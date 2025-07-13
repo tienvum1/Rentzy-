@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, verifyRenterRequirements } = require('../middleware/authMiddleware');
-const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingWithRefund, getExpectedRefund, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages } = require('../controller/bookingController');
+const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingWithRefund, getExpectedRefund, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages, reviewBooking ,getOwnerReviews} = require('../controller/bookingController');
 const upload = require('../middleware/upload');
 
 // Public routes
@@ -33,6 +33,10 @@ router.post('/:id/confirm-return', protect, confirmReturn);
 router.post('/:id/upload-pre-delivery-images', upload.array('images', 5), protect, uploadPreDeliveryImages);
 // Upload ảnh sau khi nhận lại xe
 router.post('/:id/upload-post-delivery-images', upload.array('images', 5), protect, uploadPostDeliveryImages);
+
+// Đánh giá booking
+router.post('/:id/review', protect, reviewBooking);
+router.get('/:ownerId/reviews', getOwnerReviews);
 
 // VAN KHAI : 
 // route for get all bookings of specific user : 
