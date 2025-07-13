@@ -236,6 +236,166 @@ const approvePayout = async (req, res) => {
   }
 };
 
+const getDashboardStats = async (req, res) => {
+    try {
+        const totalUsers = await User.countDocuments();
+        const totalAdmins = await User.countDocuments({ role: { $in: ['admin'] } });
+        const totalOwners = await User.countDocuments({ role: { $in: ['owner'] } });
+        const totalRenters = await User.countDocuments({ role: { $in: ['renter'] } });
+
+        const totalVehicles = await Vehicle.countDocuments();
+        const pendingVehicles = await Vehicle.countDocuments({ approvalStatus: 'pending' });
+        const approvedVehicles = await Vehicle.countDocuments({ approvalStatus: 'approved' });
+        const availableVehicles = await Vehicle.countDocuments({ status: 'available' });
+
+        const totalBookings = await Booking.countDocuments();
+        const pendingBookings = await Booking.countDocuments({ status: 'pending' });
+        const completedBookings = await Booking.countDocuments({ status: 'completed' });
+        const cancelledBookings = await Booking.countDocuments({ status: 'cancelled' });
+
+        const totalTransactions = await Transaction.countDocuments();
+        const completedTransactions = await Transaction.countDocuments({ status: 'COMPLETED' });
+
+        const revenueStats = await Transaction.aggregate([
+            { $match: { status: 'COMPLETED', type: { $in: ['RENTAL', 'DEPOSIT'] } } },
+            { $group: { _id: null, totalRevenue: { $sum: '$amount' } } }
+        ]);
+        const totalRevenue = revenueStats.length > 0 ? revenueStats[0].totalRevenue : 0;
+
+        const pendingOwnerRequests = await User.countDocuments({ owner_request_status: 'pending' });
+        const pendingDriverLicenses = await User.countDocuments({ 
+            driver_license_verification_status: 'pending',
+            driver_license_number: { $ne: null, $ne: '' } 
+        });
+        const pendingPayouts = await Booking.countDocuments({ payoutStatus: 'pending' });
+
+        const monthlyStats = await Booking.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: new Date(new Date().setMonth(new Date().getMonth() - 6)) }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: '$createdAt' },
+                        month: { $month: '$createdAt' }
+                    },
+                    count: { $sum: 1 },
+                    revenue: { $sum: '$totalCost' }
+                }
+            },
+            { $sort: { '_id.year': 1, '_id.month': 1 } }
+        ]);
+
+        const topVehicles = await Vehicle.aggregate([
+            { $sort: { rentalCount: -1 } },
+            { $limit: 5 },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'owner',
+                    foreignField: '_id',
+                    as: 'owner'
+                }
+            },
+            { $unwind: '$owner' },
+            {
+                $project: {
+                    _id: 1,
+                    brand: 1,
+                    model: 1,
+                    licensePlate: 1,
+                    rentalCount: 1,
+                    pricePerDay: 1,
+                    primaryImage: 1,
+                    'owner.name': 1
+                }
+            }
+        ]);
+
+        const topOwners = await Booking.aggregate([
+            { $match: { status: 'completed' } },
+            {
+                $lookup: {
+                    from: 'vehicles',
+                    localField: 'vehicle',
+                    foreignField: '_id',
+                    as: 'vehicle'
+                }
+            },
+            { $unwind: '$vehicle' },
+            {
+                $group: {
+                    _id: '$vehicle.owner',
+                    totalRevenue: { $sum: '$payoutAmount' },
+                    bookingCount: { $sum: 1 }
+                }
+            },
+            { $sort: { totalRevenue: -1 } },
+            { $limit: 5 },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'owner'
+                }
+            },
+            { $unwind: '$owner' },
+            {
+                $project: {
+                    _id: 1,
+                    'owner.name': 1,
+                    'owner.email': 1,
+                    totalRevenue: 1,
+                    bookingCount: 1
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                userStats: {
+                    total: totalUsers,
+                    admins: totalAdmins,
+                    owners: totalOwners,
+                    renters: totalRenters
+                },
+                vehicleStats: {
+                    total: totalVehicles,
+                    pending: pendingVehicles,
+                    approved: approvedVehicles,
+                    available: availableVehicles
+                },
+                bookingStats: {
+                    total: totalBookings,
+                    pending: pendingBookings,
+                    completed: completedBookings,
+                    cancelled: cancelledBookings
+                },
+                transactionStats: {
+                    total: totalTransactions,
+                    completed: completedTransactions,
+                    totalRevenue: totalRevenue
+                },
+                pendingRequests: {
+                    ownerRequests: pendingOwnerRequests,
+                    driverLicenses: pendingDriverLicenses,
+                    payouts: pendingPayouts
+                },
+                monthlyStats,
+                topVehicles,
+                topOwners
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching dashboard stats:", error);
+        res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
+    }
+};
+
 // ✅ Export tất cả ở một chỗ duy nhất
 module.exports = {
     getOwnerRequests,
@@ -246,5 +406,6 @@ module.exports = {
     getPendingVehicleDetail,
     reviewVehicleApproval,
     getPayoutRequests,
-    approvePayout
+    approvePayout,
+    getDashboardStats
 };
