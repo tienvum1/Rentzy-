@@ -1,0 +1,61 @@
+.revenue-content {
+    flex: 1;
+    padding: 2.5rem 3.5rem;
+    background: #fff;
+    border-radius: 18px;
+    margin: 2.5rem auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+    max-width: 700px;
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .revenue-content h1 {
+    font-size: 2.2rem;
+    margin-bottom: 1.2rem;
+    color: #2d3a4b;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  
+  .revenue-content label {
+  
+    font-size: 1.1rem;
+    color: #444;
+    margin-right: 8px;
+  }
+  
+  .revenue-content select {
+    font-size: 1.05rem;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #f7f8fa;
+    margin-left: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .revenue-content strong {
+    font-size: 1.15rem;
+    color: #222;
+  }
+  
+  .revenue-content span {
+    color: #007bff;
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  
+  .recharts-responsive-container {
+    margin-top: 18px;
+  }
+  
+  @media (max-width: 900px) {
+    .revenue-content {
+      padding: 1.2rem 0.5rem;
+      max-width: 98vw;
+    }
+  } 

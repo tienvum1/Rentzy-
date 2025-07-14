@@ -4,6 +4,7 @@ const upload = require('../middleware/upload');
 const { protect } = require('../middleware/authMiddleware');
 const ownerController = require('../controller/ownerController');
 const { getOwnerCancelRequests } = require('../controller/ownerController');
+const { getOwnerRevenue } = require('../controller/ownerController');
 
 // Simple middleware to check if user is admin
 const checkAdmin = (req, res, next) => {
@@ -29,5 +30,7 @@ router.put(
 // Lấy tất cả đơn thuê của chủ xe hiện tại
 router.get('/owner-bookings', protect, ownerController.getOwnerBookings);
 router.get('/cancel-requests', protect, getOwnerCancelRequests);
+// doanh thu của owner
+router.get('/revenue', protect, getOwnerRevenue);
 
 module.exports = router;

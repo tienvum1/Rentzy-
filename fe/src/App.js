@@ -52,6 +52,7 @@ import OwnerNotificationPage from "./pages/owner/ownerNotifications/OwnerNotific
 import OwnerBookingManagement from "./pages/owner/ownerBookings/OwnerBookingManagement";
 import OwenerCancelRequest from "./pages/owner/ownerBookings/OwnerCancelRequests";
 import OwnerBookingDetail from "./pages/owner/bookingDetail/BookingDetailOwner";
+import RevenuePage from "./pages/owner/ownerRevenue/RevenuePage";
 // admin 
 import AdminDashboard from "./pages/admin/adminDashboard/AdminDashboard";
 import OwnerRequestsPage from "./pages/admin/adminOwnerRequestsPage/OwnerRequestsPage";
@@ -163,7 +164,7 @@ function App() {
               />
               <Route path="cancel-requests" element={<OwenerCancelRequest />} />
               <Route path="booking-detail/:id" element={<OwnerBookingDetail />} />
-  
+              <Route path="revenue" element={<RevenuePage />} />
 
             </Route>
             {/* 404 Route - Thêm route cho trang không tìm thấy */}
