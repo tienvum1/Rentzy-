@@ -44,7 +44,7 @@ import WalletInfo from "./pages/profile/myWallet/WalletInfo";
 import NotificationPage from "./pages/profile/myNotifications/NotificationPage";
 
 // owner
-import OwnerPage from "./pages/owner/Ownerpage";
+import OwnerPage from "./pages/owner/ownerpage";
 import VehicleManagement from "./pages/owner/vehiclemanagement/VehicleManagement";
 import AddVehicleForm from "./pages/owner/vehiclemanagement/AddVehicleForm";
 import OwnerVehicleDetail from "./pages/owner/vehiclemanagement/OwnerVehicleDetail";
