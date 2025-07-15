@@ -121,7 +121,8 @@ async function seedAll() {
         features: ["Bluetooth", "Camera lùi", "Điều hoà", "GPS", "Bảo hiểm"],
         rentalPolicy:
           "Không hút thuốc trong xe, không chở quá số người quy định",
-        primaryImage: "",
+        primaryImage: `https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=400&q=80`,
+        vehicleDocument: `https://example.com/vehicle-docs/${i + 1}.pdf`,
         gallery: [],
         approvalStatus: approvalStatus,
         status: "available",
@@ -224,8 +225,8 @@ async function seedAll() {
     transactionData.push({
       booking: booking._id,
       user: renter._id,
-      amount: booking.deposit,
-      type: "DEPOSIT",
+      amount: booking.deposit || 100000, // đảm bảo luôn có amount
+      type: "WALLET_DEPOSIT", // Đúng enum
       status: "COMPLETED",
       paymentMethod: ["PAYOS", "MOMO", "VNPAY", "ZALOPAY"][
         Math.floor(Math.random() * 4)

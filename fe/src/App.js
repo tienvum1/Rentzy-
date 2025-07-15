@@ -5,9 +5,10 @@ import "./App.css";
 import { AuthProvider } from "./context/AuthContext"; // Import AuthProvider
 import OwnerRouteGuard from "./components/OwnerRouteGuard/OwnerRouteGuard"; // Import OwnerRouteGuard
 import AdminRouteGuard from "./components/AdminRouteGuard/AdminRouteGuard"; // Import AdminRouteGuard
+import RenterRouteGuard from "./components/RenterRouteGuard/RenterRouteGuard";
+import UserChatPage from "./pages/profile/myAccount/UserChatPage";
 
-
-// page 
+// page
 import Homepage from "./pages/homepage/Homepage";
 import VehiclePage from "./pages/vehiclePage/VehicleListPage";
 import Login from "./pages/login/Login";
@@ -21,18 +22,14 @@ import VehicleDetail from "./pages/vehicles/VehicleDetail"; // Import VehicleDet
 import BookingDetailsPage from "./pages/bookings/BookingDetailsPage"; // Import BookingDetailsPage
 
 import ConsignForm from "./pages/consignForm/ConsignForm";
-// profile  owner 
-import OwnerProfilePage from "./pages/owner/ownerProfilePage/OwnerProfilePage"
-
+// profile  owner
+import OwnerProfilePage from "./pages/owner/ownerProfilePage/OwnerProfilePage";
 
 // order booking  payment
 import OrderConfirmation from "./pages/payment/paymentConfirm/OrderConfirmation";
 import PaymentDeposit from "./pages/payment/paymentDeposit/PaymentDeposit";
-import PaymentRemaining from './pages/payment/paymentRemaining/PaymentRemaining';
-import ContractPage from './pages/bookings/ContractPage';
-
-
-
+import PaymentRemaining from "./pages/payment/paymentRemaining/PaymentRemaining";
+import ContractPage from "./pages/bookings/ContractPage";
 
 // user
 import Profile from "./pages/profile/myAccount/Profile"; // IMPORT: New ProfilePage component
@@ -53,16 +50,17 @@ import OwnerBookingManagement from "./pages/owner/ownerBookings/OwnerBookingMana
 import OwenerCancelRequest from "./pages/owner/ownerBookings/OwnerCancelRequests";
 import OwnerBookingDetail from "./pages/owner/bookingDetail/BookingDetailOwner";
 import RevenuePage from "./pages/owner/ownerRevenue/RevenuePage";
-// admin 
+// admin
 import AdminDashboard from "./pages/admin/adminDashboard/AdminDashboard";
 import OwnerRequestsPage from "./pages/admin/adminOwnerRequestsPage/OwnerRequestsPage";
 import VehiclesRequestPage from "./pages/admin/adminVehiclesRequestPage/VehiclesRequestPage";
 import AdminWithdrawals from "./pages/admin/adminWithdrawals/AdminWithdrawals";
 import DriverLicenseRequestsPage from "./pages/admin/adminDriverLicenseRequestsPage/DriverLicenseRequestsPage";
-import AdminVehicleDetailPage from './pages/admin/adminAdminVehicleDetailPage/AdminVehicleDetailPage';
-import AdminDepositRefunds from './pages/admin/payoutRequests/AdminDepositRefunds';
-import AdminPayoutRequests from './pages/admin/payoutRequests/AdminPayoutRequests';
-import AdminNotificationPage from './pages/admin/adminNotificationPage/AdminNotificationPage';
+import AdminVehicleDetailPage from "./pages/admin/adminAdminVehicleDetailPage/AdminVehicleDetailPage";
+import AdminDepositRefunds from "./pages/admin/payoutRequests/AdminDepositRefunds";
+import AdminPayoutRequests from "./pages/admin/payoutRequests/AdminPayoutRequests";
+import AdminNotificationPage from "./pages/admin/adminNotificationPage/AdminNotificationPage";
+import AdminChatPage from "./pages/admin/adminChatPage/AdminChatPage";
 
 import PaymentSuccess from "./pages/payment/PaymentSuccess";
 import PaymentFailed from "./pages/payment/PaymentFailed";
@@ -75,54 +73,63 @@ function App() {
         <div className="App">
           <Routes>
             {/* Profile*/}
-            <Route path="/homepage" element={<Homepage />} />
-            <Route path="/vehicles" element={<VehiclePage />} />
-            <Route path="/owner/:ownerId" element={<OwnerProfilePage />} />
-            
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-
-            
-
-      {/* Profile*/}
-            <Route path="/profile/account" element={<Profile />} />
-            <Route path="/profile/favorites" element={<Profile />} />
-            <Route
-              path="/profile/my-bookings"
-              element={<UserBookings />}
-            />{" "}
-            {/* New route for user bookings */}
-            <Route
-              path="/profile/my-notifications"
-              element={<NotificationPage />}
-            />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route
-              path="/profile/change-password"
-              element={<ChangePassword />}
-            />
-            <Route
-              path="/profile/transactions"
-              element={<TransactionHistory />}
-            />
-            <Route path="/profile/wallet" element={<WalletInfo />} />
-            <Route path="/vehicles/:id" element={<VehicleDetail />} />{" "}
-            {/* Add VehicleDetail route */}
-            {/* Add VehicleDetail route */}
-            <Route path="/confirm/:bookingId" element={<OrderConfirmation />} />
-            <Route path="/payment-deposit/:bookingId" element={<PaymentDeposit />} />
-            <Route path="/contracts/:bookingId" element={<ContractPage />} />
-            
-            <Route path="/bookings/:id" element={<BookingDetailsPage />} /> {/* New route for Booking Details */}
-            <Route path="/payment-remaining/:id" element={<PaymentRemaining />} />
-            <Route path="/payment/success" element={<PaymentSuccess />} />
-            <Route path="/payment/failed" element={<PaymentFailed />} />
-            {/* Add route for OwnerPage */}
-            <Route path="/consignForm" element={<ConsignForm />} />
+            <Route path="/" element={<RenterRouteGuard />}>
+              <Route path="/" index element={<Homepage />} />
+              <Route path="/homepage" element={<Homepage />} />
+              <Route path="/vehicles" element={<VehiclePage />} />
+              <Route path="/owner/:ownerId" element={<OwnerProfilePage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              {/* Profile*/}
+              {/* Renter chat route - only for authenticated renters */}
+              <Route path="/profile/account" element={<Profile />} />
+              <Route path="/profile/favorites" element={<Profile />} />
+              <Route path="/profile/my-bookings" element={<UserBookings />} />
+              {/* New route for user bookings */}
+              <Route
+                path="/profile/my-notifications"
+                element={<NotificationPage />}
+              />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route
+                path="/profile/change-password"
+                element={<ChangePassword />}
+              />
+              <Route
+                path="/profile/transactions"
+                element={<TransactionHistory />}
+              />
+              <Route path="/profile/wallet" element={<WalletInfo />} />
+              <Route path="/vehicles/:id" element={<VehicleDetail />} />{" "}
+              {/* Add VehicleDetail route */}
+              {/* Add VehicleDetail route */}
+              <Route
+                path="/confirm/:bookingId"
+                element={<OrderConfirmation />}
+              />
+              <Route
+                path="/payment-deposit/:bookingId"
+                element={<PaymentDeposit />}
+              />
+              <Route path="/contracts/:bookingId" element={<ContractPage />} />
+              <Route
+                path="/bookings/:id"
+                element={<BookingDetailsPage />}
+              />{" "}
+              {/* New route for Booking Details */}
+              <Route
+                path="/payment-remaining/:id"
+                element={<PaymentRemaining />}
+              />
+              <Route path="/payment/success" element={<PaymentSuccess />} />
+              <Route path="/payment/failed" element={<PaymentFailed />} />
+              {/* Add route for OwnerPage */}
+              <Route path="/consignForm" element={<ConsignForm />} />
+            </Route>
             {/* Add a root route if needed */}
-            <Route path="/" element={<Homepage />} />
+
             {/* admin route */}
             {/* chỉ admin có quyền truy cập */}
             <Route path="/admin" element={<AdminRouteGuard />}>
@@ -145,6 +152,7 @@ function App() {
               <Route path="payout-requests" element={<AdminPayoutRequests />} />
               <Route path="notifications" element={<AdminNotificationPage />} />
               <Route path="deposit-refunds" element={<AdminDepositRefunds />} />
+              <Route path="chat" element={<AdminChatPage />} />
             </Route>
             {/* Route Guard owner  managemnt route */}
             {/*  Chỉ có user đăng kí chủ xe mới dăng nhập được  đăng nhập được */}
@@ -163,9 +171,11 @@ function App() {
                 element={<OwnerBookingManagement />}
               />
               <Route path="cancel-requests" element={<OwenerCancelRequest />} />
-              <Route path="booking-detail/:id" element={<OwnerBookingDetail />} />
+              <Route
+                path="booking-detail/:id"
+                element={<OwnerBookingDetail />}
+              />
               <Route path="revenue" element={<RevenuePage />} />
-
             </Route>
             {/* 404 Route - Thêm route cho trang không tìm thấy */}
             {/* 404 Route - Thêm route cho trang không tìm thấy */}

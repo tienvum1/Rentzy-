@@ -34,14 +34,14 @@
 }
 
 .sidebar-menu li {
-    padding: 12px 10px; /* Padding cho mỗi mục menu */
+    padding: 11px 10px; /* Padding cho mỗi mục menu */
     margin-bottom: 8px; /* Khoảng cách giữa các mục */
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease, color 0.3s ease;
     display: flex;
     align-items: center;
-    font-size: 1.1em;
+    font-size: 1em;
 }
 
 .sidebar-menu li:hover {

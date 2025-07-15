@@ -11,26 +11,39 @@ const morgan = require("morgan");
 const passport = require("passport");
 require("./auth/auth");
 
+// Lấy PORT và origin từ biến môi trường
+const PORT = process.env.PORT || 4999;
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+
 //routes
 const authRoutes = require("./route/auth");
 const userRoutes = require("./route/userRoutes");
 const vehicleRoutes = require("./route/vehicleRoutes");
 const ownerRoutes = require("./route/ownerRoutes");
 const adminRoutes = require("./route/adminRoutes");
-const bookingRoutes = require('./route/bookingRoutes');
-const paymentRoutes = require('./route/paymentRoute');
-const momoRoutes = require('./route/momoRoutes');
-const walletRoutes = require('./route/walletRoutes');
-const transactionRoute = require('./route/transactionRoute');
-const notificationRoutes = require('./route/notificationRoutes');
+const bookingRoutes = require("./route/bookingRoutes");
+const paymentRoutes = require("./route/paymentRoute");
+const momoRoutes = require("./route/momoRoutes");
+const walletRoutes = require("./route/walletRoutes");
+const transactionRoute = require("./route/transactionRoute");
+const notificationRoutes = require("./route/notificationRoutes");
+const messageRoutes = require("./route/messageRoutes");
+const Message = require("./models/Message");
+const User = require("./models/User");
 
 const app = express();
 
-app.use(cookieParser());
+const http = require("http");
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server, {
+  cors: {
+    origin: CLIENT_ORIGIN,
+    credentials: true,
+  },
+});
 
-// Lấy PORT và origin từ biến môi trường
-const PORT = process.env.PORT || 4999;
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+app.use(cookieParser());
 
 // Cấu hình CORS
 app.use(
@@ -73,13 +86,13 @@ app.use("/api/user", userRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/owner", ownerRoutes);
 app.use("/api/admin", adminRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/payment', paymentRoutes);
-app.use('/api/momo', momoRoutes);
-app.use('/api/wallet', walletRoutes);
-app.use('/api/transactions', transactionRoute);
-app.use('/api/notifications', notificationRoutes);
-
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/payment", paymentRoutes);
+app.use("/api/momo", momoRoutes);
+app.use("/api/wallet", walletRoutes);
+app.use("/api/transactions", transactionRoute);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/messages", messageRoutes);
 
 app.get("/hello", (req, res) => {
   res.send("Hello World");
@@ -92,12 +105,47 @@ app.use(
   express.static(path.join(__dirname, "uploads", "vehicles"))
 );
 
+// Socket.io chat logic
+io.on("connection", (socket) => {
+  // Khi client join vào phòng chat với userId (user hoặc admin)
+  socket.on("join", (userId) => {
+    socket.join(userId);
+  });
+
+  // Khi gửi tin nhắn
+  socket.on("chatMessage", async ({ sender, receiver, content }) => {
+    if (!sender || !receiver || !content) return;
+    // Lưu vào DB
+    const message = await Message.create({ sender, receiver, content });
+    // Gửi realtime cho người nhận nếu đang online
+    io.to(receiver).emit("chatMessage", {
+      _id: message._id,
+      sender,
+      receiver,
+      content,
+      createdAt: message.createdAt,
+    });
+    // (Tùy chọn) Gửi lại cho người gửi để xác nhận
+    io.to(sender).emit("chatMessage", {
+      _id: message._id,
+      sender,
+      receiver,
+      content,
+      createdAt: message.createdAt,
+    });
+  });
+});
+
 // Basic error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send("Something broke!");
 });
 
-app.listen(PORT, () => {
+// Thay app.listen bằng server.listen
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+// Export io để sử dụng ở nơi khác nếu cần
+module.exports = { app, io };
