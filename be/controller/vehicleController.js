@@ -50,37 +50,46 @@ exports.addVehicle = async (req, res) => {
   try {
     // Lấy dữ liệu từ form
     const {
-      brand, model, licensePlate, location, pricePerDay, deposit,
-      seatCount, bodyType, transmission, fuelType, features, rentalPolicy, description,fuelConsumption
+      brand, model, licensePlate, location, pricePerDay,
+      seatCount, bodyType, transmission, fuelType, fuelConsumption,
+      features, description
     } = req.body;
-    console.log(req.body)
 
-    // Validate các trường bắt buộc
-    if (!brand || !model || !licensePlate || !location || !pricePerDay || !deposit ||
+    // Validate các trường bắt buộc (không có deposit, rentalPolicy)
+    if (!brand || !model || !licensePlate || !location || !pricePerDay ||
         !seatCount || !bodyType || !transmission || !fuelType || !description) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin xe.' });
     }
 
-    // Xử lý ảnh (nếu có upload)
+    // Validate file giấy tờ xe
+    if (!req.files || !req.files.vehicleDocument || !req.files.vehicleDocument[0]) {
+      return res.status(400).json({ message: 'Vui lòng upload giấy tờ xe.' });
+    }
+
+    // Upload ảnh chính
     let main_image_url = '';
-    let additional_images_urls = [];
     if (req.files && req.files.main_image) {
       main_image_url = await uploadImageToCloudinary(req.files.main_image[0]);
     }
+    // Upload ảnh phụ
+    let additional_images_urls = [];
     if (req.files && req.files.additional_images) {
       for (const file of req.files.additional_images) {
         const url = await uploadImageToCloudinary(file);
         additional_images_urls.push(url);
       }
     }
+    // Upload giấy tờ xe
+    let vehicleDocumentUrl = '';
+    if (req.files && req.files.vehicleDocument) {
+      vehicleDocumentUrl = await uploadImageToCloudinary(req.files.vehicleDocument[0]);
+    }
 
     // Xử lý location: nếu là JSON hợp lệ thì parse, nếu không thì giữ nguyên chuỗi
     let parsedLocation = location;
     try {
       parsedLocation = JSON.parse(location);
-    } catch (e) {
-      // Nếu không phải JSON, giữ nguyên chuỗi
-    }
+    } catch (e) {}
 
     // Tạo vehicle mới
     const newVehicle = new Vehicle({
@@ -89,7 +98,6 @@ exports.addVehicle = async (req, res) => {
       licensePlate,
       location: parsedLocation,
       pricePerDay,
-      deposit,
       seatCount,
       bodyType,
       transmission,
@@ -98,9 +106,9 @@ exports.addVehicle = async (req, res) => {
       features: Array.isArray(features) ? features : [features],
       primaryImage: main_image_url,
       gallery: additional_images_urls,
-      rentalPolicy,
+      vehicleDocument: vehicleDocumentUrl,
       description,
-      owner: req.user._id // Lấy từ middleware xác thực
+      owner: req.user._id
     });
 
     await newVehicle.save();
@@ -135,19 +143,17 @@ exports.updateVehicle = async (req, res) => {
       licensePlate,
       location,
       pricePerDay,
-      deposit,
       seatCount,
       bodyType,
       transmission,
       fuelType,
       fuelConsumption,
       features,
-      rentalPolicy,
       description
     } = req.body;
 
-    // Validate các trường bắt buộc
-    if (!brand || !model || !licensePlate || !location || !pricePerDay || !deposit ||
+    // Validate các trường bắt buộc (bỏ deposit, rentalPolicy)
+    if (!brand || !model || !licensePlate || !location || !pricePerDay ||
         !seatCount || !bodyType || !transmission || !fuelType || !description) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin xe.' });
     }
@@ -178,6 +184,12 @@ exports.updateVehicle = async (req, res) => {
       }
     }
 
+    // Xử lý giấy tờ xe (vehicleDocument)
+    let vehicleDocumentUrl = vehicle.vehicleDocument;
+    if (req.files && req.files.vehicleDocument && req.files.vehicleDocument.length > 0) {
+      vehicleDocumentUrl = await uploadImageToCloudinary(req.files.vehicleDocument[0]);
+    }
+
     // Xử lý location: nếu là JSON hợp lệ thì parse, nếu không thì giữ nguyên chuỗi
     let parsedLocation = location;
     try {
@@ -186,13 +198,12 @@ exports.updateVehicle = async (req, res) => {
       // Nếu không phải JSON, giữ nguyên chuỗi
     }
 
-    // Cập nhật vehicle
+    // Cập nhật vehicle (bỏ deposit, rentalPolicy)
     vehicle.brand = brand;
     vehicle.model = model;
     vehicle.licensePlate = licensePlate;
     vehicle.location = parsedLocation;
     vehicle.pricePerDay = pricePerDay;
-    vehicle.deposit = deposit;
     vehicle.seatCount = seatCount;
     vehicle.bodyType = bodyType;
     vehicle.transmission = transmission;
@@ -201,7 +212,7 @@ exports.updateVehicle = async (req, res) => {
     vehicle.features = Array.isArray(features) ? features : [features];
     vehicle.primaryImage = main_image_url;
     vehicle.gallery = additional_images_urls;
-    vehicle.rentalPolicy = rentalPolicy;
+    vehicle.vehicleDocument = vehicleDocumentUrl;
     vehicle.description = description;
 
     // Khi cập nhật xe, chuyển trạng thái duyệt về 'pending' để admin duyệt lại
@@ -268,7 +279,7 @@ exports.getApprovedVehicles = async (req, res) => {
   }
 };
 
-// Add function to get a single vehicle by ID (chỉ lấy từ Vehicle, không join car/motorbike)
+// Add function to get a single vehicle by ID 
 exports.getVehicleById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -339,108 +350,43 @@ exports.searchVehiclesByTime = async (req, res) => {
     const pickupDateTime = new Date(`${pickupDate}T${pickupTime}`);
     const returnDateTime = new Date(`${returnDate}T${returnTime}`);
 
-    // Validate date logic
-    if (returnDateTime <= pickupDateTime) {
-      return res.status(400).json({
-        success: false,
-        message: "Thời gian trả xe phải sau thời gian nhận xe"
-      });
-    }
-
-    if (pickupDateTime < new Date()) {
-      return res.status(400).json({
-        success: false,
-        message: "Thời gian nhận xe không thể trong quá khứ"
-      });
-    }
-
-    // Tìm tất cả xe đã được duyệt và có sẵn
-    const allVehicles = await Vehicle.find({
-      approvalStatus: "approved",
-      status: "available"
-    }).populate('owner', 'name email phone');
-
-    // Lọc ra xe có sẵn trong thời gian người dùng chọn
-    const availableVehicles = [];
-    
-    for (const vehicle of allVehicles) {
-      // Tìm tất cả booking của xe này có xung đột với thời gian yêu cầu
-      const conflictingBookings = await Booking.find({
-        vehicle: vehicle._id,
-        status: {
-          $in: ['pending', 'deposit_paid', 'in_progress', 'fully_paid']
+    // Find vehicles that are available and have a booking that overlaps
+    const overlappingBookings = await Booking.find({
+      vehicle: { $in: req.params.id }, // Assuming req.params.id is the vehicle ID
+      $or: [
+        {
+          pickupDateTime: { $lte: returnDateTime },
+          returnDateTime: { $gte: pickupDateTime }
         },
-        $or: [
-          // Trường hợp 1: Booking hiện tại bắt đầu trước thời gian nhận xe và kết thúc sau thời gian nhận xe
-          {
-            startDate: { $lte: pickupDateTime },
-            endDate: { $gte: pickupDateTime }
-          },
-          // Trường hợp 2: Booking hiện tại bắt đầu trước thời gian trả xe và kết thúc sau thời gian trả xe
-          {
-            startDate: { $lte: returnDateTime },
-            endDate: { $gte: returnDateTime }
-          },
-          // Trường hợp 3: Booking hiện tại hoàn toàn nằm trong khoảng thời gian yêu cầu
-          {
-            startDate: { $gte: pickupDateTime },
-            endDate: { $lte: returnDateTime }
-          },
-          // Trường hợp 4: Khoảng thời gian yêu cầu hoàn toàn nằm trong booking hiện tại
-          {
-            startDate: { $lte: pickupDateTime },
-            endDate: { $gte: returnDateTime }
-          }
-        ]
-      });
-
-      // Nếu không có booking xung đột, xe có sẵn
-      if (conflictingBookings.length === 0) {
-        availableVehicles.push(vehicle);
-      }
-    }
-
-    // Tính toán thông tin giá và thời gian
-    const totalDays = Math.ceil((returnDateTime - pickupDateTime) / (1000 * 60 * 60 * 24));
-
-    // Thêm thông tin tính toán vào mỗi xe
-    const vehiclesWithPricing = availableVehicles.map(vehicle => {
-      const totalCost = vehicle.pricePerDay * totalDays;
-      return {
-        ...vehicle.toObject(),
-        totalDays,
-        totalCost,
-        pickupDateTime,
-        returnDateTime
-      };
+        {
+          pickupDateTime: { $gte: pickupDateTime },
+          returnDateTime: { $lte: returnDateTime }
+        }
+      ]
     });
 
+    // If there are overlapping bookings, the vehicle is not available
+    if (overlappingBookings.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Xe đã được đặt trong khoảng thời gian này."
+      });
+    }
+
+    // If no overlapping bookings, the vehicle is available for the requested time
     res.status(200).json({
       success: true,
-      message: "Tìm kiếm xe thành công",
-      data: {
-        vehicles: vehiclesWithPricing,
-        totalVehicles: vehiclesWithPricing.length,
-        searchCriteria: {
-          pickupDateTime,
-          returnDateTime,
-          totalDays
-        }
-      }
+      message: "Xe có rảnh trong khoảng thời gian này."
     });
-
   } catch (error) {
-    console.error('Lỗi khi tìm kiếm xe:', error);
+    console.error("Error searching vehicles by time:", error);
     res.status(500).json({
-      success: false,
-      message: 'Có lỗi xảy ra khi tìm kiếm xe',
-      error: error.message
+      message: "Failed to search vehicles by time.",
+      error: error.message,
     });
   }
 };
 
-// ... existing code ...
-// Lấy tất cả xe của một owner theo ownerId (public, chỉ lấy xe available)
 exports.getVehiclesByOwnerId = async (req, res) => {
   try {
     const { ownerId } = req.params;

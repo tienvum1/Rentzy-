@@ -61,12 +61,12 @@ const OrderConfirmation = () => {
     const totalCost = booking.totalCost || 0; // Tiền thuê xe cơ bản
     const deliveryFee = booking.pickupLocation !== booking.vehicle?.location ? DELIVERY_FEE : 0;
     const discountAmount = booking.discountAmount || 0;
-    const deposit = booking.deposit || 0;
-    // Tổng cộng = phí thuê xe + phí giao xe + tiền đặt cọc - giảm giá
-    const totalAmount = totalCost + deliveryFee + deposit - discountAmount;
-    // Số tiền còn lại khi nhận xe = tổng cộng - cọc (nếu cần)
-    const remaining = Math.max(0, totalAmount - deposit);
-    return { totalCost, deliveryFee, discountAmount, deposit, totalAmount, remaining };
+    // const deposit = booking.deposit || 0;
+    // Tổng cộng = phí thuê xe + phí giao xe - giảm giá
+    const totalAmount = totalCost + deliveryFee - discountAmount;
+    // Số tiền còn lại khi nhận xe = tổng cộng
+    const remaining = totalAmount;
+    return { totalCost, deliveryFee, discountAmount, totalAmount, remaining };
   };
   const fees = calculateFees();
 
@@ -163,10 +163,6 @@ const OrderConfirmation = () => {
                 <span className="summary-value">{formatCurrency(fees.deliveryFee)}</span>
               </div>
             )}
-            <div className="summary-item">
-              <span className="summary-label">Tiền đặt cọc</span>
-              <span className="summary-value">{formatCurrency(fees.deposit)}</span>
-            </div>
             {fees.discountAmount > 0 && (
               <div className="summary-item">
                 <span className="summary-label">Giảm giá</span>
@@ -185,19 +181,18 @@ const OrderConfirmation = () => {
           <div className="payment-step">
             <div className="payment-step-number">1</div>
             <div className="payment-step-content">
-              <p className="payment-step-title">Thanh toán đặt cọc qua Rentzy</p>
-              <p className="payment-step-description">Tiền này để xác nhận đơn thuê và giữ xe, sẽ được trừ vào số tiền còn lại phải thanh toán khi nhận xe.</p>
+              <p className="payment-step-title">Thanh toán qua Rentzy</p>
+              <p className="payment-step-description">Thanh toán để xác nhận đơn thuê và giữ xe.</p>
             </div>
-            <span className="payment-amount">{formatCurrency(fees.deposit)}</span>
+            <span className="payment-amount">{formatCurrency(fees.totalAmount)}</span>
           </div>
           <div className="payment-step">
             <div className={`payment-step-number ${isPaymentCompleted ? 'completed' : ''}`}>2</div>
             <div className="payment-step-content">
-              <p className="payment-step-title">Thanh toán số tiền còn lại khi nhận xe</p>
-              <p className="payment-step-description">Số tiền còn lại = Tổng cộng - Tiền đặt cọc</p>
-              <p className="payment-step-description">Tiền cọc xe sẽ được hoàn trả sau khi hoàn thành chuyến đi (nếu không có phát sinh).</p>
+              <p className="payment-step-title">Nhận xe và hoàn tất thanh toán</p>
+              <p className="payment-step-description">Thanh toán số tiền còn lại khi nhận xe (nếu có).</p>
             </div>
-            <span className="payment-amount">{formatCurrency(fees.remaining)}</span>
+            <span className="payment-amount">{formatCurrency(0)}</span>
           </div>
         </div>
 

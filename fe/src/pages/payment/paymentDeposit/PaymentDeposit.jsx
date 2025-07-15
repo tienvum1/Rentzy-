@@ -211,7 +211,6 @@ const PaymentDeposit = () => {
     const s = seconds % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
-
   // UI
   if (loading) return <Header><div className="loading-screen">Đang tải thông tin...</div></Header>;
   if (error) return <Header><div className="error-screen">Lỗi: {error}</div></Header>;

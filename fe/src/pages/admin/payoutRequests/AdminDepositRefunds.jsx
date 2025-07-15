@@ -24,7 +24,6 @@ const AdminDepositRefunds = () => {
     }
     setLoading(false);
   };
-
   const handleApproveDeposit = async (bookingId) => {
     setActionLoading(prev => ({ ...prev, [bookingId]: 'deposit' }));
     try {

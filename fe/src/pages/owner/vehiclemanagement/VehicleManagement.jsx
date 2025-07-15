@@ -3,6 +3,8 @@ import './VehicleManagement.css'
 import axios from 'axios';
 import SidebarOwner from '../../../components/SidebarOwner/SidebarOwner';
 import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const VehicleManagement = () => {
     const navigate = useNavigate();
@@ -46,27 +48,6 @@ const VehicleManagement = () => {
         navigate(`/ownerpage/edit-vehicle/${vehicleId}`);
     };
 
-    // Placeholder function for handling delete action
-    const handleDelete = async (vehicleId) => {
-        if (window.confirm('Are you sure you want to delete this vehicle?')) {
-            try {
-                setLoading(true); // Start loading indicator if desired
-                const apiUrl = `${backendUrl}/api/vehicles/${vehicleId}`;
-                const response = await axios.delete(apiUrl, { withCredentials: true });
-                setMessage({ type: 'success', text: response.data.message || 'Vehicle deleted successfully!' });
-                // After successful deletion, refresh the vehicle list
-                fetchOwnerVehicles(); // Refresh owner's vehicle list
-                setLoading(false); // Stop loading indicator
-            } catch (error) {
-                console.error('Error deleting vehicle:', error.response?.data || error.message);
-                setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to delete vehicle.' });
-                setLoading(false); // Stop loading indicator on error
-            }
-        } else {
-            // User cancelled deletion
-        }
-    };
-
     // Thêm hàm chuyển sang trang chi tiết xe
     const handleViewDetail = (vehicleId) => {
         navigate(`/ownerpage/vehicle/${vehicleId}`);
@@ -96,10 +77,10 @@ const VehicleManagement = () => {
                 setLoading(true);
                 const apiUrl = `${backendUrl}/api/vehicles/${vehicleId}/status`;
                 const response = await axios.put(apiUrl, { status: newStatus }, { withCredentials: true });
-                setMessage({ type: 'success', text: response.data.message || 'Cập nhật trạng thái xe thành công!' });
+                toast.success(response.data.message || 'Cập nhật trạng thái xe thành công!');
                 fetchOwnerVehicles();
             } catch (error) {
-                setMessage({ type: 'error', text: error.response?.data?.message || 'Không thể cập nhật trạng thái xe.' });
+                toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái xe.');
             } finally {
                 setLoading(false);
             }
@@ -113,7 +94,6 @@ const VehicleManagement = () => {
             {/* Nội dung của VehicleManagement được hiển thị bên cạnh sidebar. */}
             <div className="vehicle-management-content">
                 <h2>Your Vehicles</h2>
-                {message && <p className={`message ${message.type}`}>{message.text}</p>}
                 {error && <p className="error">{error}</p>}
                 <div className="add-buttons">
                     <button className="btn-add-car" onClick={handleNavigateToAddCar}>+ Thêm xe mới</button>
@@ -167,6 +147,7 @@ const VehicleManagement = () => {
                     </table>
                 )}
             </div>
+            <ToastContainer position="top-right" autoClose={2500} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
         </div>
     );
 };

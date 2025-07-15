@@ -984,6 +984,7 @@ const createWalletRentalPayment = async (req, res) => {
     }
 };
 
+
 module.exports = {
     createPayment,
     checkPayment,
@@ -992,5 +993,6 @@ module.exports = {
     createRentalPayment,
     checkRentalPayment,
     createWalletDepositPayment,
-    createWalletRentalPayment
+    createWalletRentalPayment,
+
 };

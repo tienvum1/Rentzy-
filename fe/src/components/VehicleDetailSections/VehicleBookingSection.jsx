@@ -261,8 +261,8 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
       // Tổng tiền thực tế (chỉ để hiển thị, không thanh toán ngay)
       const totalAmount = bookingDetails.rentalFee + bookingDetails.deliveryFee - discountAmount;
 
-      // Số tiền cần thanh toán ban đầu là tiền cọc
-      const depositToPay = vehicle.deposit;
+      // Không còn gửi tiền cọc
+      // const depositToPay = vehicle.deposit;
 
       const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/createBooking`, {
         vehicleId: vehicle._id,
@@ -277,7 +277,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         totalAmount: totalAmount,
         promoCode: selectedPromo ? selectedPromo.code : null,
         discountAmount: discountAmount,
-        deposit: depositToPay, // Chỉ gửi tiền cọc
+        // deposit: depositToPay, // Xóa dòng này
         isDelivery: pickupLocation !== vehicle.location,
         deliveryFee: bookingDetails.deliveryFee
       }, {
@@ -289,7 +289,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
 
       if (response.data.success) {
         if (onBookNow) {
-          onBookNow(response.data.data.booking._id, null, depositToPay);
+          onBookNow(response.data.data.booking._id, null, null); // Không truyền tiền cọc
         }
       } else {
         toast.error(response.data.message);
@@ -458,14 +458,11 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
               -{discountAmount.toLocaleString('vi-VN')}đ
             </span>
           </div>
-          <div className="cost-item">
-            <span>Tiền cọc xe (thanh toán trước)</span>
-            <span>{vehicle.deposit.toLocaleString('vi-VN')} VND</span>
-          </div>
+          {/* Xóa phần hiển thị tiền cọc xe */}
           <div className="cost-item total">
             <span>Tổng cộng</span>
             <span>
-              {(bookingDetails.rentalFee + vehicle.deposit + bookingDetails.deliveryFee - discountAmount).toLocaleString('vi-VN')} VND
+              {(bookingDetails.rentalFee + bookingDetails.deliveryFee - discountAmount).toLocaleString('vi-VN')} VND
             </span>
           </div>
         </div>

@@ -99,3 +99,209 @@
     border: 1px solid #ccc;
     border-radius: 4px;
 } 
+
+.edit-vehicle-form-modern {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 6px 32px rgba(0,0,0,0.10);
+  padding: 38px 44px 32px 44px;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+}
+.edit-vehicle-form-grid {
+  display: flex;
+  gap: 48px;
+  margin-top: 10px;
+}
+.edit-vehicle-images-col {
+  flex: 0 0 40%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+}
+.edit-vehicle-info-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.edit-vehicle-fields label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  margin-bottom: 18px;
+  color: #222;
+  font-size: 1.08rem;
+  letter-spacing: 0.01em;
+}
+.edit-vehicle-fields input,
+.edit-vehicle-fields select,
+.edit-vehicle-fields textarea {
+  margin-top: 7px;
+  padding: 12px 14px;
+  border: 1.5px solid #d0d7de;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  background: #f7fafd;
+  transition: border 0.2s, box-shadow 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.edit-vehicle-fields input:focus,
+.edit-vehicle-fields select:focus,
+.edit-vehicle-fields textarea:focus {
+  border: 1.7px solid #1976d2;
+  box-shadow: 0 0 0 2px #e3f2fd;
+  outline: none;
+}
+.gallery-images-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 340px;
+  margin-top: 10px;
+}
+.image-wrapper {
+  position: relative;
+}
+.btn-remove-image {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  background: #fff;
+  border: 1.5px solid #d32f2f;
+  color: #d32f2f;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-remove-image:hover {
+  background: #ffebee;
+  color: #b71c1c;
+}
+.info-tag {
+  display: inline-block;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  background: #e8f5e9;
+  color: #388e3c;
+  margin-bottom: 16px;
+  letter-spacing: 0.01em;
+}
+.info-tag-green {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+.btn-submit {
+  background: linear-gradient(90deg, #1976d2 60%, #2196f3 100%);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 13px 38px;
+  font-size: 1.13rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-right: 16px;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-submit:disabled {
+  background: #bdbdbd;
+  cursor: not-allowed;
+}
+.btn-cancel {
+  background: #fff;
+  color: #1976d2;
+  border: 2px solid #1976d2;
+  border-radius: 9px;
+  padding: 13px 38px;
+  font-size: 1.13rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-cancel:hover {
+  background: #e3f2fd;
+}
+.form-message {
+  margin: 14px 0 0 0;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.form-message.success {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+.form-message.error {
+  background: #ffebee;
+  color: #d32f2f;
+}
+.features-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  margin-top: 8px;
+}
+.feature-checkbox {
+  font-weight: 400;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.edit-vehicle-images-col img,
+.edit-vehicle-images-col .vehicle-document-img {
+  border-radius: 10px;
+  border: 1.5px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 8px;
+  background: #f7fafd;
+}
+.edit-vehicle-images-col .main-image {
+  max-width: 340px;
+  max-height: 240px;
+  cursor: pointer;
+}
+.edit-vehicle-images-col .vehicle-document-img {
+  max-width: 340px;
+  max-height: 240px;
+  cursor: zoom-in;
+  display: block;
+  margin: 10px auto 0 auto;
+}
+@media (max-width: 900px) {
+  .edit-vehicle-form-modern {
+    padding: 14px 4px;
+  }
+  .edit-vehicle-form-grid {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .edit-vehicle-images-col, .edit-vehicle-info-col {
+    max-width: 100%;
+  }
+  .gallery-images-grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 100%;
+  }
+  .btn-submit, .btn-cancel {
+    width: 100%;
+    margin: 0 0 10px 0;
+    padding: 13px 0;
+  }
+} 

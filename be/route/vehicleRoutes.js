@@ -29,7 +29,8 @@ router.post(
   protect,
   upload.fields([
     { name: 'main_image', maxCount: 1 },
-    { name: 'additional_images', maxCount: 10 }
+    { name: 'additional_images', maxCount: 10 },
+    { name: 'vehicleDocument', maxCount: 1 }
   ]),
   vehicleController.addVehicle
 );

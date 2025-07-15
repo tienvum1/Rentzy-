@@ -1087,26 +1087,13 @@ const ownerRejectCancel = async (req, res) => {
   }
 };
 
-// Hàm này nên được gọi khi booking hoàn thành hoặc huỷ (nếu chủ xe được nhận tiền)
-async function setBookingPayoutPending(booking) {
-  // Ví dụ: phí dịch vụ 10%
-  const serviceFeeRate = 0.1;
-  // Số tiền thực nhận của chủ xe (chỉ tính tiền thuê, không tính cọc)
-  const payoutAmount = Math.round((booking.totalCost || 0) * (1 - serviceFeeRate) - booking.deposit);
-  booking.payoutAmount = payoutAmount;
-  booking.payoutStatus = 'pending';
-  booking.depositRefundStatus = 'pending'; // <--- add this line
-  booking.payoutNote = '';
-  await booking.save();
-}
-
 // Ví dụ: khi hoàn thành chuyến đi
 const completeBooking = async (req, res) => {
   // ... các bước xác nhận hoàn thành ...
   const booking = await Booking.findById(req.params.id);
   if (!booking) return res.status(404).json({ message: 'Không tìm thấy booking' });
   booking.status = 'completed';
-  await setBookingPayoutPending(booking);
+  await booking.save();
   // ... các bước khác ...
   res.json({ success: true });
 };

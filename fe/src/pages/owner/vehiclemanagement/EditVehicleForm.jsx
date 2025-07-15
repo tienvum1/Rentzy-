@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './OwnerVehicleDetail.css';
 import SidebarOwner from '../../../components/SidebarOwner/SidebarOwner';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const bodyTypeOptions = [
-  'Sedan', 'SUV', 'Hatchback', 'Coupe', 'Convertible', 'Wagon', 'Van', 'Pickup'
+  'Sedan', 'SUV', 'Hatchback', 'Coupe', 'Mui trần', 'Xe wagon', 'Xe van', 'Bán tải'
 ];
-const transmissionOptions = ['automatic', 'manual'];
-const fuelTypeOptions = ['gasoline', 'diesel', 'electric', 'hybrid'];
+const transmissionOptions = ['Tự động', 'Số sàn'];
+const fuelTypeOptions = ['Xăng', 'Dầu', 'Điện', 'Hybrid'];
 const availableFeatures = [
   'Bản đồ', 'Bluetooth', 'Camera 360', 'Camera cập lề', 'Camera hành trình', 'Camera lùi',
   'Cảm biến lốp', 'Cảm biến va chạm', 'Cảnh báo tốc độ', 'Cửa sổ trời', 'Định vị GPS',
@@ -29,6 +31,8 @@ const EditVehicleForm = () => {
   const [modalImage, setModalImage] = useState(null);
   const [saving, setSaving] = useState(false);
   const galleryInputRef = useRef(null);
+  // Thêm state cho preview giấy tờ xe
+  const [vehicleDocumentPreview, setVehicleDocumentPreview] = useState(null);
 
   useEffect(() => {
     const fetchVehicle = async () => {
@@ -41,9 +45,11 @@ const EditVehicleForm = () => {
           ...response.data.vehicle,
           main_image: null, // file mới
           gallery: [],      // file mới
+          vehicleDocumentFile: null, // file mới
         });
         setMainImagePreview(response.data.vehicle.primaryImage);
         setGalleryPreviews(response.data.vehicle.gallery || []);
+        setVehicleDocumentPreview(response.data.vehicle.vehicleDocument || null);
       } catch (err) {
         setError(err.response?.data?.message || 'Không thể tải thông tin xe.');
       } finally {
@@ -70,6 +76,10 @@ const EditVehicleForm = () => {
         ...prev,
         ...newFiles.map((file) => URL.createObjectURL(file)),
       ]);
+    } else if (name === 'vehicleDocument') {
+      const file = files[0] || null;
+      setFormData((prev) => ({ ...prev, vehicleDocumentFile: file }));
+      setVehicleDocumentPreview(file ? URL.createObjectURL(file) : (vehicle.vehicleDocument || null));
     } else if (type === 'checkbox') {
       setFormData((prev) => {
         const features = prev.features || [];
@@ -96,7 +106,7 @@ const EditVehicleForm = () => {
 
   // Validate form
   const validateForm = () => {
-    if (!formData.brand || !formData.model || !formData.licensePlate || !formData.location || !formData.pricePerDay || !formData.deposit || !formData.seatCount || !formData.bodyType || !formData.transmission || !formData.fuelType || !formData.description) {
+    if (!formData.brand || !formData.model || !formData.licensePlate || !formData.location || !formData.pricePerDay || !formData.seatCount || !formData.bodyType || !formData.transmission || !formData.fuelType || !formData.description) {
       setMessage({ type: 'error', text: 'Vui lòng nhập đầy đủ thông tin bắt buộc.' });
       return false;
     }
@@ -115,13 +125,11 @@ const EditVehicleForm = () => {
     dataToSubmit.append('licensePlate', formData.licensePlate);
     dataToSubmit.append('location', formData.location);
     dataToSubmit.append('pricePerDay', formData.pricePerDay);
-    dataToSubmit.append('deposit', formData.deposit);
     dataToSubmit.append('seatCount', formData.seatCount);
     dataToSubmit.append('bodyType', formData.bodyType);
     dataToSubmit.append('transmission', formData.transmission);
     dataToSubmit.append('fuelType', formData.fuelType);
     dataToSubmit.append('fuelConsumption', formData.fuelConsumption || '');
-    dataToSubmit.append('rentalPolicy', formData.rentalPolicy || '');
     dataToSubmit.append('description', formData.description);
 
     // Ảnh chính (nếu có chọn mới)
@@ -142,12 +150,18 @@ const EditVehicleForm = () => {
       dataToSubmit.append('clear_gallery', 'true');
     }
 
+    // Giấy tờ xe (nếu có chọn mới)
+    if (formData.vehicleDocumentFile) {
+      dataToSubmit.append('vehicleDocument', formData.vehicleDocumentFile);
+    }
+
     try {
+      // Nếu backend đã đổi endpoint PUT, sửa lại ở đây
       const response = await axios.put(`${backendUrl}/api/vehicles/${id}`, dataToSubmit, { withCredentials: true });
-      setMessage({ type: 'success', text: response.data.message || 'Cập nhật xe thành công!' });
+      toast.success(response.data.message || 'Cập nhật xe thành công!');
       setTimeout(() => navigate(-1), 1500);
     } catch (error) {
-      setMessage({ type: 'error', text: error.response?.data?.message || 'Có lỗi khi cập nhật xe.' });
+      toast.error(error.response?.data?.message || 'Có lỗi khi cập nhật xe.');
     } finally {
       setSaving(false);
     }
@@ -199,18 +213,26 @@ const EditVehicleForm = () => {
             <div className="owner-vehicle-detail-info improved">
               <table className="vehicle-info-table">
                 <tbody>
-                  <tr><td>Thương hiệu:</td><td><input type="text" name="brand" value={formData.brand} onChange={handleChange} /></td></tr>
-                  <tr><td>Dòng xe:</td><td><input type="text" name="model" value={formData.model} onChange={handleChange} /></td></tr>
-                  <tr><td>Biển số:</td><td><input type="text" name="licensePlate" value={formData.licensePlate} onChange={handleChange} /></td></tr>
-                  <tr><td>Địa điểm:</td><td><input type="text" name="location" value={formData.location} onChange={handleChange} /></td></tr>
-                  <tr><td>Giá thuê/ngày:</td><td><input type="number" name="pricePerDay" value={formData.pricePerDay} onChange={handleChange} /></td></tr>
-                  <tr><td>Tiền đặt cọc:</td><td><input type="number" name="deposit" value={formData.deposit} onChange={handleChange} /></td></tr>
-                  <tr><td>Số chỗ:</td><td><input type="number" name="seatCount" value={formData.seatCount} onChange={handleChange} /></td></tr>
-                  <tr><td>Thân xe:</td><td><select name="bodyType" value={formData.bodyType} onChange={handleChange}>{bodyTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></td></tr>
-                  <tr><td>Hộp số:</td><td><select name="transmission" value={formData.transmission} onChange={handleChange}>{transmissionOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></td></tr>
-                  <tr><td>Nhiên liệu:</td><td><select name="fuelType" value={formData.fuelType} onChange={handleChange}>{fuelTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></td></tr>
-                  <tr><td>Tiêu hao nhiên liệu:</td><td><input type="text" name="fuelConsumption" value={formData.fuelConsumption || ''} onChange={handleChange} /></td></tr>
-                  <tr><td>Tính năng:</td><td>
+                  <tr><td>Thương hiệu <span style={{color:'#d32f2f'}}>*</span>:</td><td><input type="text" name="brand" value={formData.brand} onChange={handleChange} placeholder="VD: Toyota, Kia..." /></td></tr>
+                  <tr><td>Dòng xe <span style={{color:'#d32f2f'}}>*</span>:</td><td><input type="text" name="model" value={formData.model} onChange={handleChange} placeholder="VD: Vios, Morning..." /></td></tr>
+                  <tr><td>Biển số <span style={{color:'#d32f2f'}}>*</span>:</td><td><input type="text" name="licensePlate" value={formData.licensePlate} onChange={handleChange} placeholder="VD: 30A-123.45" /></td></tr>
+                  <tr><td>Địa điểm <span style={{color:'#d32f2f'}}>*</span>:</td><td><input type="text" name="location" value={formData.location} onChange={handleChange} placeholder="VD: Hà Nội, TP.HCM..." /></td></tr>
+                  <tr><td>Giá thuê/ngày <span style={{color:'#d32f2f'}}>*</span>:</td><td><input type="number" name="pricePerDay" value={formData.pricePerDay} onChange={handleChange} placeholder="Nhập giá VNĐ" /></td></tr>
+                  <tr><td>Số chỗ <span style={{color:'#d32f2f'}}>*</span>:</td><td><input type="number" name="seatCount" value={formData.seatCount} onChange={handleChange} placeholder="VD: 5, 7..." /></td></tr>
+                  <tr><td>Kiểu dáng <span style={{color:'#d32f2f'}}>*</span>:</td><td><select name="bodyType" value={formData.bodyType} onChange={handleChange}>
+                    <option value="">Chọn kiểu dáng</option>
+                    {bodyTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select></td></tr>
+                  <tr><td>Hộp số <span style={{color:'#d32f2f'}}>*</span>:</td><td><select name="transmission" value={formData.transmission} onChange={handleChange}>
+                    <option value="">Chọn hộp số</option>
+                    {transmissionOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select></td></tr>
+                  <tr><td>Nhiên liệu <span style={{color:'#d32f2f'}}>*</span>:</td><td><select name="fuelType" value={formData.fuelType} onChange={handleChange}>
+                    <option value="">Chọn loại nhiên liệu</option>
+                    {fuelTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select></td></tr>
+                  <tr><td>Mức tiêu thụ nhiên liệu:</td><td><input type="text" name="fuelConsumption" value={formData.fuelConsumption || ''} onChange={handleChange} placeholder="VD: 7L/100km" /></td></tr>
+                  <tr><td>Tiện nghi:</td><td>
                     <div className="features-grid">
                       {availableFeatures.map((feature) => (
                         <label key={feature} className="feature-checkbox">
@@ -225,8 +247,29 @@ const EditVehicleForm = () => {
                       ))}
                     </div>
                   </td></tr>
-                  <tr><td>Điều khoản thuê:</td><td><textarea name="rentalPolicy" value={formData.rentalPolicy || ''} onChange={handleChange} rows="3" /></td></tr>
-                  <tr><td>Mô tả:</td><td><textarea name="description" value={formData.description} onChange={handleChange} rows="4" /></td></tr>
+                  <tr><td>Mô tả <span style={{color:'#d32f2f'}}>*</span>:</td><td><textarea name="description" value={formData.description} onChange={handleChange} rows="4" placeholder="Mô tả chi tiết về xe, tình trạng, lưu ý..." /></td></tr>
+                  <tr>
+                    <td>Giấy tờ xe:</td>
+                    <td>
+                      <input type="file" name="vehicleDocument" accept="image/*,application/pdf" onChange={handleChange} />
+                      {vehicleDocumentPreview && (
+                        vehicleDocumentPreview.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                          <img
+                            src={vehicleDocumentPreview}
+                            alt="Giấy tờ xe"
+                            className="vehicle-document-img clickable"
+                            style={{maxWidth: 220, maxHeight: 160, border: '1.5px solid #bdbdbd', borderRadius: 8, marginTop: 6, cursor: 'zoom-in'}}
+                            onClick={() => setModalImage(vehicleDocumentPreview)}
+                            title="Click để xem lớn"
+                          />
+                        ) : vehicleDocumentPreview.match(/\.pdf$/i) ? (
+                          <a href={vehicleDocumentPreview} target="_blank" rel="noopener noreferrer">Xem file PDF</a>
+                        ) : (
+                          <a href={vehicleDocumentPreview} target="_blank" rel="noopener noreferrer">Xem</a>
+                        )
+                      )}
+                    </td>
+                  </tr>
                 </tbody>
               </table>
               {message && <div className={`form-message ${message.type}`}>{message.text}</div>}
@@ -238,11 +281,12 @@ const EditVehicleForm = () => {
           </form>
           {modalImage && (
             <div className="image-modal" onClick={() => setModalImage(null)}>
-              <img src={modalImage} alt="Xem lớn" className="modal-img" />
+              <img src={modalImage} alt="Xem lớn" className="modal-img" style={{maxWidth: '90vw', maxHeight: '90vh'}} />
             </div>
           )}
         </div>
       </div>
+      <ToastContainer position="top-right" autoClose={2500} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
     </div>
   );
 };

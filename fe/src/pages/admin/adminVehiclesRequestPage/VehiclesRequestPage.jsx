@@ -3,6 +3,8 @@ import './VehiclesRequestPage.css';
 import axios from 'axios';
 import SidebarAdmin from '../../../components/SidebarAdmin/SidebarAdmin';
 import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999';
 const adminApi = `${backendUrl}/api/admin`;
@@ -51,12 +53,12 @@ const VehiclesRequestPage = () => {
             const response = await axios.put(`${adminApi}/vehicle-approvals/${vehicleId}`, payload, { withCredentials: true });
             if (response.status === 200) {
                 setPendingVehicles(pendingVehicles.filter(vehicle => vehicle._id !== vehicleId));
-                alert(response.data.message);
+                toast.success(response.data.message || 'Thành công!');
             } else {
-                setError(response.data.message || 'Đã xảy ra lỗi khi duyệt xe.');
+                toast.error(response.data.message || 'Đã xảy ra lỗi khi duyệt xe.');
             }
         } catch (error) {
-            setError(error.response?.data?.message || 'Có lỗi xảy ra khi xử lý yêu cầu duyệt xe!');
+            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xử lý yêu cầu duyệt xe!');
         }
         setActionLoading(prev => ({ ...prev, [vehicleId]: false }));
     };
@@ -156,6 +158,7 @@ const VehiclesRequestPage = () => {
                     {renderContent()}
                 </div>
             </div>
+            <ToastContainer position="top-right" autoClose={2500} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
         </div>
     );
 };

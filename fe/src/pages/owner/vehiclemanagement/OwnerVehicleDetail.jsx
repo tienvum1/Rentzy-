@@ -75,7 +75,6 @@ const OwnerVehicleDetail = () => {
                   <tr><td>Biển số:</td><td>{vehicle.licensePlate}</td></tr>
                   <tr><td>Địa điểm:</td><td>{vehicle.location}</td></tr>
                   <tr><td>Giá thuê/ngày:</td><td>{vehicle.pricePerDay?.toLocaleString()} VND</td></tr>
-                  <tr><td>Tiền đặt cọc:</td><td>{vehicle.deposit?.toLocaleString()} VND</td></tr>
                   <tr><td>Số chỗ:</td><td>{vehicle.seatCount}</td></tr>
                   <tr><td>Thân xe:</td><td>{vehicle.bodyType}</td></tr>
                   <tr><td>Hộp số:</td><td>{vehicle.transmission}</td></tr>
@@ -83,9 +82,28 @@ const OwnerVehicleDetail = () => {
                   <tr><td>Tiêu hao nhiên liệu:</td><td>{vehicle.fuelConsumption}</td></tr>
                   <tr><td>Trạng thái xe:</td><td>{vehicle.status}</td></tr>
                   <tr><td>Trạng thái duyệt:</td><td>{vehicle.approvalStatus}</td></tr>
-                 
                   <tr><td>Tính năng:</td><td>{vehicle.features && vehicle.features.length > 0 ? vehicle.features.join(', ') : 'Không có'}</td></tr>
-                  <tr><td>Điều khoản thuê:</td><td>{vehicle.rentalPolicy}</td></tr>
+                  <tr>
+                    <td>Giấy tờ xe:</td>
+                    <td>
+                      {vehicle.vehicleDocument ? (
+                        vehicle.vehicleDocument.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                          <img
+                            src={vehicle.vehicleDocument}
+                            alt="Giấy tờ xe"
+                            className="vehicle-document-img clickable"
+                            style={{maxWidth: 220, maxHeight: 160, border: '1.5px solid #bdbdbd', borderRadius: 8, marginTop: 6, cursor: 'zoom-in'}}
+                            onClick={() => setModalImage(vehicle.vehicleDocument)}
+                            title="Click để xem lớn"
+                          />
+                        ) : vehicle.vehicleDocument.match(/\.pdf$/i) ? (
+                          <a href={vehicle.vehicleDocument} target="_blank" rel="noopener noreferrer">Xem file PDF</a>
+                        ) : (
+                          <a href={vehicle.vehicleDocument} target="_blank" rel="noopener noreferrer">Xem</a>
+                        )
+                      ) : 'Không có'}
+                    </td>
+                  </tr>
                   <tr><td>Mô tả:</td><td>{vehicle.description}</td></tr>
                   <tr><td>Lượt thuê:</td><td>{vehicle.rentalCount || 0}</td></tr>
                 </tbody>
@@ -97,7 +115,7 @@ const OwnerVehicleDetail = () => {
       </div>
       {modalImage && (
         <div className="image-modal" onClick={() => setModalImage(null)}>
-          <img src={modalImage} alt="Xem lớn" className="modal-img" />
+          <img src={modalImage} alt="Xem lớn" className="modal-img" style={{maxWidth: '90vw', maxHeight: '90vh'}} />
         </div>
       )}
     </div>

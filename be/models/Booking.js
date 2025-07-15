@@ -60,12 +60,6 @@ const bookingSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-    // Tiền đặt cọc
-    deposit: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
     // Tiền giảm giá
     discountAmount: {
       type: Number,

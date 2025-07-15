@@ -46,36 +46,58 @@ const AdminVehicleDetailPage = () => {
                 <div className="vehicles-requests-inner-content">
                     <button className="btn-action btn-close" onClick={() => navigate(-1)}>Quay lại</button>
                     <h2>Chi tiết xe chờ duyệt</h2>
-                    <div className="vehicle-detail-admin">
-                        <div className="vehicle-detail-images">
+                    <div className="vehicle-detail-admin-new">
+                        <div className="vehicle-detail-images-col">
                             {vehicle.primaryImage && (
-                                <img src={vehicle.primaryImage} alt="Ảnh chính" className="vehicle-detail-main-img" onClick={() => handleImageClick(vehicle.primaryImage)} style={{cursor:'zoom-in'}} />
+                                <img src={vehicle.primaryImage} alt="Ảnh chính" className="vehicle-detail-main-img" onClick={() => handleImageClick(vehicle.primaryImage)} />
                             )}
                             {vehicle.gallery && vehicle.gallery.length > 0 && (
                                 <div className="vehicle-detail-gallery">
                                     {vehicle.gallery.map((img, idx) => (
-                                        <img key={idx} src={img} alt={`Ảnh phụ ${idx + 1}`} className="vehicle-detail-gallery-img" onClick={() => handleImageClick(img)} style={{cursor:'zoom-in'}} />
+                                        <img key={idx} src={img} alt={`Ảnh phụ ${idx + 1}`} className="vehicle-detail-gallery-img" onClick={() => handleImageClick(img)} />
                                     ))}
                                 </div>
                             )}
+                            <div className="vehicle-info-group">
+                                <div className="vehicle-info-group-title">Giấy tờ xe</div>
+                                {vehicle.vehicleDocument ? (
+                                    vehicle.vehicleDocument.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                                        <img src={vehicle.vehicleDocument} alt="Giấy tờ xe" style={{maxWidth: 400, maxHeight: 280, border: '1.5px solid #bdbdbd', borderRadius: 8, marginTop: 6, cursor: 'zoom-in'}} onClick={() => handleImageClick(vehicle.vehicleDocument)} />
+                                    ) : vehicle.vehicleDocument.match(/\.pdf$/i) ? (
+                                        <a href={vehicle.vehicleDocument} target="_blank" rel="noopener noreferrer">Xem file PDF</a>
+                                    ) : (
+                                        <a href={vehicle.vehicleDocument} target="_blank" rel="noopener noreferrer">Xem</a>
+                                    )
+                                ) : 'Không có'}
+                            </div>
                         </div>
-                        <div className="vehicle-detail-info">
-                            <p><b>Thương hiệu:</b> {vehicle.brand}</p>
-                            <p><b>Model:</b> {vehicle.model}</p>
-                            <p><b>Biển số:</b> {vehicle.licensePlate}</p>
-                            <p><b>Giá/ngày:</b> {vehicle.pricePerDay ? parseFloat(vehicle.pricePerDay).toLocaleString() + ' VNĐ' : 'N/A'}</p>
-                            <p><b>Tiền đặt cọc:</b> {vehicle.deposit ? parseFloat(vehicle.deposit).toLocaleString() + ' VNĐ' : 'N/A'}</p>
-                            <p><b>Số chỗ:</b> {vehicle.seatCount}</p>
-                            <p><b>Kiểu dáng:</b> {vehicle.bodyType}</p>
-                            <p><b>Truyền động:</b> {vehicle.transmission}</p>
-                            <p><b>Nhiên liệu:</b> {vehicle.fuelType}</p>
-                            <p><b>Mức tiêu thụ nhiên liệu:</b> {vehicle.fuelConsumption}</p>
-                            <p><b>Tiện nghi:</b> {vehicle.features && Array.isArray(vehicle.features) ? vehicle.features.join(', ') : vehicle.features}</p>
-                            <p><b>Chính sách thuê:</b> {vehicle.rentalPolicy}</p>
-                            <p><b>Mô tả:</b> {vehicle.description}</p>
-                            <p><b>Chủ xe:</b> {vehicle.owner ? `${vehicle.owner.name} (${vehicle.owner.email})` : 'N/A'}</p>
-                            <p><b>Trạng thái duyệt:</b> {vehicle.approvalStatus}</p>
-                            <p><b>Trạng thái xe:</b> {vehicle.status}</p>
+                        <div className="vehicle-detail-info-col">
+                            <div className="vehicle-info-group">
+                                <div className="vehicle-info-group-title">Thông tin xe</div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Thương hiệu:</span><span className="vehicle-info-value">{vehicle.brand}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Model:</span><span className="vehicle-info-value">{vehicle.model}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Biển số:</span><span className="vehicle-info-value" style={{fontWeight:600, color:'#d32f2f'}}>{vehicle.licensePlate}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Địa điểm:</span><span className="vehicle-info-value">{vehicle.location}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Giá/ngày:</span><span className="vehicle-info-value">{vehicle.pricePerDay ? parseFloat(vehicle.pricePerDay).toLocaleString() + ' VNĐ' : 'N/A'}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Số chỗ:</span><span className="vehicle-info-value">{vehicle.seatCount}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Kiểu dáng:</span><span className="vehicle-info-value">{vehicle.bodyType}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Hộp số:</span><span className="vehicle-info-value">{vehicle.transmission}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Nhiên liệu:</span><span className="vehicle-info-value">{vehicle.fuelType}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Mức tiêu thụ:</span><span className="vehicle-info-value">{vehicle.fuelConsumption}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Tiện nghi:</span><span className="vehicle-info-value">{vehicle.features && Array.isArray(vehicle.features) ? vehicle.features.join(', ') : vehicle.features}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Mô tả:</span><span className="vehicle-info-value">{vehicle.description}</span></div>
+                            </div>
+                            <div className="vehicle-info-group">
+                                <div className="vehicle-info-group-title">Chủ xe</div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Tên:</span><span className="vehicle-info-value">{vehicle.owner ? vehicle.owner.name : 'N/A'}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Email:</span><span className="vehicle-info-value">{vehicle.owner ? vehicle.owner.email : 'N/A'}</span></div>
+                            </div>
+                            <div className="vehicle-info-group">
+                                <div className="vehicle-info-group-title">Trạng thái</div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Duyệt:</span><span className="vehicle-info-value" style={{fontWeight:600, color:'#1976d2'}}>{vehicle.approvalStatus}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Trạng thái xe:</span><span className="vehicle-info-value">{vehicle.status}</span></div>
+                                <div className="vehicle-info-row"><span className="vehicle-info-label">Lượt thuê:</span><span className="vehicle-info-value">{vehicle.rentalCount || 0}</span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -83,7 +105,7 @@ const AdminVehicleDetailPage = () => {
                 {zoomImage && (
                     <div className="zoom-modal-backdrop" onClick={closeZoom}>
                         <div className="zoom-modal-content" onClick={e => e.stopPropagation()}>
-                            <img src={zoomImage} alt="Phóng to" className="zoom-modal-img" />
+                            <img src={zoomImage} alt="Phóng to" className="zoom-modal-img" style={{maxWidth: '90vw', maxHeight: '90vh'}} />
                             <button className="btn-action btn-close" onClick={closeZoom} style={{marginTop: 16}}>Đóng</button>
                         </div>
                     </div>

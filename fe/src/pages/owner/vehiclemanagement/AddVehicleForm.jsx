@@ -3,25 +3,44 @@ import './AddVehicleForm.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import SidebarOwner from '../../../components/SidebarOwner/SidebarOwner';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const bodyTypeOptions = [
-  'Sedan', 'SUV', 'Hatchback', 'Coupe', 'Convertible', 'Wagon', 'Van', 'Pickup'
+  { label: 'Sedan', value: 'sedan' },
+  { label: 'SUV', value: 'suv' },
+  { label: 'Hatchback', value: 'hatchback' },
+  { label: 'Coupe', value: 'coupe' },
+  { label: 'Mui trần', value: 'convertible' },
+  { label: 'Xe wagon', value: 'wagon' },
+  { label: 'Xe van', value: 'van' },
+  { label: 'Bán tải', value: 'pickup' }
 ];
-const transmissionOptions = ['Automatic', 'Manual'];
-const fuelTypeOptions = ['Gasoline', 'Diesel', 'Electric', 'Hybrid'];
+const transmissionOptions = [
+  { label: 'Tự động', value: 'automatic' },
+  { label: 'Số sàn', value: 'manual' }
+];
+const fuelTypeOptions = [
+  { label: 'Xăng', value: 'gasoline' },
+  { label: 'Dầu', value: 'diesel' },
+  { label: 'Điện', value: 'electric' },
+  { label: 'Hybrid', value: 'hybrid' }
+];
 const availableFeatures = [
   'Bản đồ', 'Bluetooth', 'Camera 360', 'Camera cập lề', 'Camera hành trình', 'Camera lùi',
   'Cảm biến lốp', 'Cảm biến va chạm', 'Cảnh báo tốc độ', 'Cửa sổ trời', 'Định vị GPS',
-  'Ghế trẻ em', 'Khe cắm USB', 'Lốp dự phòng', 'Màn hình DVD', 'Nắp thùng xe bán tải', 'ETC', 'Túi khí an toàn'
+  'Ghế trẻ em', 'Khe cắm USB', 'Lốp dự phòng', 'Màn hình DVD', 'Nắp thùng xe bán tải', 'ETC', 'Túi khí an toàn',
+  'Cửa hít', 'Cảnh báo điểm mù',
 ];
 
 const AddVehicleForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     brand: '', model: '', license_plate: '', location: '', price_per_day: '',
-    deposit_required: '', seats: '', body_type: '', transmission: '', fuel_type: '',
+    seats: '', body_type: '', transmission: '', fuel_type: '',
     fuelConsumption: '', main_image: null, additional_images: [], features: [],
-    rentalPolicy: '', description: ''
+    description: '',
+    vehicleDocument: null
   });
   const [mainImagePreview, setMainImagePreview] = useState(null);
   const [additionalImagesPreviews, setAdditionalImagesPreviews] = useState([]);
@@ -29,6 +48,8 @@ const AddVehicleForm = () => {
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const additionalImagesInputRef = useRef(null);
+  const vehicleDocumentInputRef = useRef(null);
+  const [vehicleDocumentPreview, setVehicleDocumentPreview] = useState(null);
 
   // Handle input change
   const handleChange = (e) => {
@@ -43,6 +64,10 @@ const AddVehicleForm = () => {
         ...prev,
         additional_images: [...prev.additional_images, ...newFiles],
       }));
+    } else if (name === 'vehicleDocument') {
+      const file = files[0] || null;
+      setFormData((prev) => ({ ...prev, vehicleDocument: file }));
+      setVehicleDocumentPreview(file && file.type.startsWith('image/') ? URL.createObjectURL(file) : null);
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -83,13 +108,13 @@ const AddVehicleForm = () => {
     if (!formData.license_plate.trim()) newErrors.license_plate = 'Bắt buộc';
     if (!formData.location.trim()) newErrors.location = 'Bắt buộc';
     if (!formData.price_per_day || Number(formData.price_per_day) <= 0) newErrors.price_per_day = 'Bắt buộc';
-    if (!formData.deposit_required || Number(formData.deposit_required) < 0) newErrors.deposit_required = 'Bắt buộc';
     if (!formData.seats || Number(formData.seats) <= 0) newErrors.seats = 'Bắt buộc';
     if (!formData.body_type) newErrors.body_type = 'Bắt buộc';
     if (!formData.transmission) newErrors.transmission = 'Bắt buộc';
     if (!formData.fuel_type) newErrors.fuel_type = 'Bắt buộc';
     if (!formData.main_image) newErrors.main_image = 'Bắt buộc';
     if (!formData.description.trim()) newErrors.description = 'Bắt buộc';
+    if (!formData.vehicleDocument) newErrors.vehicleDocument = 'Bắt buộc';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -106,28 +131,27 @@ const AddVehicleForm = () => {
     dataToSubmit.append('licensePlate', formData.license_plate);
     dataToSubmit.append('location', formData.location);
     dataToSubmit.append('pricePerDay', Number(formData.price_per_day));
-    dataToSubmit.append('deposit', Number(formData.deposit_required));
     dataToSubmit.append('seatCount', Number(formData.seats));
     dataToSubmit.append('bodyType', formData.body_type);
     dataToSubmit.append('transmission', formData.transmission.toLowerCase());
     dataToSubmit.append('fuelType', formData.fuel_type.toLowerCase());
     dataToSubmit.append('fuelConsumption', formData.fuelConsumption);
-    dataToSubmit.append('rentalPolicy', formData.rentalPolicy);
     dataToSubmit.append('description', formData.description);
     if (formData.main_image) dataToSubmit.append('main_image', formData.main_image);
     formData.additional_images.forEach((file) => dataToSubmit.append('additional_images', file));
     formData.features.forEach((f) => dataToSubmit.append('features', f));
+    if (formData.vehicleDocument) dataToSubmit.append('vehicleDocument', formData.vehicleDocument);
     try {
       const apiUrl = `${process.env.REACT_APP_BACKEND_URL}/api/vehicles/add`;
       const response = await axios.post(apiUrl, dataToSubmit, { withCredentials: true });
       if (response.status === 201) {
-        setMessage({ type: 'success', text: response.data.message || 'Xe đã được thêm thành công!' });
+        toast.success(response.data.message || 'Xe đã được thêm thành công!');
         setTimeout(() => navigate('/ownerpage/vehicle-management'), 3000);
       } else {
-        setMessage({ type: 'warning', text: response.data.message || 'Thêm xe thành công nhưng có cảnh báo.' });
+        toast.warn(response.data.message || 'Thêm xe thành công nhưng có cảnh báo.');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: error.response?.data?.message || 'Có lỗi xảy ra khi thêm xe.' });
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi thêm xe.');
     } finally {
       setLoading(false);
     }
@@ -141,6 +165,10 @@ const AddVehicleForm = () => {
       <div className="add-vehicle-form-main">
         <div className="add-vehicle-form-card">
           <h2>Đăng xe cho thuê</h2>
+          <div className="form-info-tag" style={{marginBottom: 16, color: '#155724', fontWeight: 500, background: '#d4edda', padding: 10, borderRadius: 4, border: '1px solid #c3e6cb'}}>
+            Hãy vui lòng điền các thông tin chính xác của xe và giấy tờ xe hợp lệ.
+          </div>
+          <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="colored" />
           {message && <div className={`form-message ${message.type}`}>{message.text}</div>}
           {loading && <div className="form-loading">Đang xử lý...</div>}
           <form onSubmit={handleSubmit} noValidate>
@@ -148,37 +176,32 @@ const AddVehicleForm = () => {
               <div className="form-section">
                 <div className="form-group">
                   <label>Thương hiệu</label>
-                  <input type="text" name="brand" value={formData.brand} onChange={handleChange} />
+                  <input type="text" name="brand" value={formData.brand} onChange={handleChange} placeholder="VD: Toyota, Kia, Ford..." />
                   {errors.brand && <span className="error">{errors.brand}</span>}
                 </div>
                 <div className="form-group">
                   <label>Dòng xe</label>
-                  <input type="text" name="model" value={formData.model} onChange={handleChange} />
+                  <input type="text" name="model" value={formData.model} onChange={handleChange} placeholder="VD: Vios, Morning, Ranger..." />
                   {errors.model && <span className="error">{errors.model}</span>}
                 </div>
                 <div className="form-group">
                   <label>Biển số xe</label>
-                  <input type="text" name="license_plate" value={formData.license_plate} onChange={handleChange} />
+                  <input type="text" name="license_plate" value={formData.license_plate} onChange={handleChange} placeholder="VD: 30A-123.45" />
                   {errors.license_plate && <span className="error">{errors.license_plate}</span>}
                 </div>
                 <div className="form-group">
                   <label>Địa điểm</label>
-                  <input type="text" name="location" value={formData.location} onChange={handleChange} />
+                  <input type="text" name="location" value={formData.location} onChange={handleChange} placeholder="VD: Hà Nội, TP.HCM, Đà Nẵng..." />
                   {errors.location && <span className="error">{errors.location}</span>}
                 </div>
                 <div className="form-group">
                   <label>Giá mỗi ngày (VND)</label>
-                  <input type="number" name="price_per_day" value={formData.price_per_day} onChange={handleChange} min="0" />
+                  <input type="number" name="price_per_day" value={formData.price_per_day} onChange={handleChange} min="0" placeholder="VD: 500000" />
                   {errors.price_per_day && <span className="error">{errors.price_per_day}</span>}
                 </div>
                 <div className="form-group">
-                  <label>Tiền đặt cọc (VND)</label>
-                  <input type="number" name="deposit_required" value={formData.deposit_required} onChange={handleChange} min="0" />
-                  {errors.deposit_required && <span className="error">{errors.deposit_required}</span>}
-                </div>
-                <div className="form-group">
                   <label>Số chỗ ngồi</label>
-                  <input type="number" name="seats" value={formData.seats} onChange={handleChange} min="1" />
+                  <input type="number" name="seats" value={formData.seats} onChange={handleChange} min="1" placeholder="VD: 5" />
                   {errors.seats && <span className="error">{errors.seats}</span>}
                 </div>
                
@@ -188,7 +211,7 @@ const AddVehicleForm = () => {
                   <label>Dạng thân xe</label>
                   <select name="body_type" value={formData.body_type} onChange={handleChange}>
                     <option value="">-- Chọn dạng thân xe --</option>
-                    {bodyTypeOptions.map((type) => <option key={type} value={type}>{type}</option>)}
+                    {bodyTypeOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                   </select>
                   {errors.body_type && <span className="error">{errors.body_type}</span>}
                 </div>
@@ -196,7 +219,7 @@ const AddVehicleForm = () => {
                   <label>Hộp số</label>
                   <select name="transmission" value={formData.transmission} onChange={handleChange}>
                     <option value="">-- Chọn hộp số --</option>
-                    {transmissionOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                    {transmissionOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                   </select>
                   {errors.transmission && <span className="error">{errors.transmission}</span>}
                 </div>
@@ -204,7 +227,7 @@ const AddVehicleForm = () => {
                   <label>Loại nhiên liệu</label>
                   <select name="fuel_type" value={formData.fuel_type} onChange={handleChange}>
                     <option value="">-- Chọn loại nhiên liệu --</option>
-                    {fuelTypeOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                    {fuelTypeOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                   </select>
                   {errors.fuel_type && <span className="error">{errors.fuel_type}</span>}
                 </div>
@@ -215,7 +238,7 @@ const AddVehicleForm = () => {
                     name="fuelConsumption"
                     value={formData.fuelConsumption}
                     onChange={handleChange}
-                    placeholder="6.5 L/100km hoặc 15 kWh/100km"
+                    placeholder="VD: 6.5 L/100km hoặc 15 kWh/100km"
                   />
                 </div>
                 <div className="form-group">
@@ -236,12 +259,8 @@ const AddVehicleForm = () => {
               </div>
             </div>
             <div className="form-group full-width">
-              <label>Điều khoản thuê xe (tùy chọn)</label>
-              <textarea name="rentalPolicy" value={formData.rentalPolicy} onChange={handleChange} rows="4" placeholder="Nhập các điều khoản đặc biệt khi thuê xe này..." />
-            </div>
-            <div className="form-group full-width">
               <label>Mô tả</label>
-              <textarea name="description" value={formData.description} onChange={handleChange} rows="5" className={errors.description ? 'input-error' : ''} />
+              <textarea name="description" value={formData.description} onChange={handleChange} rows="5" className={errors.description ? 'input-error' : ''} placeholder="Mô tả chi tiết về xe, tình trạng, lưu ý khi thuê..." />
               {errors.description && <span className="error">{errors.description}</span>}
             </div>
             <div className="form-group full-width">
@@ -262,6 +281,16 @@ const AddVehicleForm = () => {
                   </div>
                 ))}
               </div>
+            </div>
+            <div className="form-group full-width">
+              <label>Giấy tờ xe (bắt buộc)</label>
+              <input type="file" name="vehicleDocument" accept="image/*,application/pdf" onChange={handleChange} required />
+              {vehicleDocumentPreview && (
+                <div style={{marginTop: 8}}>
+                  <span style={{fontSize: 13, color: '#555'}}>Xem trước giấy tờ xe:</span><br/>
+                  <img src={vehicleDocumentPreview} alt="Preview giấy tờ xe" style={{maxWidth: 220, maxHeight: 180, border: '1px solid #ccc', borderRadius: 4}} />
+                </div>
+              )}
             </div>
             <div className="form-actions">
               <button type="submit" className="btn-submit" disabled={loading}>{loading ? 'Đang thêm...' : 'Đăng xe cho thuê'}</button>
