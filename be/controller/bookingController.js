@@ -1316,6 +1316,8 @@ const requestCancelBooking = async (req, res) => {
   }
 };
 
+
+
 module.exports = {
   getBookingByIdForOwner,
   createBooking,
@@ -1342,5 +1344,6 @@ module.exports = {
   reviewBooking,
   getOwnerReviews,
   getBookingContract,
-  getExpectedDepositRefund
+  getExpectedDepositRefund,
+
 };

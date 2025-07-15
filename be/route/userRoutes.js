@@ -4,6 +4,7 @@ const userController = require("../controller/userController");
 const { protect } = require("../middleware/authMiddleware");
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' }); // Thay đổi: Lưu file tạm thời vào thư mục 'uploads/'
+const { addBankAccount } = require('../controller/userController');
 
 
 router.get("/profile", protect, userController.getProfile);
@@ -37,6 +38,8 @@ router.post('/verify-phone-otp', protect, userController.verifyPhoneOtp);
 
 // New route for resending phone OTP
 router.post('/resend-phone-otp', protect, userController.resendPhoneOtp);
+
+router.post('/bank-account', protect, addBankAccount);
 
 
 module.exports = router;

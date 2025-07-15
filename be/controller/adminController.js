@@ -1,3 +1,7 @@
+const axios = require('axios');
+const FormData = require('form-data');
+const fs = require('fs');
+const cloudinary = require('../utils/cloudinary');
 const User = require('../models/User');
 const Vehicle = require('../models/Vehicle');
 const Notification = require('../models/Notification');
@@ -5,6 +9,76 @@ const Booking = require('../models/Booking');
 const Wallet = require('../models/Wallet');
 const Transaction = require('../models/Transaction');
 const mongoose = require('mongoose');
+
+// Hàm gọi FPT.AI OCR
+async function extractDriverLicenseInfoFPT(imageUrl) {
+  // Tải ảnh về file tạm nếu là URL
+  const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+  const tempPath = `/tmp/license_${Date.now()}.jpg`;
+  fs.writeFileSync(tempPath, response.data);
+  const form = new FormData();
+  form.append('image', fs.createReadStream(tempPath));
+  const apiKey = process.env.FPT_AI_API_KEY ; // Đặt key thật ở .env
+  try {
+    const ocrRes = await axios.post(
+      'https://api.fpt.ai/vision/dlr/vnm',
+      form,
+      {
+        headers: {
+          ...form.getHeaders(),
+          'api-key': apiKey,
+        },
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+      }
+    );
+    fs.unlinkSync(tempPath); // Xoá file tạm
+    return ocrRes.data.data;
+  } catch (error) {
+    fs.unlinkSync(tempPath);
+    throw error;
+  }
+}
+
+// Controller nhận upload GPLX và xác thực AI
+exports.createDriverLicense = async (req, res) => {
+  try {
+    const { driver_license_full_name, driver_license_birth_date, driver_license_number } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    // Upload ảnh lên cloudinary như cũ...
+    let imageUrl = user.driver_license_image;
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'driver_licenses'
+      });
+      imageUrl = result.secure_url;
+    }
+    // Gọi FPT.AI OCR để trích xuất thông tin từ ảnh
+    const ocrInfo = await extractDriverLicenseInfoFPT(imageUrl);
+    // So sánh với thông tin user nhập
+    if (
+      ocrInfo.name.trim().toLowerCase() !== driver_license_full_name.trim().toLowerCase() ||
+      ocrInfo.date_of_birth !== driver_license_birth_date ||
+      ocrInfo.id !== driver_license_number
+    ) {
+      return res.status(400).json({ message: 'Thông tin trên ảnh GPLX không khớp với thông tin bạn nhập. Vui lòng kiểm tra lại!' });
+    }
+    // Nếu khớp, lưu thông tin và đặt trạng thái chờ duyệt
+    user.driver_license_full_name = driver_license_full_name;
+    user.driver_license_birth_date = driver_license_birth_date;
+    user.driver_license_number = driver_license_number;
+    user.driver_license_image = imageUrl;
+    user.driver_license_verification_status = 'pending';
+    await user.save({ validateBeforeSave: false });
+    res.status(200).json({ message: 'Thông tin GPLX đã được gửi để chờ admin duyệt!', user });
+  } catch (error) {
+    console.error("Error creating/updating driver license:", error);
+    res.status(500).json({ message: 'Lỗi khi xử lý thông tin GPLX.' });
+  }
+};
 
 // Lấy danh sách yêu cầu làm chủ xe
 const getOwnerRequests = async (req, res) => {
@@ -544,6 +618,9 @@ const getDashboardStats = async (req, res) => {
     }
 };
 
+
+
+
 // ✅ Export tất cả ở một chỗ duy nhất
 module.exports = {
     getOwnerRequests,
@@ -558,4 +635,5 @@ module.exports = {
     getPendingDepositRefundRequests,
     approveDepositRefund,
     approvePayoutBooking,
+    createDriverLicense: exports.createDriverLicense, // Add the new function to exports
 };

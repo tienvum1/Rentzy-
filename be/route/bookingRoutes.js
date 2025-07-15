@@ -43,7 +43,6 @@ router.post('/:id/upload-post-delivery-images', upload.array('images', 5), prote
 router.post('/:id/review', protect, reviewBooking);
 router.get('/:ownerId/reviews', getOwnerReviews);
 
-// VAN KHAI : 
 // route for get all bookings of specific user : 
 router.post('/a/get-filter-bookings', protect, getFilteredBookingsOfUser )
 // router for get all models 
@@ -51,7 +50,6 @@ router.get("/a/get-all-models", protect, getAllModelOfVehicle)
 // router for get all status bookings of specific user 
 router.get('/a/get-all-status-of-booking-for-user', protect, getAllStatusOfBooking);
 router.get('/get-all-bookings', protect, getAllBookingOfSpecificUser)
-
 
 
 module.exports = router;
