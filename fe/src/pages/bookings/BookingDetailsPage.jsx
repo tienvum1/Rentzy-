@@ -724,6 +724,9 @@ const BookingDetailsPage = () => {
           <FaMoneyBillWave style={{fontSize: 22}} /> Chính sách hoàn tiền tiền cọc khi huỷ đặt xe
         </h3>
         <ul style={{ fontSize: 16, color: '#334155', margin: 0, paddingLeft: 24 }}>
+        <li style={{ marginBottom: 8 }}>
+            <b>Huỷ trong vòng 1 giờ sau khi đặt :</b> <span style={{ color: '#f59e42', fontWeight: 600 }}>Hoàn 100% tiền đã thanh toán </span>
+          </li>
           <li style={{ marginBottom: 8 }}>
             <b>Huỷ trước 7 ngày:</b> <span style={{ color: '#f59e42', fontWeight: 600 }}>Hoàn 50% tiền cọc</span>, <span style={{ color: '#ef4444', fontWeight: 600 }}>mất 50%</span>
           </li>

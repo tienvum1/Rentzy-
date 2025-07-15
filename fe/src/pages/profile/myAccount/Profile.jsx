@@ -13,6 +13,7 @@ import UpdateNamePopup from './UpdateNamePopup';
 import DriverLicenseVerification from './DriverLicenseVerification';
 import ProfileLayout from '../profileLayout/ProfileLayout';
 import BankAccountPage from './BankAccountPage';
+import CCCDPage from './CCCDPage';
 
 const Profile = () => {
   const { user, isAuthenticated, isLoading, login } = useAuth();
@@ -101,6 +102,12 @@ const Profile = () => {
           style={{ padding: '8px 16px', background: activeTab === 'gplx' ? '#1976d2' : '#eee', color: activeTab === 'gplx' ? '#fff' : '#333', border: 'none', borderRadius: 4 }}
         >
           Giấy phép lái xe
+        </button>
+        <button
+          onClick={() => setActiveTab('cccd')}
+          style={{ padding: '8px 16px', background: activeTab === 'cccd' ? '#1976d2' : '#eee', color: activeTab === 'cccd' ? '#fff' : '#333', border: 'none', borderRadius: 4 }}
+        >
+          CCCD
         </button>
         <button
           onClick={() => setActiveTab('bank')}
@@ -212,6 +219,7 @@ const Profile = () => {
         </div>
       )}
       {activeTab === 'gplx' && <DriverLicenseVerification />}
+      {activeTab === 'cccd' && <CCCDPage />}
       {activeTab === 'bank' && <BankAccountPage />}
       <AvatarPopup
         open={showAvatarPopup}
