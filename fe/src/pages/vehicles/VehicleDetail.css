@@ -1000,3 +1000,117 @@
         transform: translateY(0);
     }
 } 
+
+/* Nút báo cáo xe này */
+.report-vehicle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 32px auto 0 auto;
+  font-size: 1.25rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid #222;
+  color: #111;
+  cursor: pointer;
+  padding: 0 0 4px 0;
+  transition: color 0.2s;
+}
+.report-vehicle-btn:hover {
+  color: #28a745;
+  border-bottom: 2px solid #28a745;
+}
+.report-flag-icon {
+  font-size: 1.4em;
+}
+
+/* Modal báo xấu */
+.report-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.report-modal {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 36px 32px 32px 32px;
+  min-width: 340px;
+  max-width: 95vw;
+  width: 420px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.close-modal-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 1.6em;
+  color: #444;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.close-modal-btn:hover {
+  color: #e74c3c;
+}
+.report-modal-title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 28px;
+}
+.report-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.report-modal-label {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.report-modal-select {
+  font-size: 1.1rem;
+  padding: 12px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 6px;
+}
+.report-modal-textarea {
+  font-size: 1.1rem;
+  padding: 12px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  resize: vertical;
+  min-height: 80px;
+}
+.report-modal-submit {
+  background: #6ee7b7;
+  color: #222;
+  font-size: 1.15rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 0;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.report-modal-submit:hover {
+  background: #34d399;
+}
+@media (max-width: 600px) {
+  .report-modal {
+    min-width: 0;
+    width: 98vw;
+    padding: 18px 6px 18px 6px;
+  }
+} 

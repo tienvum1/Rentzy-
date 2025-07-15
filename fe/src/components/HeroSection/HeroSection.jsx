@@ -6,30 +6,30 @@ const HeroSection = () => {
     <div className="hero-section">
       <div className="hero-section__content">
         <h1 className="hero-section__title">
-          Find the <br />
-          Perfect Car <br />
-          for <span className="highlight">Your Trip</span>
+          Tìm chiếc xe <br />
+          hoàn hảo <br />
+          cho <span className="highlight">chuyến đi của bạn</span>
         </h1>
         <p className="hero-section__desc">
-          Quick, easy, and at the best price. Whether you're planning a weekend getaway or a cross-country adventure, our diverse fleet and exceptional service ensure you get on the road effortlessly.
+          Nhanh chóng, dễ dàng và giá tốt nhất. Dù bạn lên kế hoạch cho một chuyến đi cuối tuần hay hành trình xuyên Việt, đội xe đa dạng và dịch vụ tận tâm của chúng tôi sẽ giúp bạn lên đường thật dễ dàng.
         </p>
         <div className="hero-section__buttons">
-          <button className="btn btn-primary">Get Started</button>
-          <button className="btn btn-secondary">Download App</button>
+          <button className="btn btn-primary">Bắt đầu ngay</button>
+          <button className="btn btn-secondary">Tải ứng dụng</button>
         </div>
         <div className="hero-section__stores">
           <div className="store">
             <img src="https://upload.wikimedia.org/wikipedia/commons/6/67/App_Store_%28iOS%29.svg" alt="Apple Store" className="store__icon" />
-            <span>Download on the <b>Apple Store</b></span>
+            <span>Tải trên <b>Apple Store</b></span>
           </div>
           <div className="store">
             <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" className="store__icon" />
-            <span>Get it on <b>Google Play</b></span>
+            <span>Tải về từ <b>Google Play</b></span>
           </div>
         </div>
       </div>
       <div className="hero-section__image">
-        <img src="https://images.pexels.com/photos/358070/pexels-photo-358070.jpeg" alt="Car" />
+        <img src="https://images.pexels.com/photos/358070/pexels-photo-358070.jpeg" alt="Xe ô tô" />
       </div>
     </div>
   );

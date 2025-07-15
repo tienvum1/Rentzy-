@@ -1,8 +1,8 @@
 // be/routes/bookingRoutes.js
 const express = require('express');
 const router = express.Router();
-const { protect, verifyRenterRequirements } = require('../middleware/authMiddleware');
-const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages, reviewBooking ,getOwnerReviews, getBookingContract, getExpectedDepositRefund} = require('../controller/bookingController');
+const { protect, verifyRenterRequirements, adminOnly } = require('../middleware/authMiddleware');
+const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages, reviewBooking ,getOwnerReviews, getBookingContract, getExpectedDepositRefund, getMyBookingReviews} = require('../controller/bookingController');
 const upload = require('../middleware/upload');
 
 // Public routes
@@ -42,6 +42,9 @@ router.post('/:id/upload-post-delivery-images', upload.array('images', 5), prote
 // Đánh giá booking
 router.post('/:id/review', protect, reviewBooking);
 router.get('/:ownerId/reviews', getOwnerReviews);
+
+// Lấy tất cả review của user 
+router.get('/user/my-reviews', protect, getMyBookingReviews);
 
 // route for get all bookings of specific user : 
 router.post('/a/get-filter-bookings', protect, getFilteredBookingsOfUser )
