@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import SidebarOwner from '../../../components/SidebarOwner/SidebarOwner';
 import './OwnerCancelRequests.css';
+import { toast } from 'react-toastify';
 
 const OwnerCancelRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -31,8 +32,9 @@ const OwnerCancelRequests = () => {
     try {
       await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${bookingId}/owner-approve-cancel`, {}, { withCredentials: true });
       setRequests(prev => prev.filter(r => r._id !== bookingId));
+      toast.success('Duyệt huỷ đơn thành công!');
     } catch (err) {
-      alert('Duyệt huỷ thất bại!');
+      toast.error('Duyệt huỷ thất bại!');
     }
     setActionLoading('');
   };
@@ -42,8 +44,9 @@ const OwnerCancelRequests = () => {
     try {
       await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${bookingId}/owner-reject-cancel`, {}, { withCredentials: true });
       setRequests(prev => prev.filter(r => r._id !== bookingId));
+      toast.success('Từ chối huỷ đơn thành công!');
     } catch (err) {
-      alert('Từ chối huỷ thất bại!');
+      toast.error('Từ chối huỷ thất bại!');
     }
     setActionLoading('');
   };

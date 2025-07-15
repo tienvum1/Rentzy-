@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, verifyRenterRequirements } = require('../middleware/authMiddleware');
-const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingWithRefund, getExpectedRefund, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages, reviewBooking ,getOwnerReviews, getBookingContract} = require('../controller/bookingController');
+const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages, reviewBooking ,getOwnerReviews, getBookingContract, getExpectedDepositRefund} = require('../controller/bookingController');
 const upload = require('../middleware/upload');
 
 // Public routes
@@ -16,14 +16,18 @@ router.get('/my-bookings', protect, getUserBookings);
 router.post('/createBooking', protect, verifyRenterRequirements, createBooking);
 router.get('/:id', protect, getBookingDetails);
 router.get('/contract/:id', protect, getBookingContract);
-router.get('/:id/expected-refund', protect, getExpectedRefund); // API lấy thông tin hoàn tiền dự kiến
+
+// huỷ đơn thuê
 router.post('/:id/cancel-expired', protect, cancelBookingByFrontend);
+
 // huỷ đơn thue
-router.post('/:id/cancel-with-refund', protect, cancelBookingWithRefund);
-router.post('/:id/cancel', protect, cancelBookingByUser);
-router.post('/:id/request-cancel', protect, requestCancelBooking);
+router.get('/:id/expected-refund',protect , getExpectedDepositRefund); // Route: Tính toán hoàn tiền cọc dự kiến
+router.post('/:id/request-cancel', protect, requestCancelBooking); // gửi yêu cầu 
+
+// approve đơn thuê
 router.post('/:id/owner-approve-cancel', protect, ownerApproveCancel);
 router.post('/:id/owner-reject-cancel', protect, ownerRejectCancel);
+
 
 // Xác nhận giao xe
 router.post('/:id/confirm-handover', protect, confirmHandover);

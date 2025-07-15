@@ -5,6 +5,8 @@ import "./App.css";
 import { AuthProvider } from "./context/AuthContext"; // Import AuthProvider
 import OwnerRouteGuard from "./components/OwnerRouteGuard/OwnerRouteGuard"; // Import OwnerRouteGuard
 import AdminRouteGuard from "./components/AdminRouteGuard/AdminRouteGuard"; // Import AdminRouteGuard
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 // page 
@@ -63,6 +65,8 @@ import AdminVehicleDetailPage from './pages/admin/adminAdminVehicleDetailPage/Ad
 import AdminDepositRefunds from './pages/admin/payoutRequests/AdminDepositRefunds';
 import AdminPayoutRequests from './pages/admin/payoutRequests/AdminPayoutRequests';
 import AdminNotificationPage from './pages/admin/adminNotificationPage/AdminNotificationPage';
+import AdminPromotionPage from './pages/admin/adminPromotionPage/AdminPromotionPage';
+
 
 import PaymentSuccess from "./pages/payment/PaymentSuccess";
 import PaymentFailed from "./pages/payment/PaymentFailed";
@@ -73,6 +77,8 @@ function App() {
       <AuthProvider>
         {/* Wrap the application with AuthProvider */}
         <div className="App">
+          {/* ToastContainer để hiển thị toast toàn cục */}
+          <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
           <Routes>
             {/* Profile*/}
             <Route path="/homepage" element={<Homepage />} />
@@ -138,6 +144,7 @@ function App() {
                 element={<AdminVehicleDetailPage />}
               />
               <Route path="withdrawals" element={<AdminWithdrawals />} />
+              <Route path="promotions" element={<AdminPromotionPage />} />
               <Route
                 path="driver-license-requests"
                 element={<DriverLicenseRequestsPage />}
