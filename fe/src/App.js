@@ -45,7 +45,7 @@ import NotificationPage from "./pages/profile/myNotifications/NotificationPage";
 import MyReviews from './pages/profile/myReviews/MyReviews';
 
 // owner
-import OwnerPage from "./pages/owner/Ownerpage";
+import OwnerPage from "./pages/owner/ownerpage";
 import VehicleManagement from "./pages/owner/vehiclemanagement/VehicleManagement";
 import AddVehicleForm from "./pages/owner/vehiclemanagement/AddVehicleForm";
 import OwnerVehicleDetail from "./pages/owner/vehiclemanagement/OwnerVehicleDetail";
