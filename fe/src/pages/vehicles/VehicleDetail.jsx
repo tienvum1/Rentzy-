@@ -38,6 +38,10 @@ const VehicleDetail = () => {
     const [pickupTime, setPickupTime] = useState('');
     const [returnTime, setReturnTime] = useState('');
     const [ownerReviewData, setOwnerReviewData] = useState(null);
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportReason, setReportReason] = useState('');
+    const [reportMessage, setReportMessage] = useState('');
+    const [reportLoading, setReportLoading] = useState(false);
 
     // Fetch vehicle details
     useEffect(() => {
@@ -127,6 +131,31 @@ const VehicleDetail = () => {
             month: '2-digit',
             day: '2-digit'
         });
+    };
+
+    // Hàm gửi báo cáo xe
+    const handleReportSubmit = async (e) => {
+        e.preventDefault();
+        if (!reportReason) {
+            toast.error('Vui lòng chọn lý do báo cáo!');
+            return;
+        }
+        setReportLoading(true);
+        try {
+            await axios.post(
+                `${backendUrl}/api/report/vehicles/${vehicle._id}/report`,
+                { reason: reportReason, message: reportMessage },
+                { withCredentials:true }
+            );
+            toast.success('Báo cáo của bạn đã được gửi!');
+            setShowReportModal(false);
+            setReportReason('');
+            setReportMessage('');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Gửi báo cáo thất bại!');
+        } finally {
+            setReportLoading(false);
+        }
     };
 
     // Loading state
@@ -231,6 +260,32 @@ const VehicleDetail = () => {
                             user={user}
                             bookedDates={bookedDates}
                         />
+                        {/* Nút báo cáo xe này */}
+                        <button className="report-vehicle-btn" onClick={() => setShowReportModal(true)}>
+                            <span className="report-flag-icon">&#9873;</span> Báo cáo xe này
+                        </button>
+                        {/* Modal báo xấu */}
+                        {showReportModal && (
+                            <div className="report-modal-overlay">
+                                <div className="report-modal">
+                                    <button className="close-modal-btn" onClick={() => setShowReportModal(false)}>&times;</button>
+                                    <h2 className="report-modal-title">Báo xấu</h2>
+                                    <form className="report-modal-form" onSubmit={handleReportSubmit}>
+                                        <label className="report-modal-label">Vui lòng chọn lí do</label>
+                                        <select className="report-modal-select" value={reportReason} onChange={e => setReportReason(e.target.value)} required>
+                                            <option value="">Chọn lí do</option>
+                                            <option value="fake_info">Xe không đúng thực tế</option>
+                                            <option value="illegal">Xe vi phạm pháp luật</option>
+                                            <option value="bad_owner">Chủ xe không hợp tác</option>
+                                            <option value="dangerous">Xe nguy hiểm/không an toàn</option>
+                                            <option value="other">Khác</option>
+                                        </select>
+                                        <textarea className="report-modal-textarea" placeholder="Vui lòng nhập lí do hoặc lời nhắn" rows={4} value={reportMessage} onChange={e => setReportMessage(e.target.value)}></textarea>
+                                        <button className="report-modal-submit" type="submit" disabled={reportLoading}>{reportLoading ? 'Đang gửi...' : 'Báo cáo'}</button>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
                         {showDateTimeModal && (
                             <DateTimeSelector
                                 bookedDates={bookedDates}

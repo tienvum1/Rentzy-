@@ -7,6 +7,7 @@ const User = require("../models/User");
 const Wallet = require("../models/Wallet");
 const Notification = require("../models/Notification");
 const cloudinary = require('../utils/cloudinary');
+const mongoose = require('mongoose'); // Đảm bảo đã import mongoose
 
 // Tạo booking mới
 const createBooking = async (req, res) => {
@@ -1317,6 +1318,31 @@ const requestCancelBooking = async (req, res) => {
 };
 
 
+const getMyBookingReviews = async (req, res) => {
+  try {
+    let userId = req.user._id;
+    // Nếu userId là object, chuyển sang string
+    if (typeof userId === 'object' && userId.toString) {
+      userId = userId.toString();
+    }
+    // Kiểm tra ObjectId hợp lệ
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'UserId không hợp lệ.' });
+    }
+    const reviews = await Booking.find({
+      renter: userId,
+      review: { $exists: true, $ne: '' }
+    })
+      .select('vehicle rating review createdAt')
+      .populate('vehicle', 'brand model licensePlate')
+      .sort({ createdAt: -1 });
+
+    res.json({ reviews });
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi lấy đánh giá của bạn.', error: err.message });
+  }
+};
+
 
 module.exports = {
   getBookingByIdForOwner,
@@ -1345,5 +1371,6 @@ module.exports = {
   getOwnerReviews,
   getBookingContract,
   getExpectedDepositRefund,
+  getMyBookingReviews,
 
 };

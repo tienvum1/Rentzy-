@@ -42,6 +42,7 @@ import UserBookings from "./pages/profile/myBookings/UserBookings"; // Import Us
 import TransactionHistory from "./pages/profile/myTransactions/TransactionHistory";
 import WalletInfo from "./pages/profile/myWallet/WalletInfo";
 import NotificationPage from "./pages/profile/myNotifications/NotificationPage";
+import MyReviews from './pages/profile/myReviews/MyReviews';
 
 // owner
 import OwnerPage from "./pages/owner/Ownerpage";
@@ -65,6 +66,7 @@ import AdminVehicleDetailPage from './pages/admin/adminAdminVehicleDetailPage/Ad
 import AdminPayoutRequests from './pages/admin/payoutRequests/AdminPayoutRequests';
 import AdminNotificationPage from './pages/admin/adminNotificationPage/AdminNotificationPage';
 import AdminPromotionPage from './pages/admin/adminPromotionPage/AdminPromotionPage';
+import AdminVehicleReports from './pages/admin/adminVehicleReports/AdminVehicleReports';
 
 
 import PaymentSuccess from "./pages/payment/PaymentSuccess";
@@ -102,6 +104,7 @@ function App() {
               path="/profile/my-notifications"
               element={<NotificationPage />}
             />
+            <Route path="/profile/my-reviews" element={<MyReviews />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route
@@ -150,6 +153,7 @@ function App() {
               />
               <Route path="payout-requests" element={<AdminPayoutRequests />} />
               <Route path="notifications" element={<AdminNotificationPage />} />
+              <Route path="vehicle-reports" element={<AdminVehicleReports />} />
         
             </Route>
             {/* Route Guard owner  managemnt route */}

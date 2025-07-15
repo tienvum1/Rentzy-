@@ -39,6 +39,8 @@ const SidebarAdmin = () => {
                 {/* Withdrawals Management */}
                 <li onClick={() => handleMenuItemClick('/admin/promotions')}>Quản lý mã khuyến mãi</li>
         
+        {/* Withdrawals Management */}
+        <li onClick={() => handleMenuItemClick('/admin/vehicle-reports')}>Quản lý báo cáo</li>
     
 
 

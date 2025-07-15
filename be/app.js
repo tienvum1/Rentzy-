@@ -24,6 +24,7 @@ const walletRoutes = require('./route/walletRoutes');
 const transactionRoute = require('./route/transactionRoute');
 const notificationRoutes = require('./route/notificationRoutes');
 const promotionRoutes = require('./route/promotionRoutes');
+const reportRoutes = require('./route/reportRoutes');
 
 const app = express();
 
@@ -81,6 +82,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/transactions', transactionRoute);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/promotions', promotionRoutes);
+app.use('/api/report', reportRoutes);
 
 
 app.get("/hello", (req, res) => {
