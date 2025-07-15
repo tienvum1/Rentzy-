@@ -3,7 +3,7 @@ import axios from "axios";
 import { FaCar, FaStar, FaCrown } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import "./OwnerProfilePage.css";
-import VehicleCard from '../../../components/VehicleCard/vehicleCard';
+import VehicleCard from '../../../components/VehicleCard/VehicleCard';
 import Header from '../../../components/Header/Header';
 import Footer from '../../../components/footer/Footer';
 
