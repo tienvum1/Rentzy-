@@ -43,9 +43,10 @@ import TransactionHistory from "./pages/profile/myTransactions/TransactionHistor
 import WalletInfo from "./pages/profile/myWallet/WalletInfo";
 import NotificationPage from "./pages/profile/myNotifications/NotificationPage";
 import MyReviews from './pages/profile/myReviews/MyReviews';
+import FavoritesPage from "./pages/profile/FavoritesPage";
 
 // owner
-import OwnerPage from "./pages/owner/ownerpage";
+import OwnerPage from "./pages/owner/OwnerPage";
 import VehicleManagement from "./pages/owner/vehiclemanagement/VehicleManagement";
 import AddVehicleForm from "./pages/owner/vehiclemanagement/AddVehicleForm";
 import OwnerVehicleDetail from "./pages/owner/vehiclemanagement/OwnerVehicleDetail";
@@ -94,7 +95,7 @@ function App() {
 
       {/* Profile*/}
             <Route path="/profile/account" element={<Profile />} />
-            <Route path="/profile/favorites" element={<Profile />} />
+            <Route path="/profile/favorites" element={<FavoritesPage />} />
             <Route
               path="/profile/my-bookings"
               element={<UserBookings />}

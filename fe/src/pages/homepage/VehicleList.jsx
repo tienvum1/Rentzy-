@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import VehicleCard from "../../components/VehicleCard/VehicleCard";
+import VehicleCard from "../../components/vehicleCard/VehicleCard";
 import "./VehicleList.css";
 
 const VehicleList = () => {
