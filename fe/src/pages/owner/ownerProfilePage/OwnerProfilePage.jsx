@@ -82,7 +82,7 @@ const OwnerProfilePage = () => {
             {vehicles.length === 0 ? (
               <div>Chủ xe chưa có xe nào đang cho thuê.</div>
             ) : (
-              vehicles.map((v) => (
+              vehicles.filter(v => v.status === 'available' && v.approvalStatus === 'approved').map((v) => (
                 <VehicleCard vehicle={v} key={v._id} />
               ))
             )}

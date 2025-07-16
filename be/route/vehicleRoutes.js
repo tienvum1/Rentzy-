@@ -20,7 +20,7 @@ router.get('/approved', vehicleController.getApprovedVehicles);
 
 
 // Route tìm xe theo thời gian (API đơn giản)
-router.post('/search/by-time', vehicleController.searchVehiclesByTime);
+router.post('/search/by-time', vehicleController.searchVehicles);
 
 
 // tạo xe 
