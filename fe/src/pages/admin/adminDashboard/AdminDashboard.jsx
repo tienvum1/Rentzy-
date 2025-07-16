@@ -81,11 +81,12 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="admin-dashboard-layout">
+      <div className="for-admin-dashboard-layout">
         <SidebarAdmin />
-        <main className="admin-dashboard-content">
-          <section className="loading-section">
-            <div className="loading-spinner" />
+
+        <div className="for-admin-dashboard-content">
+          <div className="for-admin-dashboard-loading-container">
+
             <div>Đang tải dữ liệu...</div>
           </section>
         </main>
@@ -95,86 +96,205 @@ const AdminDashboard = () => {
 
   if (error) {
     return (
-      <div className="admin-dashboard-layout">
+      <div className="for-admin-dashboard-layout">
         <SidebarAdmin />
-        <main className="admin-dashboard-content">
-          <section className="error-section">
-            <h3>Lỗi tải dữ liệu</h3>
-            <p>{error}</p>
-          </section>
-        </main>
+
+        <div className="for-admin-dashboard-content">
+          <div className="for-admin-dashboard-error-container">
+            <div>
+              <h3>Lỗi tải dữ liệu</h3>
+              <p>{error}</p>
+            </div>
+          </div>
+        </div>
+
+
       </div>
     );
   }
 
   return (
-    <div className="admin-dashboard-layout">
+    <div className="for-admin-dashboard-layout">
       <SidebarAdmin />
-      <main className="admin-dashboard-content">
-        {/* Header */}
-        <header className="admin-dashboard-header center-header">
-          <h1 className="admin-dashboard-title">Bảng điều khiển Admin</h1>
-          <p className="admin-dashboard-subtitle">
+
+      <div className="for-admin-dashboard-content">
+        <div className="for-admin-dashboard-header">
+          <h1 className="for-admin-dashboard-title">Bảng điều khiển Admin</h1>
+          <p className="for-admin-dashboard-subtitle">
+
             Chào mừng trở lại, {user.name}! Đây là tổng quan về hệ thống Rentzy.
           </p>
         </header>
 
-        {/* Stats Row */}
-        <section className="stats-section stats-row">
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-card-header">
-                <span className="stat-card-title">Tổng người dùng</span>
-                <div className="stat-card-icon" style={{ backgroundColor: "#dbeafe", color: "#1e40af" }}>👥</div>
-              </div>
-              <div className="stat-card-value">{formatNumber(dashboardData?.userStats?.total || 0)}</div>
-              <div className="stat-card-change positive">
-                <span>↗</span>
-                <span>Hoạt động</span>
-              </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-card-header">
-                <span className="stat-card-title">Tổng xe</span>
-                <div className="stat-card-icon" style={{ backgroundColor: "#d1fae5", color: "#065f46" }}>🚗</div>
-              </div>
-              <div className="stat-card-value">{formatNumber(dashboardData?.vehicleStats?.total || 0)}</div>
-              <div className="stat-card-change positive">
-                <span>↗</span>
-                <span>{formatNumber(dashboardData?.vehicleStats?.available || 0)} khả dụng</span>
+        <div className="for-admin-dashboard-stats-grid">
+          <div className="for-admin-dashboard-stat-card">
+            <div className="for-admin-dashboard-stat-card-header">
+              <span className="for-admin-dashboard-stat-card-title">
+                Tổng người dùng
+              </span>
+              <div
+                className="for-admin-dashboard-stat-card-icon"
+                style={{ backgroundColor: "#dbeafe", color: "#1e40af" }}
+              >
+                👥
               </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-card-header">
-                <span className="stat-card-title">Tổng đơn thuê</span>
-                <div className="stat-card-icon" style={{ backgroundColor: "#fef3c7", color: "#92400e" }}>📅</div>
-              </div>
-              <div className="stat-card-value">{formatNumber(dashboardData?.bookingStats?.total || 0)}</div>
-              <div className="stat-card-change positive">
-                <span>↗</span>
-                <span>{formatNumber(dashboardData?.bookingStats?.completed || 0)} hoàn thành</span>
+            <div className="for-admin-dashboard-stat-card-value">
+              {formatNumber(dashboardData?.userStats?.total || 0)}
+            </div>
+            <div className="for-admin-dashboard-stat-card-change positive">
+              <span>↗</span>
+              <span>Hoạt động</span>
+            </div>
+          </div>
+
+          <div className="for-admin-dashboard-stat-card">
+            <div className="for-admin-dashboard-stat-card-header">
+              <span className="for-admin-dashboard-stat-card-title">
+                Tổng xe
+              </span>
+              <div
+                className="for-admin-dashboard-stat-card-icon"
+                style={{ backgroundColor: "#d1fae5", color: "#065f46" }}
+              >
+                🚗
               </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-card-header">
-                <span className="stat-card-title">Doanh thu</span>
-                <div className="stat-card-icon" style={{ backgroundColor: "#fce7f3", color: "#be185d" }}>💰</div>
+            <div className="for-admin-dashboard-stat-card-value">
+              {formatNumber(dashboardData?.vehicleStats?.total || 0)}
+            </div>
+            <div className="for-admin-dashboard-stat-card-change positive">
+              <span>↗</span>
+              <span>
+                {formatNumber(dashboardData?.vehicleStats?.available || 0)} khả
+                dụng
+              </span>
+            </div>
+          </div>
+
+          <div className="for-admin-dashboard-stat-card">
+            <div className="for-admin-dashboard-stat-card-header">
+              <span className="for-admin-dashboard-stat-card-title">
+                Tổng đơn thuê
+              </span>
+              <div
+                className="for-admin-dashboard-stat-card-icon"
+                style={{ backgroundColor: "#fef3c7", color: "#92400e" }}
+              >
+                📅
               </div>
-              <div className="stat-card-value">{formatCurrency(dashboardData?.transactionStats?.totalRevenue || 0)}</div>
-              <div className="stat-card-change positive">
-                <span>↗</span>
-                <span>Tổng cộng</span>
+            </div>
+            <div className="for-admin-dashboard-stat-card-value">
+              {formatNumber(dashboardData?.bookingStats?.total || 0)}
+            </div>
+            <div className="for-admin-dashboard-stat-card-change positive">
+              <span>↗</span>
+              <span>
+                {formatNumber(dashboardData?.bookingStats?.completed || 0)} hoàn
+                thành
+              </span>
+            </div>
+          </div>
+
+          <div className="for-admin-dashboard-stat-card">
+            <div className="for-admin-dashboard-stat-card-header">
+              <span className="for-admin-dashboard-stat-card-title">
+                Doanh thu
+              </span>
+              <div
+                className="for-admin-dashboard-stat-card-icon"
+                style={{ backgroundColor: "#fce7f3", color: "#be185d" }}
+              >
+                💰
               </div>
+            </div>
+            <div className="for-admin-dashboard-stat-card-value">
+              {formatCurrency(
+                dashboardData?.transactionStats?.totalRevenue || 0
+              )}
+            </div>
+            <div className="for-admin-dashboard-stat-card-change positive">
+              <span>↗</span>
+              <span>Tổng cộng</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="for-admin-dashboard-charts-section">
+          <div className="for-admin-dashboard-chart-card">
+            <div className="for-admin-dashboard-chart-card-header">
+              <h3 className="for-admin-dashboard-chart-card-title">
+                Thống kê đơn thuê theo tháng
+              </h3>
+            </div>
+            <div
+              className="for-admin-dashboard-chart-container"
+              style={{ width: "100%", height: 300 }}
+            >
+              {monthlyChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={monthlyChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      stroke="#82ca9d"
+                      hide
+                    />
+                    <Tooltip
+                      formatter={(value, name) =>
+                        name === "Doanh thu"
+                          ? `${value.toLocaleString()}₫`
+                          : value
+                      }
+                    />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="Số đơn" fill="#8884d8" />
+                    <Bar yAxisId="right" dataKey="Doanh thu" fill="#82ca9d" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div>Chưa có dữ liệu thống kê</div>
+              )}
+
             </div>
           </div>
         </section>
 
-        {/* Main Section: 2 columns */}
-        <section className="main-section-2col">
-          <div className="main-left-col">
-            <div className="chart-card">
-              <div className="chart-card-header">
-                <h3 className="chart-card-title">Thống kê đơn thuê theo tháng</h3>
+
+          <div className="for-admin-dashboard-chart-card">
+            <div className="for-admin-dashboard-chart-card-header">
+              <h3 className="for-admin-dashboard-chart-card-title">
+                Yêu cầu chờ duyệt
+              </h3>
+            </div>
+            <div style={{ padding: "1rem 0" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "1rem",
+                }}
+              >
+                <span>Yêu cầu chủ xe</span>
+                <span style={{ fontWeight: "bold", color: "#dc2626" }}>
+                  {dashboardData?.pendingRequests?.ownerRequests || 0}
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "1rem",
+                }}
+              >
+                <span>Xác thực GPLX</span>
+                <span style={{ fontWeight: "bold", color: "#dc2626" }}>
+                  {dashboardData?.pendingRequests?.driverLicenses || 0}
+                </span>
+
               </div>
               <div className="chart-container">
                 {monthlyChartData.length > 0 ? (
@@ -195,101 +315,170 @@ const AdminDashboard = () => {
                 )}
               </div>
             </div>
-            {/* Hai bảng nằm ngang */}
-            <div className="top-tables-row">
-              <div className="table-card">
-                <div className="table-card-header">
-                  <h3 className="table-card-title">Top 5 xe được thuê nhiều nhất</h3>
-                </div>
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Xe</th>
-                      <th>Chủ xe</th>
-                      <th>Số lần thuê</th>
-                      <th>Giá/ngày</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dashboardData?.topVehicles?.length > 0 ? (
-                      dashboardData.topVehicles.map((vehicle) => (
-                        <tr key={vehicle._id}>
-                          <td>
-                            <div>
-                              <div style={{ fontWeight: "600" }}>{vehicle.brand} {vehicle.model}</div>
-                              <div style={{ fontSize: "0.75rem", color: "#64748b" }}>{vehicle.licensePlate}</div>
-                            </div>
-                          </td>
-                          <td>{vehicle.owner?.name}</td>
-                          <td><span className="status-badge completed">{vehicle.rentalCount}</span></td>
-                          <td>{formatCurrency(vehicle.pricePerDay)}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="4" style={{ textAlign: "center", color: "#64748b" }}>Chưa có dữ liệu</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <div className="table-card">
-                <div className="table-card-header">
-                  <h3 className="table-card-title">Top 5 chủ xe có doanh thu cao nhất</h3>
-                </div>
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Chủ xe</th>
-                      <th>Email</th>
-                      <th>Doanh thu</th>
-                      <th>Số đơn</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dashboardData?.topOwners?.length > 0 ? (
-                      dashboardData.topOwners.map((owner) => (
-                        <tr key={owner._id}>
-                          <td style={{ fontWeight: "600" }}>{owner.owner?.name}</td>
-                          <td>{owner.owner?.email}</td>
-                          <td style={{ fontWeight: "600", color: "#059669" }}>{formatCurrency(owner.totalRevenue)}</td>
-                          <td><span className="status-badge approved">{owner.bookingCount}</span></td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="4" style={{ textAlign: "center", color: "#64748b" }}>Chưa có dữ liệu</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            {/* End hai bảng nằm ngang */}
+
           </div>
-          <div className="main-right-col">
-            <div className="chart-card">
-              <div className="chart-card-header">
-                <h3 className="chart-card-title">Yêu cầu chờ duyệt</h3>
-              </div>
-              <div className="pending-requests-list">
-                <div className="pending-request-item">
-                  <span>Yêu cầu chủ xe</span>
-                  <span className="pending-request-count">{dashboardData?.pendingRequests?.ownerRequests || 0}</span>
-                </div>
-                <div className="pending-request-item">
-                  <span>Xác thực GPLX</span>
-                  <span className="pending-request-count">{dashboardData?.pendingRequests?.driverLicenses || 0}</span>
-                </div>
-                <div className="pending-request-item">
-                  <span>Duyệt xe</span>
-                  <span className="pending-request-count">{dashboardData?.pendingRequests?.payouts || 0}</span>
-                </div>
-              </div>
+        </div>
+
+        <div className="for-admin-dashboard-tables-section">
+          <div className="for-admin-dashboard-table-card">
+            <div className="for-admin-dashboard-table-card-header">
+              <h3 className="for-admin-dashboard-table-card-title">
+                Top 5 xe được thuê nhiều nhất
+              </h3>
             </div>
+            <table className="for-admin-dashboard-table">
+              <thead>
+                <tr>
+                  <th>Xe</th>
+                  <th>Chủ xe</th>
+                  <th>Số lần thuê</th>
+                  <th>Giá/ngày</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboardData?.topVehicles?.map((vehicle, index) => (
+                  <tr key={vehicle._id}>
+                    <td>
+                      <div>
+                        <div style={{ fontWeight: "600" }}>
+                          {vehicle.brand} {vehicle.model}
+                        </div>
+                        <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                          {vehicle.licensePlate}
+                        </div>
+                      </div>
+                    </td>
+                    <td>{vehicle.owner?.name}</td>
+                    <td>
+                      <span className="for-admin-dashboard-status-badge completed">
+                        {vehicle.rentalCount}
+                      </span>
+                    </td>
+                    <td>{formatCurrency(vehicle.pricePerDay)}</td>
+                  </tr>
+                )) || (
+                  <tr>
+                    <td
+                      colSpan="4"
+                      style={{ textAlign: "center", color: "#64748b" }}
+                    >
+                      Chưa có dữ liệu
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        </section>
-      </main>
+
+          <div className="for-admin-dashboard-table-card">
+            <div className="for-admin-dashboard-table-card-header">
+              <h3 className="for-admin-dashboard-table-card-title">
+                Top 5 chủ xe có doanh thu cao nhất
+              </h3>
+            </div>
+            <table className="for-admin-dashboard-table">
+              <thead>
+                <tr>
+                  <th>Chủ xe</th>
+                  <th>Email</th>
+                  <th>Doanh thu</th>
+                  <th>Số đơn</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboardData?.topOwners?.map((owner, index) => (
+                  <tr key={owner._id}>
+                    <td style={{ fontWeight: "600" }}>{owner.owner?.name}</td>
+                    <td>{owner.owner?.email}</td>
+                    <td style={{ fontWeight: "600", color: "#059669" }}>
+                      {formatCurrency(owner.totalRevenue)}
+                    </td>
+                    <td>
+                      <span className="for-admin-dashboard-status-badge approved">
+                        {owner.bookingCount}
+                      </span>
+                    </td>
+                  </tr>
+                )) || (
+                  <tr>
+                    <td
+                      colSpan="4"
+                      style={{ textAlign: "center", color: "#64748b" }}
+                    >
+                      Chưa có dữ liệu
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="for-admin-dashboard-quick-actions">
+          <h3 className="for-admin-dashboard-quick-actions-title">
+            Thao tác nhanh
+          </h3>
+          <div className="for-admin-dashboard-quick-actions-grid">
+            <a
+              href="/admin/owner-requests"
+              className="for-admin-dashboard-quick-action-btn"
+            >
+              <span className="for-admin-dashboard-quick-action-icon">👤</span>
+              <span>Duyệt yêu cầu chủ xe</span>
+            </a>
+            <a
+              href="/admin/vehicle-approvals"
+              className="for-admin-dashboard-quick-action-btn"
+            >
+              <span className="for-admin-dashboard-quick-action-icon">🚗</span>
+              <span>Duyệt xe mới</span>
+            </a>
+            <a
+              href="/admin/driver-license-requests"
+              className="for-admin-dashboard-quick-action-btn"
+            >
+              <span className="for-admin-dashboard-quick-action-icon">📋</span>
+              <span>Xác thực GPLX</span>
+            </a>
+            <a
+              href="/admin/payout-requests"
+              className="for-admin-dashboard-quick-action-btn"
+            >
+              <span className="for-admin-dashboard-quick-action-icon">💰</span>
+              <span>Duyệt giải ngân</span>
+            </a>
+            <a
+              href="/admin/withdrawals"
+              className="for-admin-dashboard-quick-action-btn"
+            >
+              <span className="for-admin-dashboard-quick-action-icon">💸</span>
+              <span>Quản lý rút tiền</span>
+            </a>
+            <a
+              href="/admin/users"
+              className="for-admin-dashboard-quick-action-btn"
+            >
+              <span className="for-admin-dashboard-quick-action-icon">👥</span>
+              <span>Quản lý người dùng</span>
+            </a>
+            <a
+              href="/admin/vehicle-approvals"
+              className="for-admin-dashboard-quick-action-btn"
+            >
+              <span className="for-admin-dashboard-quick-action-icon">🚙</span>
+              <span>Quản lý xe</span>
+            </a>
+            <a
+              href="/admin/notifications"
+              className="for-admin-dashboard-quick-action-btn"
+            >
+              <span className="for-admin-dashboard-quick-action-icon">🔔</span>
+              <span>Thông báo</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };
