@@ -274,8 +274,41 @@ exports.updateVehicleStatus = async (req, res) => {
 // Lấy danh sách xe đã được duyệt và đang sẵn sàng cho thuê
 exports.getApprovedVehicles = async (req, res) => {
   try {
-    // Chỉ lấy xe đã duyệt và đang available
-    const vehicles = await Vehicle.find({ approvalStatus: "approved", status: "available" }).populate('owner', 'name email');
+    const {
+      pickupDate, pickupTime, returnDate, returnTime,
+      seat, brand, transmission, fuel, area
+    } = req.query;
+
+    let filter = { approvalStatus: "approved", status: "available" };
+
+    // Filter các trường khác
+    if (seat) filter.seatCount = Number(seat);
+    if (brand) filter.brand = brand;
+    if (transmission) filter.transmission = transmission;
+    if (fuel) filter.fuelType = fuel;
+    if (area) filter.location = area;
+
+    // Filter ngày như cũ
+    let excludeVehicleIds = [];
+    if (pickupDate && pickupTime && returnDate && returnTime) {
+      const pickupDateTime = new Date(`${pickupDate}T${pickupTime}`);
+      const returnDateTime = new Date(`${returnDate}T${returnTime}`);
+      const overlappingBookings = await require('../models/Booking').find({
+        $or: [
+          {
+            startDate: { $lte: returnDateTime },
+            endDate: { $gte: pickupDateTime }
+          }
+        ],
+        status: { $nin: ['canceled', 'rejected'] }
+      });
+      excludeVehicleIds = overlappingBookings.map(b => b.vehicle.toString());
+      if (excludeVehicleIds.length > 0) {
+        filter._id = { $nin: excludeVehicleIds };
+      }
+    }
+
+    const vehicles = await require('../models/Vehicle').find(filter).populate('owner', 'name email');
     res.status(200).json({ vehicles, count: vehicles.length });
   } catch (error) {
     res.status(500).json({ message: "Không thể lấy danh sách xe đã duyệt.", error: error.message });

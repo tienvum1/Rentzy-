@@ -6,6 +6,8 @@ import HeroSection from '../../components/HeroSection/HeroSection';
 import StatsSection from '../../components/StatsSection/StatsSection';
 import BrandsSection from '../../components/BrandsSection/BrandsSection';
 import VehicleList from './VehicleList';
+import FilterBar from '../../components/vehicleFilter/FilterBar';
+import DateTimeSelector from '../../components/DateTimeSelector/DateTimeSelector';
 
 // Testimonial Section
 const testimonials = [
@@ -77,9 +79,7 @@ function Homepage() {
         <section className="vehiclelist-wrapper">
           <VehicleList />
         </section>
-
         <TestimonialSection />
-
       </div>
       <Footer />
     </div>
