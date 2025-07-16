@@ -108,12 +108,12 @@ const OwnerRequestsPage = () => {
       <table className="requests-table">
         <thead>
           <tr>
-            <th>Tên</th>
+            <th>Họ tên CCCD</th>
             <th>Email</th>
             <th>Số điện thoại</th>
-            <th>Số CCCD/CMND</th>
-            <th>Ảnh mặt trước CCCD</th>
-            <th>Ảnh mặt sau CCCD</th>
+            <th>Số CCCD</th>
+            <th>Ngày sinh</th>
+            <th>Ảnh CCCD</th>
             <th>Ngày gửi</th>
             <th>Hành động</th>
           </tr>
@@ -121,31 +121,22 @@ const OwnerRequestsPage = () => {
         <tbody>
           {pendingRequests.map(request => (
             <tr key={request._id}>
-              <td>{request.name}</td>
+              <td>{request.cccd_full_name || request.name}</td>
               <td>{request.email}</td>
               <td>{request.phone}</td>
               <td>{request.cccd_number}</td>
+              <td>{request.cccd_birth_date ? new Date(request.cccd_birth_date).toLocaleDateString() : ''}</td>
               <td>
-                {request.cccd_front_url ? (
+                {request.cccd_image ? (
                   <img
-                    src={request.cccd_front_url}
-                    alt="CCCD mặt trước"
+                    src={request.cccd_image}
+                    alt="CCCD"
                     className="cccd-image-thumbnail"
-                    onClick={() => setModalImage(request.cccd_front_url)}
+                    onClick={() => setModalImage(request.cccd_image)}
                   />
                 ) : 'Không có ảnh'}
               </td>
-              <td>
-                {request.cccd_back_url ? (
-                  <img
-                    src={request.cccd_back_url}
-                    alt="CCCD mặt sau"
-                    className="cccd-image-thumbnail"
-                    onClick={() => setModalImage(request.cccd_back_url)}
-                  />
-                ) : 'Không có ảnh'}
-              </td>
-              <td>{new Date(request.owner_request_submitted_at).toLocaleDateString()}</td>
+              <td>{request.owner_request_submitted_at ? new Date(request.owner_request_submitted_at).toLocaleDateString() : ''}</td>
               <td>
                 {actionLoading[request._id] ? (
                   'Đang xử lý...'

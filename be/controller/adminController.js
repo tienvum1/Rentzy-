@@ -117,7 +117,8 @@ const createOrUpdateDriverLicense = async (req, res) => {
 // Lấy danh sách yêu cầu làm chủ xe
 const getOwnerRequests = async (req, res) => {
     try {
-        const pendingOwners = await User.find({ owner_request_status: 'pending' }).select('-password');
+        const pendingOwners = await User.find({ owner_request_status: 'pending' })
+          .select('name email phone cccd_number cccd_full_name cccd_birth_date cccd_image owner_request_status owner_request_submitted_at');
         res.status(200).json({ success: true, data: pendingOwners });
     } catch (error) {
         console.error("Error fetching owner requests:", error);
