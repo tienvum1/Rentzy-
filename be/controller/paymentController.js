@@ -758,13 +758,13 @@ const checkRentalPayment = async (req, res) => {
     }
 };
 
-// Hàm thanh toán tiền cọc bằng wallet
+// Hàm thanh toán tiền cọc bằng wallet (thực chất là thanh toán trước 30%)
 const createWalletDepositPayment = async (req, res) => {
     try {
         const { amount, orderInfo, orderCode } = req.body; // orderCode là booking._id
         const userId = req.user._id;
 
-        console.log('Creating wallet deposit payment with data:', {
+        console.log('Creating wallet upfront (30%) payment with data:', {
             amount,
             orderInfo,
             orderCode,
@@ -775,7 +775,7 @@ const createWalletDepositPayment = async (req, res) => {
         if (!amount || !orderInfo || !orderCode) {
             return res.status(400).json({
                 success: false,
-                message: 'Missing required fields: amount, orderInfo, orderCode'
+                message: 'Thiếu thông tin: amount, orderInfo, orderCode'
             });
         }
 
@@ -783,7 +783,7 @@ const createWalletDepositPayment = async (req, res) => {
         if (isNaN(amount) || amount <= 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid amount'
+                message: 'Số tiền không hợp lệ'
             });
         }
 
@@ -793,17 +793,17 @@ const createWalletDepositPayment = async (req, res) => {
             if (bookingStatusCheck.message === "Booking expired and canceled.") {
                 return res.status(400).json({
                     success: false,
-                    message: 'Booking has expired and been canceled. Please create a new booking.'
+                    message: 'Đơn đã hết hạn và bị huỷ. Vui lòng đặt lại.'
                 });
             } else if (bookingStatusCheck.message === "Booking not in pending status.") {
                 return res.status(400).json({
                     success: false,
-                    message: 'Booking is no longer in pending status and cannot be paid for.'
+                    message: 'Đơn không còn ở trạng thái chờ thanh toán.'
                 });
             } else if (bookingStatusCheck.message === "Booking not found.") {
                 return res.status(404).json({
                     success: false,
-                    message: 'Booking not found for payment.'
+                    message: 'Không tìm thấy đơn đặt xe.'
                 });
             }
         }
@@ -825,12 +825,12 @@ const createWalletDepositPayment = async (req, res) => {
             });
         }
 
-        // Tạo transaction cho tiền cọc
+        // Tạo transaction cho thanh toán trước 30%
         const transaction = new Transaction({
             booking: orderCode,
             amount: amount,
             user: userId , 
-            type: 'DEPOSIT',
+            type: 'RENTAL', // 30% upfront payment
             status: 'COMPLETED', // Thanh toán ngay lập tức
             paymentMethod: 'WALLET',
             paymentMetadata: {
@@ -851,15 +851,16 @@ const createWalletDepositPayment = async (req, res) => {
         const booking = await Booking.findById(orderCode);
         if (booking) {
             booking.transactions.push(transaction._id);
-            booking.status = 'deposit_paid';
+            // Không dùng 'deposit_paid' vì không hợp lệ, chuyển sang 'in_progress' hoặc giữ 'pending' nếu chưa giao xe
+            booking.status = 'deposit_paid'; // Đánh dấu đã thanh toán trước 30% và bắt đầu thuê xe
             await booking.save();
         }
 
-        console.log(`Wallet deposit payment completed: ${amount} VND for booking ${orderCode}`);
+        console.log(`Wallet upfront payment completed: ${amount} VND for booking ${orderCode}`);
 
         res.json({
             success: true,
-            message: 'Thanh toán tiền cọc thành công',
+            message: 'Thanh toán trước 30% thành công',
             transactionId: transaction._id,
             bookingId: orderCode,
             amount: amount,
@@ -867,10 +868,10 @@ const createWalletDepositPayment = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error creating wallet deposit payment:', error);
+        console.error('Error creating wallet upfront payment:', error);
         res.status(500).json({
             success: false,
-            message: 'Lỗi server khi tạo thanh toán tiền cọc'
+            message: 'Lỗi server khi tạo thanh toán trước 30%'
         });
     }
 };

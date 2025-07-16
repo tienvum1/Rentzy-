@@ -77,10 +77,11 @@ const bookingSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
-        'pending',        // Đơn mới tạo, chưa thanh toán cọc
-        'deposit_paid',   // Đã thanh toán cọc, xác nhận tự động
+        'pending',        // Đơn mới tạo, chưa thanh toán
+        'deposit_paid',   // Đã thanh toán cọc (30%)
+        'fully_paid',     // Đã hoàn tất thanh toán (100%)
         'in_progress',    // Đang thuê xe
-        'fully_paid',     // Đã thanh toán toàn bộ
+        'fully_paid',     // Đã hoàn tất thanh toán (100%)
         'completed',      // Đã trả xe, hoàn tất
         'canceled',       // Đã hủy
         'refunded',       // Đã hoàn tiền
@@ -92,12 +93,6 @@ const bookingSchema = new mongoose.Schema(
 
     // Trạng thái giải ngân cho chủ xe.
     payoutStatus: {
-      type: String,
-      enum: ['none', 'pending', 'approved', 'rejected'],
-      default: 'none'
-    },
-    // Trạng thái hoàn tiền cọc cho người thuê
-    depositRefundStatus: {
       type: String,
       enum: ['none', 'pending', 'approved', 'rejected'],
       default: 'none'

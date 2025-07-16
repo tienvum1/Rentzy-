@@ -196,10 +196,73 @@ const getOwnerRevenue = async (req, res) => {
   }
 };
 
+// --- 5. Lấy số lượng xe của owner theo tháng trong năm hiện tại ---
+const getOwnerVehicleStatsByMonth = async (req, res) => {
+  try {
+    const ownerId = req.user._id;
+    const now = new Date();
+    const year = now.getFullYear();
+    const stats = await Vehicle.aggregate([
+      { $match: {
+          owner: ownerId,
+          createdAt: {
+            $gte: new Date(`${year}-01-01T00:00:00.000Z`),
+            $lte: new Date(`${year}-12-31T23:59:59.999Z`)
+          }
+        }
+      },
+      { $group: {
+          _id: { month: { $month: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.month": 1 } }
+    ]);
+    res.json({ success: true, year, stats });
+  } catch (err) {
+    console.error("Error in getOwnerVehicleStatsByMonth:", err);
+    res.status(500).json({ success: false, message: "Không thể lấy thống kê xe theo tháng." });
+  }
+};
+
+// --- 6. Lấy số lượng đơn thuê của owner theo tháng trong năm hiện tại ---
+const getOwnerBookingStatsByMonth = async (req, res) => {
+  try {
+    const ownerId = req.user._id;
+    const now = new Date();
+    const year = now.getFullYear();
+    // Lấy tất cả xe của owner
+    const vehicles = await Vehicle.find({ owner: ownerId }).select('_id');
+    const vehicleIds = vehicles.map(v => v._id);
+    const stats = await Booking.aggregate([
+      { $match: {
+          vehicle: { $in: vehicleIds },
+          createdAt: {
+            $gte: new Date(`${year}-01-01T00:00:00.000Z`),
+            $lte: new Date(`${year}-12-31T23:59:59.999Z`)
+          }
+        }
+      },
+      { $group: {
+          _id: { month: { $month: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.month": 1 } }
+    ]);
+    res.json({ success: true, year, stats });
+  } catch (err) {
+    console.error("Error in getOwnerBookingStatsByMonth:", err);
+    res.status(500).json({ success: false, message: "Không thể lấy thống kê đơn thuê theo tháng." });
+  }
+};
+
 // --- Export tất cả ---
 module.exports = {
   becomeOwner,
   getOwnerBookings,
   getOwnerCancelRequests,
   getOwnerRevenue,
+  getOwnerVehicleStatsByMonth,
+  getOwnerBookingStatsByMonth,
 };

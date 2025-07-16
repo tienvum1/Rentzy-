@@ -380,7 +380,6 @@ const BookingDetailOwner = () => {
             <div className={styles.infoRow}><span className={styles.infoLabel}>Tên xe:</span><span className={styles.infoValue}>{booking.vehicle?.brand} {booking.vehicle?.model}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Biển số:</span><span className={styles.infoValue}>{booking.vehicle?.licensePlate}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Năm:</span><span className={styles.infoValue}>{booking.vehicle?.year || 'N/A'}</span></div>
-            <div className={styles.infoRow}><span className={styles.infoLabel}>Tiền cọc:</span><span className={styles.infoValue}>{formatCurrency(booking.deposit)}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Nhận xe:</span><span className={styles.infoValue}>{moment(booking.startDate).format('HH:mm DD/MM/YYYY')}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Địa chỉ nhận xe:</span><span className={styles.infoValue}>{booking.pickupLocation || '—'}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Trả xe:</span><span className={styles.infoValue}>{moment(booking.endDate).format('HH:mm DD/MM/YYYY')}</span></div>
@@ -411,7 +410,6 @@ const BookingDetailOwner = () => {
             <div className={styles.cardTitle}><FaMoneyBillWave /> Thanh toán</div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Tổng tiền:</span><span className={styles.infoValue}>{formatCurrency(booking.totalAmount)}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Tiền thuê xe:</span><span className={styles.infoValue}>{formatCurrency(booking.totalCost)}</span></div>
-            <div className={styles.infoRow}><span className={styles.infoLabel}>Tiền cọc:</span><span className={styles.infoValue}>{formatCurrency(booking.deposit)}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Phí giao xe:</span><span className={styles.infoValue}>{formatCurrency(booking.deliveryFee)}</span></div>
             <div className={styles.infoRow}><span className={styles.infoLabel}>Giảm giá:</span><span className={styles.infoValue}>{formatCurrency(booking.discountAmount)}</span></div>
             {booking.promoCode && <div className={styles.infoRow}><span className={styles.infoLabel}>Mã KM:</span><span className={styles.infoValue}>{booking.promoCode}</span></div>}

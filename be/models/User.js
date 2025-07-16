@@ -37,6 +37,15 @@ const userSchema = new mongoose.Schema({
     default: 'none',
   },
 
+  bankAccounts: [
+    {
+      accountNumber: { type: String, required: true },
+      bankName: { type: String, required: true },
+      accountHolder: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
+
   created_at: { type: Date, default: Date.now },
 
   googleId: { type: String, unique: true, sparse: true },

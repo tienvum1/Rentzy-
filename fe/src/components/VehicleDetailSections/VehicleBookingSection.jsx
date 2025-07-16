@@ -61,6 +61,9 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
   // State để điều khiển việc hiển thị modal chọn ngày giờ
   const [showDateTimeModal, setShowDateTimeModal] = useState(false);
 
+  // State để điều khiển xác nhận đặt xe
+  const [confirmChecked, setConfirmChecked] = useState(false);
+
   // Thêm useAuth và useNavigate
   const { user, isAuthenticated, token } = useAuth();
   const navigate = useNavigate();
@@ -93,10 +96,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
 
   // Đã loại bỏ hàm calculateBookingDetails. Logic được nhúng trực tiếp vào useMemo.
 
-  const otherCosts = React.useMemo(() => ({
-    deposit: vehicle.deposit,
-    deliveryFee: pickupLocation !== vehicle.location ? 200000 : 0,
-  }), [pickupLocation, vehicle.deposit]);
+  // Xóa otherCosts, không còn deposit
 
   const bookingDetails = React.useMemo(() => {
     if (!selectedDates.startDate || !selectedDates.endDate || !pickupTime || !returnTime) {
@@ -142,11 +142,11 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
     };
   }, [selectedDates.startDate, selectedDates.endDate, pickupTime, returnTime, pickupLocation, vehicle.pricePerDay]);
 
-  // Tính tổng tiền sau khi trừ giảm giá
+  // Tính tổng tiền trước giảm giá (không còn deposit)
   const totalBeforeDiscount = React.useMemo(() => {
-    const baseAmount = bookingDetails.rentalFee + bookingDetails.deliveryFee + otherCosts.deposit;
+    const baseAmount = bookingDetails.rentalFee + bookingDetails.deliveryFee;
     return baseAmount;
-  }, [bookingDetails.rentalFee, bookingDetails.deliveryFee, otherCosts.deposit]);
+  }, [bookingDetails.rentalFee, bookingDetails.deliveryFee]);
 
   // Tính giảm giá khi chọn mã
   const handleApplyPromo = (promo) => {
@@ -543,10 +543,22 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
 
       {/* Nút đặt xe và điều khoản */}
       <div className="booking-actions">
+        {/* Checkbox xác nhận */}
+        <div className="confirm-checkbox-row">
+          <input
+            type="checkbox"
+            id="confirm-booking-checkbox"
+            checked={confirmChecked}
+            onChange={e => setConfirmChecked(e.target.checked)}
+          />
+          <label htmlFor="confirm-booking-checkbox" style={{marginLeft: 8}}>
+            Tôi xác nhận thông tin đặt xe là chính xác và đồng ý với các điều khoản.
+          </label>
+        </div>
         <button
           className="book-now-button"
           onClick={handleSubmit}
-          disabled={!selectedDates.startDate || !selectedDates.endDate || (pickupLocation !== vehicle.location && !pickupLocation) || isSubmitting}
+          disabled={!selectedDates.startDate || !selectedDates.endDate || (pickupLocation !== vehicle.location && !pickupLocation) || isSubmitting || !confirmChecked}
         >
           {isSubmitting ? 'Đang xử lý...' : 'Đặt xe ngay'}
         </button>

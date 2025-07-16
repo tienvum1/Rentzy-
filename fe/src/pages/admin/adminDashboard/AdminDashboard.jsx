@@ -83,11 +83,13 @@ const AdminDashboard = () => {
     return (
       <div className="for-admin-dashboard-layout">
         <SidebarAdmin />
+
         <div className="for-admin-dashboard-content">
           <div className="for-admin-dashboard-loading-container">
+
             <div>Đang tải dữ liệu...</div>
-          </div>
-        </div>
+          </section>
+        </main>
       </div>
     );
   }
@@ -96,6 +98,7 @@ const AdminDashboard = () => {
     return (
       <div className="for-admin-dashboard-layout">
         <SidebarAdmin />
+
         <div className="for-admin-dashboard-content">
           <div className="for-admin-dashboard-error-container">
             <div>
@@ -104,6 +107,8 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+
+
       </div>
     );
   }
@@ -111,13 +116,15 @@ const AdminDashboard = () => {
   return (
     <div className="for-admin-dashboard-layout">
       <SidebarAdmin />
+
       <div className="for-admin-dashboard-content">
         <div className="for-admin-dashboard-header">
           <h1 className="for-admin-dashboard-title">Bảng điều khiển Admin</h1>
           <p className="for-admin-dashboard-subtitle">
+
             Chào mừng trở lại, {user.name}! Đây là tổng quan về hệ thống Rentzy.
           </p>
-        </div>
+        </header>
 
         <div className="for-admin-dashboard-stats-grid">
           <div className="for-admin-dashboard-stat-card">
@@ -251,8 +258,11 @@ const AdminDashboard = () => {
               ) : (
                 <div>Chưa có dữ liệu thống kê</div>
               )}
+
             </div>
           </div>
+        </section>
+
 
           <div className="for-admin-dashboard-chart-card">
             <div className="for-admin-dashboard-chart-card-header">
@@ -284,20 +294,28 @@ const AdminDashboard = () => {
                 <span style={{ fontWeight: "bold", color: "#dc2626" }}>
                   {dashboardData?.pendingRequests?.driverLicenses || 0}
                 </span>
+
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "1rem",
-                }}
-              >
-                <span>Duyệt xe</span>
-                <span style={{ fontWeight: "bold", color: "#dc2626" }}>
-                  {dashboardData?.pendingRequests?.payouts || 0}
-                </span>
+              <div className="chart-container">
+                {monthlyChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={monthlyChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
+                      <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" hide />
+                      <Tooltip formatter={(value, name) => name === "Doanh thu" ? `${value.toLocaleString()}₫` : value} />
+                      <Legend />
+                      <Bar yAxisId="left" dataKey="Số đơn" fill="#8884d8" />
+                      <Bar yAxisId="right" dataKey="Doanh thu" fill="#82ca9d" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div>Chưa có dữ liệu thống kê</div>
+                )}
               </div>
             </div>
+
           </div>
         </div>
 
@@ -460,6 +478,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
     </div>
   );
 };

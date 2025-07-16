@@ -205,6 +205,99 @@ function PostRentalImagesViewer({ postRentalImages, renterReturnConfirmed, onCon
   );
 }
 
+function calculateRefund(booking, now = new Date()) {
+  const startDate = new Date(booking.startDate);
+  const diffMs = startDate - now;
+  const diffHours = diffMs / (1000 * 60 * 60);
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  const totalAmount = booking.totalAmount || 0;
+
+  if (diffHours > 1) {
+    if (diffDays > 7) {
+      // Huỷ trước 7 ngày: hoàn 70%
+      return {
+        refund: Math.round(totalAmount * 0.7),
+        lost: Math.round(totalAmount * 0.3),
+        policy: 'refund_70'
+      };
+    } else {
+      // Trong 7 ngày: hoàn 30%
+      return {
+        refund: Math.round(totalAmount * 0.3),
+        lost: Math.round(totalAmount * 0.7),
+        policy: 'refund_30'
+      };
+    }
+  } else if (diffHours > 0) {
+    // Huỷ trước 1h: hoàn 100%
+    return {
+      refund: totalAmount,
+      lost: 0,
+      policy: 'refund_100'
+    };
+  } else {
+    // Đã đến giờ nhận xe hoặc sau đó: không hoàn tiền
+    return {
+      refund: 0,
+      lost: totalAmount,
+      policy: 'no_refund'
+    };
+  }
+}
+
+function calculateDepositRefund(booking, now = new Date()) {
+  const startDate = new Date(booking.startDate);
+  // Lấy thời điểm thanh toán cọc thực tế
+  let depositTime = booking.createdAt;
+  if (booking.transactions && booking.transactions.length > 0) {
+    const depositTx = booking.transactions.find(
+      t => t.type === 'RENTAL' && t.status === 'COMPLETED'
+    );
+    if (depositTx) {
+      depositTime = depositTx.createdAt;
+    }
+  }
+  // Chuyển depositTime và now về múi giờ Việt Nam (UTC+7)
+  const depositTimeVN = moment(depositTime);
+  const nowVN = moment(now);
+  const diffMs = startDate - now;
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  const depositAmount = booking.depositAmount || 0;
+  // Thời gian từ lúc đặt cọc đến lúc huỷ (giờ Việt Nam)
+  const cancelSinceDeposit = nowVN.diff(depositTimeVN, 'milliseconds');
+  const cancelSinceDepositHours = cancelSinceDeposit / (1000 * 60 * 60);
+
+  if (cancelSinceDepositHours <= 1) {
+    // Vừa đặt cọc trong vòng 1h, huỷ hoàn 100%
+    return {
+      refund: depositAmount,
+      lost: 0,
+      policy: 'refund_100_new_1h'
+    };
+  } else if (diffDays > 7) {
+    // Huỷ trước 7 ngày: hoàn 50%
+    return {
+      refund: Math.round(depositAmount * 0.5),
+      lost: Math.round(depositAmount * 0.5),
+      policy: 'refund_50'
+    };
+  } else if (diffMs > 0) {
+    // Trong 7 ngày trước khi nhận xe (kể cả 1h cuối): mất 100%
+    return {
+      refund: 0,
+      lost: depositAmount,
+      policy: 'lost_100_7days'
+    };
+  } else {
+    // Đã đến giờ nhận xe hoặc sau đó: mất 100%
+    return {
+      refund: 0,
+      lost: depositAmount,
+      policy: 'lost_100_after'
+    };
+  }
+}
+
 const BookingDetailsPage = () => {
   const { id } = useParams(); // Get booking ID from URL
   const navigate = useNavigate();
@@ -215,10 +308,14 @@ const BookingDetailsPage = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelError, setCancelError] = useState('');
+  // State lưu thông tin hoàn tiền từ BE
   const [expectedRefund, setExpectedRefund] = useState(null);
+  const [refundAmount, setRefundAmount] = useState(0); // Thêm state lưu số tiền hoàn lại
   const { user } = useAuth();
   const [handoverLoading, setHandoverLoading] = useState(false);
 
+  // Thêm ref để gọi lại fetchBookingDetails sau khi huỷ thành công
+  const fetchBookingDetailsRef = useRef();
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
@@ -243,7 +340,7 @@ const BookingDetailsPage = () => {
         }
       }
     };
-
+    fetchBookingDetailsRef.current = fetchBookingDetails;
     fetchBookingDetails();
   }, [id, navigate]);
 
@@ -333,23 +430,26 @@ const BookingDetailsPage = () => {
   const { totalPaid, totalRefund, remaining } = calculatePaymentDetails();
 
   // Hàm huỷ đặt xe với hoàn tiền
+  // Khi mở modal huỷ, gọi API lấy thông tin hoàn tiền
   const handleCancelBooking = async () => {
     setCancelError('');
     setShowCancelModal(true);
-    // Fetch expected refund info
     try {
       const config = { withCredentials: true };
       const refundRes = await axios.get(
         `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}/expected-refund`,
         config
       );
-      if (refundRes.data.success) {
+      if (refundRes.data.success && refundRes.data.data) {
         setExpectedRefund(refundRes.data.data);
+        setRefundAmount(refundRes.data.data.refund ?? 0); // Lưu lại số tiền hoàn vào state
       } else {
         setExpectedRefund(null);
+        setRefundAmount(0);
       }
     } catch (err) {
       setExpectedRefund(null);
+      setRefundAmount(0);
     }
   };
 
@@ -364,20 +464,25 @@ const BookingDetailsPage = () => {
         `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}/request-cancel`,
         {
           reason: cancelReason,
-          totalRefund: expectedRefund?.totalRefund ?? undefined
+          totalRefund: refundAmount // Truyền đúng số tiền hoàn lại
         },
         config
       );
       if (res.data.success) {
-        toast.success('Yêu cầu huỷ đơn đã được gửi. Vui lòng chờ chủ xe duyệt!');
+        toast.success('Yêu cầu huỷ đơn đã được gửi thành công! Vui lòng chờ chủ xe duyệt.');
         setShowCancelModal(false);
         setCancelReason('');
         setCancelError('');
-        // Optionally refresh booking status here
+        // Gọi lại fetchBookingDetails để cập nhật trạng thái
+        if (fetchBookingDetailsRef.current) {
+          await fetchBookingDetailsRef.current();
+        }
       } else {
+        toast.error(res.data.message || 'Không thể gửi yêu cầu huỷ.');
         setCancelError(res.data.message || 'Không thể gửi yêu cầu huỷ.');
       }
     } catch (err) {
+      toast.error(err.response?.data?.message || 'Không thể gửi yêu cầu huỷ.');
       setCancelError(err.response?.data?.message || 'Không thể gửi yêu cầu huỷ.');
     }
   };
@@ -497,11 +602,7 @@ const BookingDetailsPage = () => {
                 <span className="info-value price">
                   {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.vehicle?.pricePerDay)}
                 </span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Tiền đặt cọc:</span>
-                <span className="info-value price">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.vehicle.deposit)}</span>
-              </div>
+              </div>            
             </div>
 
             <div className="vehicle-info-section">
@@ -549,10 +650,7 @@ const BookingDetailsPage = () => {
               <span className="payment-value">-{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.discountAmount)}</span>
             </div>
           )}
-          <div className="payment-row">
-            <span className="payment-label">Tiền cọc xe:</span>
-            <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.deposit)}</span>
-          </div>
+    
           <div className="payment-row total">
             <span className="payment-label">Tổng tiền đơn hàng:</span>
             <span className="payment-value">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalAmount)}</span>
@@ -589,6 +687,8 @@ const BookingDetailsPage = () => {
         </div>
       </div>
 
+      
+
       <div className="booking-summary-card">
         <h3><FaMoneyBillWave /> Lịch sử Giao dịch</h3>
         {booking.transactions.length === 0 ? (
@@ -607,6 +707,40 @@ const BookingDetailsPage = () => {
             ))}
           </div>
         )}
+      </div>
+      {/* Chính sách hoàn tiền */}
+      <div className="refund-policy-card" style={{
+        background: '#f8fafc',
+        border: '1px solid #e2e8f0',
+        borderRadius: 12,
+        padding: 20,
+        margin: '24px 0',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        maxWidth: 900,
+        marginLeft: 'auto',
+        marginRight: 'auto',
+      }}>
+        <h3 style={{ color: '#2563eb', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <FaMoneyBillWave style={{fontSize: 22}} /> Chính sách hoàn tiền tiền cọc khi huỷ đặt xe
+        </h3>
+        <ul style={{ fontSize: 16, color: '#334155', margin: 0, paddingLeft: 24 }}>
+        <li style={{ marginBottom: 8 }}>
+            <b>Huỷ trong vòng 1 giờ sau khi đặt :</b> <span style={{ color: '#f59e42', fontWeight: 600 }}>Hoàn 100% tiền đã thanh toán </span>
+          </li>
+          <li style={{ marginBottom: 8 }}>
+            <b>Huỷ trước 7 ngày:</b> <span style={{ color: '#f59e42', fontWeight: 600 }}>Hoàn 50% tiền cọc</span>, <span style={{ color: '#ef4444', fontWeight: 600 }}>mất 50%</span>
+          </li>
+          <li style={{ marginBottom: 8 }}>
+            <b>Huỷ trong vòng 7 ngày trước khi nhận xe:</b> <span style={{ color: '#ef4444', fontWeight: 600 }}>Mất 100% tiền cọc</span>
+          </li>
+          <li>
+            <b>Huỷ sau thời điểm nhận xe hoặc không tới nhận xe:</b> <span style={{ color: '#ef4444', fontWeight: 600 }}>Không hoàn tiền (tổng tiền đã thanh toán)</span>
+          </li>
+        </ul>
+        <div style={{ fontSize: 14, color: '#64748b', marginTop: 10 }}>
+          <FaInfoCircle style={{marginRight: 6, color: '#2563eb'}} />
+          Chính sách này chỉ áp dụng cho phần tiền cọc đã thanh toán (thường là 30% tổng đơn hàng).
+        </div>
       </div>
 
       <div className="booking-details-actions">
@@ -642,7 +776,7 @@ const BookingDetailsPage = () => {
                   overlayClassName="cancel-modal-overlay beautiful-cancel-modal-overlay"
                 >
                   <div style={{
-                    maxWidth: 400,
+                    maxWidth: 900,
                     margin: '0 auto',
                     background: '#fff',
                     borderRadius: 16,
@@ -684,42 +818,68 @@ const BookingDetailsPage = () => {
                     />
                     {cancelError && <div style={{ color: 'red', fontSize: 14, marginBottom: 4 }}>{cancelError}</div>}
                     {expectedRefund && (
-                      <div
-                        className="expected-refund-info"
-                      >
+                      <div className="expected-refund-info">
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                           <span role="img" aria-label="refund">💸</span>
-                          <b>Chính sách hoàn tiền:</b>
+                          <b>Chi tiết hoàn tiền cọc của bạn:</b>
                         </div>
-                        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14 }}>
-                          <li>Trước 7 ngày: Hoàn 80% tiền cọc</li>
-                          <li>Trong 7 ngày: Hoàn 30% tiền cọc</li>
-                          <li>Trong thời gian thuê: Không hoàn tiền</li>
-                          <li>Nếu đã thanh toán toàn bộ: Hoàn lại tiền thuê xe + % tiền cọc theo chính sách</li>
-                        </ul>
-                        <div style={{ marginTop: 8, fontWeight: 600, color: '#3182ce', fontSize: 16 }}>
-                          <span role="img" aria-label="money">🪙</span>
-                          {expectedRefund.refundType === 'full' ? (
-                            <>
-                              {expectedRefund.rentalRefund > 0 && (
-                                <span>
-                                  Hoàn tiền thuê xe: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expectedRefund.rentalRefund || 0)}<br/>
-                                </span>
-                              )}
-                              {expectedRefund.depositRefund > 0 && (
-                                <span>
-                                  Hoàn tiền cọc: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expectedRefund.depositRefund || 0)}<br/>
-                                </span>
-                              )}
-                              <b>Tổng tiền dự kiến hoàn: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expectedRefund.totalRefund || 0)}</b><br/>
-                              <span style={{ fontWeight: 400, color: '#475569', fontSize: 14 }}>(Bạn đã thanh toán toàn bộ, sẽ hoàn lại tiền thuê xe + % tiền cọc theo chính sách)</span>
-                            </>
-                          ) : (
-                            <>
-                              Số tiền dự kiến hoàn: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expectedRefund.depositRefund || 0)}
-                            </>
-                          )}
+                        <div style={{fontSize: 15, color: '#0f172a', marginBottom: 10, fontWeight: 500}}>
+                          <span role="img" aria-label="clock">⏰</span> <b>Thời gian đặt cọc:</b> {expectedRefund.cancelTime ? new Date(expectedRefund.cancelTime).toLocaleString('vi-VN') : ''}<br/>
+                          <span role="img" aria-label="car">🚗</span> <b>Thời gian nhận xe:</b> {expectedRefund.pickupTime ? new Date(expectedRefund.pickupTime).toLocaleString('vi-VN') : ''}<br/>
                         </div>
+                        <div style={{color:'#2563eb', fontWeight:600, marginBottom:12, fontSize:16}}>{expectedRefund.message}</div>
+                        {/* Chỉ hiển thị block policy đúng với expectedRefund.policy */}
+                        {expectedRefund.policy === 'refund_100_1h' && (
+                          <div style={{ background:'#e0f2fe', borderRadius:8, fontWeight:600, border:'2px solid #38bdf8', boxShadow:'0 2px 12px rgba(56,189,248,0.10)', padding:12, marginBottom:12 }}>
+                            <span role="img" aria-label="star">⭐</span> <b>Huỷ trong vòng 1 giờ sau khi đặt cọc</b>:<br/>
+                            Hoàn <b style={{color:'#059669'}}>{expectedRefund.refund?.toLocaleString('vi-VN')}đ</b> (100%)<br/>
+                            Số tiền bị mất: <b style={{color:'#ef4444'}}>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b>
+                          </div>
+                        )}
+                        {expectedRefund.policy === 'refund_50' && (
+                          <div style={{ background:'#fff7ed', borderRadius:8, fontWeight:600, border:'2px solid #f59e42', boxShadow:'0 2px 12px rgba(245,158,66,0.10)', padding:12, marginBottom:12 }}>
+                            <span role="img" aria-label="half">🌓</span> <b>Huỷ trước 7 ngày</b>:<br/>
+                            Hoàn <b style={{color:'#f59e42'}}>{expectedRefund.refund?.toLocaleString('vi-VN')}đ</b> (50%)<br/>
+                            Số tiền bị mất: <b style={{color:'#ef4444'}}>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b> (50%)
+                          </div>
+                        )}
+                        {expectedRefund.policy === 'lost_100_7days' && (
+                          <div style={{ background:'#fef2f2', borderRadius:8, fontWeight:600, border:'2px solid #ef4444', boxShadow:'0 2px 12px rgba(239,68,68,0.10)', padding:12, marginBottom:12 }}>
+                            <span role="img" aria-label="cross">❌</span> <b>Huỷ trong vòng 7 ngày trước khi nhận xe (kể cả 1h cuối)</b>:<br/>
+                            Hoàn <b style={{color:'#ef4444'}}>{expectedRefund.refund?.toLocaleString('vi-VN')}đ</b><br/>
+                            Số tiền bị mất: <b style={{color:'#ef4444'}}>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b> (100%)
+                          </div>
+                        )}
+                        {expectedRefund.policy === 'lost_100_after' && (
+                          <div style={{ background:'#fef2f2', borderRadius:8, fontWeight:600, border:'2px solid #ef4444', boxShadow:'0 2px 12px rgba(239,68,68,0.10)', padding:12, marginBottom:12 }}>
+                            <span role="img" aria-label="cross">❌</span> <b>Huỷ sau thời điểm nhận xe hoặc không tới nhận xe/quá giờ:</b><br/>
+                            Hoàn <b style={{color:'#ef4444'}}>{expectedRefund.refund?.toLocaleString('vi-VN')}đ</b><br/>
+                            Số tiền bị mất: <b style={{color:'#ef4444'}}>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b> (100%)
+                          </div>
+                        )}
+                        <div style={{ fontSize: 14, color: '#64748b', marginTop: 10 }}>
+                          Số tiền cọc đã thanh toán của bạn: <b>{expectedRefund.depositAmount?.toLocaleString('vi-VN')}đ</b> (thường là 30% tổng đơn hàng).
+                        </div>
+                        <div style={{ fontSize: 15, color: '#0f172a', marginTop: 12, fontWeight: 600 }}>
+                          <span role="img" aria-label="money">🪙</span> Số tiền bạn sẽ được hoàn lại nếu huỷ lúc này: <span style={{ color: expectedRefund.refund > 0 ? '#059669' : '#ef4444', fontWeight: 700 }}>{expectedRefund.refund?.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                        {/* Nếu đã thanh toán đủ đơn hàng, hiển thị rõ số tiền hoàn lại là tổng đã thanh toán trừ phần cọc bị mất */}
+                        {expectedRefund.totalPaid >= expectedRefund.totalAmount && (
+                          <div style={{ fontSize: 14, color: '#475569', marginTop: 8, fontWeight: 500 }}>
+                            (Bạn đã thanh toán đủ đơn hàng. Khi huỷ, số tiền hoàn lại là tổng đã thanh toán trừ phần cọc bị mất: <b>{expectedRefund.refund?.toLocaleString('vi-VN')}đ</b>)
+                          </div>
+                        )}
+                        {/* Nếu chỉ thanh toán cọc */}
+                        {expectedRefund.totalPaid < expectedRefund.totalAmount && (
+                          <div style={{ fontSize: 14, color: '#475569', marginTop: 8, fontWeight: 500 }}>
+                            (Bạn mới chỉ thanh toán tiền cọc. Khi huỷ, số tiền hoàn lại là phần cọc được hoàn: <b>{expectedRefund.refund?.toLocaleString('vi-VN')}đ</b>)
+                          </div>
+                        )}
+                        {expectedRefund.lost > 0 && (
+                          <div style={{ fontSize: 15, color: '#ef4444', marginTop: 4, fontWeight: 500 }}>
+                            <span role="img" aria-label="lost">⚠️</span> Số tiền bạn sẽ bị mất: <b>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b>
+                          </div>
+                        )}
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: 12, marginTop: 10 }} className="cancel-modal-actions">
@@ -779,6 +939,15 @@ const BookingDetailsPage = () => {
               <div className="completed-info">
                 <span style={{ color: '#27ae60', fontWeight: 'bold' ,fontSize : '20px'}}>
                   ✓ Đơn đã hoàn thành
+                </span>
+              </div>
+            );
+          }
+          else if (booking.status === 'cancel_requested') {
+            return (
+              <div className="completed-info">
+               <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>
+                  ✓ Đã gửi yêu cầu huỷ 
                 </span>
               </div>
             );

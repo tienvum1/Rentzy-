@@ -1,13 +1,16 @@
+
 /* Layout improvements */
 .for-admin-dashboard-layout {
   display: flex;
   min-height: 100vh;
   background: #f8fafc;
   margin-left: 250px;
+
 }
 
 .for-admin-dashboard-content {
   flex: 1;
+
   padding: 40px 32px 32px 32px;
   overflow-y: auto;
   background: #f8fafc;
@@ -20,12 +23,14 @@
 }
 
 .for-admin-dashboard-title {
+
   font-size: 2.2rem;
   font-weight: 800;
   color: #1e293b;
   margin-bottom: 0.5rem;
   letter-spacing: -1px;
 }
+
 
 .for-admin-dashboard-subtitle {
   color: #64748b;
@@ -82,8 +87,8 @@
   font-size: 2.3rem;
   font-weight: 800;
   color: #1e293b;
-  margin-bottom: 0.5rem;
 }
+
 .for-admin-dashboard-stat-card-change {
   font-size: 1rem;
   display: flex;
@@ -111,12 +116,19 @@
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+
   border: 1px solid #e2e8f0;
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
 }
 .for-admin-dashboard-chart-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   margin-bottom: 1.2rem;
 }
 .for-admin-dashboard-chart-card-title {
@@ -131,6 +143,7 @@
   justify-content: center;
   color: #64748b;
   font-size: 0.95rem;
+
 }
 
 /* Tables */
@@ -154,10 +167,12 @@
   margin-bottom: 1.2rem;
 }
 .for-admin-dashboard-table-card-title {
+
   font-size: 1.1rem;
   font-weight: 700;
   color: #1e293b;
 }
+
 .for-admin-dashboard-table {
   width: 100%;
   border-collapse: collapse;
@@ -209,6 +224,7 @@
   background-color: #fee2e2;
   color: #991b1b;
 }
+
 
 /* Quick Actions */
 .for-admin-dashboard-quick-actions {
@@ -263,9 +279,12 @@
 /* Loading and Error States */
 .for-admin-dashboard-loading-container,
 .for-admin-dashboard-error-container {
+
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+
   height: 400px;
   color: #64748b;
   text-align: center;
@@ -309,20 +328,18 @@
   .for-admin-dashboard-quick-actions {
     padding: 0.7rem;
     border-radius: 8px;
+
+  }
+  .main-section-2col {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .main-left-col, .main-right-col {
+    width: 100%;
+    gap: 12px;
   }
 }
 
-/* Animation for stats */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 .for-admin-dashboard-stat-card {
   animation: fadeInUp 0.6s ease-out;
@@ -339,4 +356,4 @@
 }
 .for-admin-dashboard-stat-card:nth-child(4) {
   animation-delay: 0.4s;
-}
+

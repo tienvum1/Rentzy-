@@ -55,38 +55,24 @@ const UserBookings = () => {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'PENDING':
       case 'pending':
         return 'Đang chờ xử lý';
-      case 'CONFIRMED':
-      case 'confirmed':
-        return 'Đã xác nhận';
-      case 'DEPOSIT_PAID':
       case 'deposit_paid':
         return 'Đã thanh toán tiền giữ chỗ';
-      case 'RENTAL_PAID':
-      case 'rental_paid':
-      case 'FULLY_PAID':
       case 'fully_paid':
-        return 'Đã thanh toán đầy đủ';
-      case 'IN_PROGRESS':
+        return 'Đã thanh toán toàn bộ';
       case 'in_progress':
-        return 'Đang sử dụng';
-      case 'COMPLETED':
+        return 'Đang thuê xe';
       case 'completed':
         return 'Đã hoàn thành';
-      case 'CANCELED':
       case 'canceled':
-        return 'Đã hủy';
-      case 'REJECTED':
-      case 'rejected':
-        return 'Đã từ chối';
-      case 'EXPIRED':
-      case 'expired':
-        return 'Đã hết hạn';
-      case 'REFUNDED':
+        return 'Đã huỷ';
       case 'refunded':
         return 'Đã hoàn tiền';
+      case 'rejected':
+        return 'Bị từ chối';
+      case 'cancel_requested':
+        return 'Đang chờ huỷ';
       default:
         return status;
     }
@@ -187,13 +173,13 @@ const UserBookings = () => {
                 <option value="">Tất cả</option>
                 <option value="pending">Đang chờ xử lý</option>
                 <option value="deposit_paid">Đã thanh toán tiền giữ chỗ</option>
-                <option value="fully_paid">Đã thanh toán đầy đủ</option>
-                <option value="in_progress">Đang sử dụng</option>
+                <option value="fully_paid">Đã thanh toán toàn bộ</option>
+                <option value="in_progress">Đang thuê xe</option>
                 <option value="completed">Đã hoàn thành</option>
-                <option value="canceled">Đã hủy</option>
-                <option value="rejected">Đã từ chối</option>
-                <option value="expired">Đã hết hạn</option>
+                <option value="canceled">Đã huỷ</option>
                 <option value="refunded">Đã hoàn tiền</option>
+                <option value="rejected">Bị từ chối</option>
+                <option value="cancel_requested">Đang chờ huỷ</option>
               </select>
             </div>
 

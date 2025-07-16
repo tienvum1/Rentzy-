@@ -10,6 +10,7 @@ import SidebarOwner from "../../components/SidebarOwner/SidebarOwner";
 import VehicleManagement from "./vehiclemanagement/VehicleManagement";
 import NotificationPage from "../profile/myNotifications/NotificationPage";
 import OwnerCancelRequests from "./ownerBookings/OwnerCancelRequests";
+import OwnerOverview from "./ownerOverview/ownerOverview";
 // Import các component nội dung thực tế của bạn
 // import OverviewContent from './OverviewContent';
 // import BookingManagement from '../bookingmanagement/BookingManagement';
@@ -17,12 +18,12 @@ import OwnerCancelRequests from "./ownerBookings/OwnerCancelRequests";
 // import RevenuePage from '../revenue/RevenuePage';
 
 // Định nghĩa các component placeholder nếu chưa có file thật
-const OverviewContent = () => (
-  <>
-    <h1>Welcome to your Owner Dashboard</h1>
-    <p>Select an option from the sidebar to manage your properties.</p>
-  </>
-);
+// const OverviewContent = () => (
+//   <>
+//     <h1>Welcome to your Owner Dashboard</h1>
+//     <p>Select an option from the sidebar to manage your properties.</p>
+//   </>
+// );
 const BookingManagement = () => (
   <div>Booking Management Content (Placeholder)</div>
 );
@@ -31,7 +32,7 @@ const RevenuePage = () => <div>Revenue Content (Placeholder)</div>;
 
 // Tạo một object ánh xạ tên menu item với component tương ứng
 const contentComponents = {
-  overview: OverviewContent, // Sử dụng component OverviewContent thực tế khi có
+  overview: OwnerOverview, // Sử dụng component OwnerOverview thực tế
   "vehicle-management": VehicleManagement,
   "booking-management": BookingManagement, // Sử dụng component BookingManagement thực tế khi có
   notification: NotificationPage, // Sử dụng component NotificationPage thực tế

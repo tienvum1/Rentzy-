@@ -107,13 +107,16 @@ const PaymentDeposit = () => {
     return () => clearInterval(timer);
   }, [step, countdown]);
 
-  // Tính toán số tiền còn lại phải thanh toán khi nhận xe
+  // Tính toán số tiền cọc (30%) và còn lại (70%)
   const getPaidAndRemaining = () => {
     if (!booking) return { paid: 0, remaining: 0, deposit: 0, total: 0 };
-    const total = booking.totalAmount || 0;
-    const deposit = booking.deposit || 0;
-    // Số tiền còn lại phải thanh toán là tổng tiền - tiền cọc
-    const remaining = Math.max(0, total - deposit);
+    // Tổng tiền = phí thuê + phí giao xe - giảm giá
+    const totalCost = booking.totalCost || 0;
+    const deliveryFee = booking.pickupLocation !== booking.vehicle?.location ? 200000 : 0;
+    const discountAmount = booking.discountAmount || 0;
+    const total = totalCost + deliveryFee - discountAmount;
+    const deposit = Math.round(total * 0.3);
+    const remaining = total - deposit;
     return { paid: deposit, remaining, deposit, total };
   };
   const { paid, remaining, deposit, total } = getPaidAndRemaining();
@@ -249,7 +252,7 @@ const PaymentDeposit = () => {
           <div className="payment-details-section">
             {step === 1 && !isTimeUp && (
               <div className="deposit-section-beautiful">
-                <h2 className="deposit-title">Thanh toán tiền cọc giữ xe</h2>
+                <h2 className="deposit-title">Thanh toán trước 30% để giữ xe</h2>
                 <div className="deposit-amount-large">{formatCurrency(deposit)}</div>
                 <div className="deposit-info-row">
                   <span className="deposit-label">Thời gian giữ chỗ còn lại:</span>
@@ -271,9 +274,9 @@ const PaymentDeposit = () => {
                       )}
                     </div>
                   )}
-                  <p className="wallet-instruction">Nhấn nút bên dưới để thanh toán cọc bằng tiền trong ví.</p>
+                  <p className="wallet-instruction">Nhấn nút bên dưới để thanh toán trước 30% bằng tiền trong ví.</p>
                   <button className="wallet-pay-button beautiful-pay-btn" onClick={() => { setConfirmType('deposit'); setShowConfirmModal(true); }} disabled={isPaying || walletLoading || !wallet || wallet.balance < deposit}>
-                    {isPaying ? 'Đang xử lý...' : 'Thanh toán cọc'}
+                    {isPaying ? 'Đang xử lý...' : 'Thanh toán trước 30%'}
                   </button>
                 </div>
               </div>
@@ -288,7 +291,7 @@ const PaymentDeposit = () => {
             {step === 2 && (
               <>
                 <h2 className="section-title">Thanh toán phần còn lại khi nhận xe</h2>
-                <p className="deposit-amount">Cọc đã thanh toán: {formatCurrency(deposit)}</p>
+                <p className="deposit-amount">Đã thanh toán trước 30%: {formatCurrency(deposit)}</p>
                 <div className="wallet-payment-section">
                   <h3 className="section-subtitle">Thanh toán phần còn lại bằng ví</h3>
                   <p>Số tiền còn lại cần thanh toán: <strong>{formatCurrency(remaining)}</strong></p>
@@ -300,7 +303,7 @@ const PaymentDeposit = () => {
                       )}
                     </div>
                   )}
-                  <button className="wallet-pay-button" onClick={() => { setConfirmType('remaining'); setShowConfirmModal(true); }} disabled={isPaying || walletLoading || !wallet || wallet.balance < remaining || remaining === 0}>{isPaying ? 'Đang xử lý...' : 'Thanh toán phần còn lại'}</button>
+                  <button className="wallet-pay-button" onClick={() => { setConfirmType('remaining'); setShowConfirmModal(true); }} disabled={isPaying || walletLoading || !wallet || wallet.balance < remaining || remaining === 0}>{isPaying ? 'Đang xử lý...' : 'Thanh toán 70% còn lại'}</button>
                 </div>
               </>
             )}
@@ -338,21 +341,20 @@ const PaymentDeposit = () => {
             </div>
             <h2 className="section-title">Các bước thanh toán</h2>
             <div className="payment-steps-summary">
-              <div className={`payment-step-item ${step > 1 ? 'completed' : ''}`}>
+              <div className={`payment-step-item ${step > 1 ? 'completed' : ''}`}> 
                 <div className="step-number">1</div>
                 <div className="step-content">
-                  <p className="step-title">Thanh toán cọc</p>
-                  <p className="step-description">Đặt cọc để giữ xe, số tiền này sẽ được trừ vào tổng thanh toán khi nhận xe.</p>
+                  <p className="step-title">Thanh toán trước 30%</p>
+                  <p className="step-description">Thanh toán trước 30% tổng giá trị đơn hàng để giữ xe, số tiền này sẽ được trừ vào tổng thanh toán khi nhận xe.</p>
                 </div>
                 <span className="step-amount">{formatCurrency(deposit)}</span>
               </div>
-              <div className={`payment-step-item ${step === 3 ? 'completed' : ''}`}>
+              <div className={`payment-step-item ${step === 3 ? 'completed' : ''}`}> 
                 <div className="step-number">2</div>
                 <div className="step-content">
-                  <p className="step-title">Thanh toán phần còn lại khi nhận xe</p>
+                  <p className="step-title">Thanh toán 70% còn lại khi nhận xe</p>
                   <div className="sub-details">
-                    <p>Tiền thuê xe <span>{formatCurrency(total - deposit)}</span></p>
-                
+                    <p>Tiền còn lại <span>{formatCurrency(remaining)}</span></p>
                   </div>
                 </div>
               </div>

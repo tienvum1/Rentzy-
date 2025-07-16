@@ -566,3 +566,20 @@ exports.getWalletAndTransactions = async (req, res) => {
     res.status(500).json({ message: 'Lỗi server khi lấy thông tin ví.' });
   }
 };
+
+exports.addBankAccount = async (req, res) => {
+  try {
+    const { accountNumber, bankName, accountHolder } = req.body;
+    if (!accountNumber || !bankName || !accountHolder) {
+      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng.' });
+    }
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.bankAccounts.push({ accountNumber, bankName, accountHolder });
+    await user.save();
+    res.status(200).json({ message: 'Thêm tài khoản ngân hàng thành công!', user });
+  } catch (err) {
+    console.error('addBankAccount error:', err);
+    res.status(500).json({ message: 'Lỗi server khi thêm tài khoản ngân hàng.' });
+  }
+};

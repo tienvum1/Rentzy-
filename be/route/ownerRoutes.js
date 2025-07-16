@@ -33,4 +33,9 @@ router.get('/cancel-requests', protect, getOwnerCancelRequests);
 // doanh thu của owner
 router.get('/revenue', protect, getOwnerRevenue);
 
+// Thống kê số lượng xe theo tháng cho owner
+router.get('/vehicle-stats-by-month', protect, ownerController.getOwnerVehicleStatsByMonth);
+// Thống kê số lượng đơn thuê theo tháng cho owner
+router.get('/booking-stats-by-month', protect, ownerController.getOwnerBookingStatsByMonth);
+
 module.exports = router;
