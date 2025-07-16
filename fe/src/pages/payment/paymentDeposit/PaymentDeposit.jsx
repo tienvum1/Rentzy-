@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaCheck, FaCar, FaRegCircle } from 'react-icons/fa';
+import { FaCheck, FaCar, FaRegCircle, FaFileSignature } from 'react-icons/fa';
 import './PaymentDeposit.css';
 import Header from '../../../components/Header/Header';
 import axios from 'axios';
@@ -20,7 +20,7 @@ const PaymentDeposit = () => {
   const [countdown, setCountdown] = useState(0);
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
-  const [step, setStep] = useState(1); // 1: chờ cọc, 2: chờ thanh toán còn lại, 3: hoàn tất
+  const [step, setStep] = useState(1); // 1: chờ cọc, 2: ký hợp đồng, 3: chờ thanh toán còn lại, 4: hoàn tất
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmType, setConfirmType] = useState(null); // 'deposit' | 'remaining'
@@ -62,9 +62,8 @@ const PaymentDeposit = () => {
   // Xác định trạng thái và bước thanh toán
   useEffect(() => {
     if (!booking) return;
-    // Đếm ngược nếu đang chờ thanh toán cọc
     if (booking.status === 'pending') {
-      setStep(1);
+      setStep(1); // Chờ cọc
       setPaymentStatus('pending');
       const createdAt = new Date(booking.createdAt).getTime();
       const tenMinutes = 10 * 60 * 1000;
@@ -74,12 +73,17 @@ const PaymentDeposit = () => {
       setCountdown(timeLeft);
       setIsTimeUp(timeLeft <= 0);
     } else if (booking.status === 'deposit_paid') {
-      setStep(2);
+      setStep(2); // Ký hợp đồng
       setPaymentStatus('deposit_paid');
       setCountdown(0);
       setIsTimeUp(false);
+    } else if (booking.status === 'contract_signed') {
+      setStep(3); // Chờ thanh toán còn lại
+      setPaymentStatus('contract_signed');
+      setCountdown(0);
+      setIsTimeUp(false);
     } else if (booking.status === 'confirmed' || booking.status === 'in_progress' || booking.status === 'fully_paid' || booking.status === 'completed') {
-      setStep(3);
+      setStep(4); // Hoàn tất
       setPaymentStatus('completed');
       setCountdown(0);
       setIsTimeUp(false);
@@ -138,7 +142,8 @@ const PaymentDeposit = () => {
       if (res.data.success) {
         toast.success('Thanh toán tiền cọc thành công!');
         setTimeout(() => {
-          navigate(`/`);
+          // Redirect to contract signing page after deposit
+          navigate(`/contracts/${booking._id}`);
         }, 1200);
       } else {
         toast.error(res.data.message || 'Thanh toán thất bại.');
@@ -238,14 +243,25 @@ const PaymentDeposit = () => {
       <div className="reservation-payment-container">
         <div className="progress-bar-wrapper">
           <div className="progress-steps">
-            <div className="progress-step completed">
+            <div className={`progress-step completed`}>
               <div className="step-icon"><FaCheck /></div>
               <span className="step-text">Tìm & chọn xe</span>
             </div>
             <div className={`progress-divider ${step > 1 ? 'completed' : ''}`}></div>
-            <div className={`progress-step ${step > 1 ? 'completed' : step === 1 ? 'current' : ''}`}> <div className="step-icon"><FaCar /></div> <span className="step-text">Thanh toán cọc</span></div>
+            <div className={`progress-step ${step > 1 ? 'completed' : step === 1 ? 'current' : ''}`}> 
+              <div className="step-icon"><FaCar /></div> 
+              <span className="step-text">Thanh toán cọc</span>
+            </div>
             <div className={`progress-divider ${step > 2 ? 'completed' : ''}`}></div>
-            <div className={`progress-step ${step === 3 ? 'completed' : ''}`}> <div className="step-icon inactive"><FaRegCircle /></div> <span className="step-text">Nhận xe</span></div>
+            <div className={`progress-step ${step > 2 ? 'completed' : step === 2 ? 'current' : ''}`}> 
+              <div className="step-icon"><FaFileSignature /></div> 
+              <span className="step-text">Ký hợp đồng</span>
+            </div>
+            <div className={`progress-divider ${step > 3 ? 'completed' : ''}`}></div>
+            <div className={`progress-step ${step === 4 ? 'completed' : ''}`}> 
+              <div className="step-icon inactive"><FaRegCircle /></div> 
+              <span className="step-text">Nhận xe</span>
+            </div>
           </div>
         </div>
         <div className="content-wrapper">

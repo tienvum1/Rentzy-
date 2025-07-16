@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, verifyRenterRequirements, adminOnly } = require('../middleware/authMiddleware');
-const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages, reviewBooking ,getOwnerReviews, getBookingContract, getExpectedDepositRefund, getMyBookingReviews} = require('../controller/bookingController');
+const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages, reviewBooking ,getOwnerReviews, getBookingContract, getExpectedDepositRefund, getMyBookingReviews, saveBookingSignature} = require('../controller/bookingController');
 const upload = require('../middleware/upload');
 
 // Public routes
@@ -45,6 +45,9 @@ router.get('/:ownerId/reviews', getOwnerReviews);
 
 // Lấy tất cả review của user 
 router.get('/user/my-reviews', protect, getMyBookingReviews);
+
+// Save signature for booking
+router.post('/:id/signature', protect, saveBookingSignature);
 
 // route for get all bookings of specific user : 
 router.post('/a/get-filter-bookings', protect, getFilteredBookingsOfUser )

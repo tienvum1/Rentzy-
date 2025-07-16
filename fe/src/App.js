@@ -56,6 +56,7 @@ import OwnerBookingManagement from "./pages/owner/ownerBookings/OwnerBookingMana
 import OwenerCancelRequest from "./pages/owner/ownerBookings/OwnerCancelRequests";
 import OwnerBookingDetail from "./pages/owner/bookingDetail/BookingDetailOwner";
 import RevenuePage from "./pages/owner/ownerRevenue/RevenuePage";
+import OwnerVehicleReviews from "./pages/owner/vehicleReviews/OwnerVehicleReviews";
 // admin
 import AdminDashboard from "./pages/admin/adminDashboard/AdminDashboard";
 import OwnerRequestsPage from "./pages/admin/adminOwnerRequestsPage/OwnerRequestsPage";
@@ -185,6 +186,7 @@ function App() {
                 element={<OwnerBookingDetail />}
               />
               <Route path="revenue" element={<RevenuePage />} />
+              <Route path="/ownerpage/vehicle-reviews" element={<OwnerVehicleReviews />} />
             </Route>
             {/* 404 Route - Thêm route cho trang không tìm thấy */}
             {/* 404 Route - Thêm route cho trang không tìm thấy */}

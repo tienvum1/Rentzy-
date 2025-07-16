@@ -190,6 +190,7 @@ const UserBookings = () => {
                 <table>
                   <thead>
                     <tr>
+                      <th>Mã đơn</th>
                       <th>Xe</th>
                       <th>Ngày nhận</th>
                       <th>Ngày trả</th>
@@ -207,6 +208,7 @@ const UserBookings = () => {
                       return (
                         <React.Fragment key={booking._id}>
                           <tr>
+                            <td>#{booking._id.slice(-4)}</td>
                             <td>
                               <div className="vehicle-cell-content">
                                 <div className="vehicle-details-text">
