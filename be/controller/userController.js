@@ -12,6 +12,7 @@ const Transaction = require('../models/Transaction');
 const axios = require('axios');
 const { URL } = require('url');
 const otpGenerator = require('otp-generator');
+const FormData = require('form-data');
 dotenv.config();
 
 exports.getProfile = async (req, res) => {
@@ -619,5 +620,70 @@ exports.createCCCD = async (req, res) => {
   } catch (error) {
     console.error("Error creating/updating CCCD:", error);
     res.status(500).json({ message: 'Lỗi khi xử lý thông tin CCCD.' });
+  }
+};
+
+// @desc    Verify CCCD info with FPT.AI OCR
+// @route   POST /api/user/verify-cccd
+// @access  Private
+exports.verifyCCCD = async (req, res) => {
+  try {
+    const { cccd_number, full_name, birth_date } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    // Upload ảnh lên Cloudinary nếu có file mới
+    let imageUrl = user.cccd_image;
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'cccds'
+      });
+      imageUrl = result.secure_url;
+    }
+    // Gọi FPT.AI OCR CCCD
+    const axios = require('axios');
+    const FormData = require('form-data');
+    const form = new FormData();
+    form.append('image', fs.createReadStream(req.file.path));
+    const apiKey = '1Bqxz1oBUZ0AIERNIjXlJ72q0U8pj5j3';
+    const ocrRes = await axios.post(
+      'https://api.fpt.ai/vision/idr/vnm',
+      form,
+      {
+        headers: {
+          ...form.getHeaders(),
+          'api-key': apiKey,
+        },
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+      }
+    );
+    const ocr = ocrRes.data.data[0] || {};
+    // So sánh trực tiếp các trường
+    const ocrNumber = (ocr.id || '').trim();
+    const ocrName = (ocr.name || '').trim();
+    const ocrDob = ocr.dob ? ocr.dob.split('/').reverse().join('-') : '';
+    if (!ocrNumber || !ocrName || !ocrDob) {
+      return res.status(400).json({ success: false, message: 'Không nhận diện được đủ thông tin từ ảnh CCCD.' });
+    }
+    if (
+      ocrNumber !== cccd_number.trim() ||
+      ocrName !== full_name.trim() ||
+      ocrDob !== birth_date.trim()
+    ) {
+      return res.status(400).json({ success: false, message: 'Thông tin trên ảnh CCCD không khớp với thông tin bạn nhập. Vui lòng kiểm tra lại!' });
+    }
+    // Nếu khớp hoàn toàn, lưu và trả về thành công
+    user.cccd_number = cccd_number;
+    user.cccd_full_name = full_name;
+    user.cccd_birth_date = birth_date;
+    user.cccd_image = imageUrl;
+    user.cccd_verification_status = 'pending';
+    await user.save({ validateBeforeSave: false });
+    res.status(200).json({ success: true, message: 'Thông tin CCCD đã được gửi để chờ admin duyệt!', user, ocr, input: { cccd_number, full_name, birth_date } });
+  } catch (error) {
+    console.error("Error verifying CCCD:", error);
+    res.status(500).json({ success: false, message: 'Lỗi khi xử lý thông tin CCCD.' });
   }
 };

@@ -4,6 +4,7 @@ const { protect, adminOnly } = require("../middleware/authMiddleware");
 const adminController = require("../controller/adminController");
 const upload = require('../middleware/upload');
 
+
 // Route để lấy thống kê tổng quan cho admin dashboard
 router.get(
   "/dashboard-stats",
@@ -75,6 +76,8 @@ router.post('/approve-deposit-refund/:bookingId', protect, adminOnly, adminContr
 router.get('/payout-requests', protect, adminOnly, adminController.getPendingPayoutRequests);
 router.post('/approve-payout/:bookingId', protect, adminOnly, adminController.approvePayoutBooking);
 
+router.get('/cccd-requests', protect, adminOnly, adminController.getPendingCCCDRequests);
+router.put('/cccd-status/:userId', protect, adminOnly, adminController.updateCCCDStatus);
 
 
 module.exports = router;

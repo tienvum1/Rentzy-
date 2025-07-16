@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./SidebarAdmin.css";
+import { Link } from 'react-router-dom';
 
 const SidebarAdmin = () => {
 
@@ -26,6 +27,7 @@ const SidebarAdmin = () => {
                 {/* Driver License Requests */}
                 <li onClick={() => handleMenuItemClick('/admin/driver-license-requests')}>Duyệt GPLX</li>
 
+                <li onClick={() => handleMenuItemClick('/admin/cccd-requests')}>Duyệt CCCD</li>
                 {/* Owner Requests */}
                 <li onClick={() => handleMenuItemClick('/admin/owner-requests')}>Duyệt chủ xe</li>
 

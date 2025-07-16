@@ -2,6 +2,7 @@ import React from "react";
 import Header from "../../../components/Header/Header";
 import Footer from "../../../components/footer/Footer";
 import ProfileSidebar from "../ProfileSidebar";
+
 import "./ProfileLayout.css";
 
 const ProfileLayout = ({ children }) => (
@@ -13,6 +14,7 @@ const ProfileLayout = ({ children }) => (
       </div>
       <main className="profile-main-content">
         {children}
+
       </main>
     </div>
     <Footer />

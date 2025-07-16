@@ -14,6 +14,7 @@ import DriverLicenseVerification from './DriverLicenseVerification';
 import ProfileLayout from '../profileLayout/ProfileLayout';
 import BankAccountPage from './BankAccountPage';
 import CCCDPage from './CCCDPage';
+import CCCDVerification from './CCCDVerification';
 
 const Profile = () => {
   const { user, isAuthenticated, isLoading, login } = useAuth();
@@ -107,7 +108,13 @@ const Profile = () => {
           onClick={() => setActiveTab('cccd')}
           style={{ padding: '8px 16px', background: activeTab === 'cccd' ? '#1976d2' : '#eee', color: activeTab === 'cccd' ? '#fff' : '#333', border: 'none', borderRadius: 4 }}
         >
-          CCCD
+          CCCD truyền thống
+        </button>
+        <button
+          onClick={() => setActiveTab('cccdAI')}
+          style={{ padding: '8px 16px', background: activeTab === 'cccdAI' ? '#1976d2' : '#eee', color: activeTab === 'cccdAI' ? '#fff' : '#333', border: 'none', borderRadius: 4 }}
+        >
+          CCCD AI (FPT.AI)
         </button>
         <button
           onClick={() => setActiveTab('bank')}
@@ -220,6 +227,7 @@ const Profile = () => {
       )}
       {activeTab === 'gplx' && <DriverLicenseVerification />}
       {activeTab === 'cccd' && <CCCDPage />}
+      {activeTab === 'cccdAI' && <CCCDVerification />}
       {activeTab === 'bank' && <BankAccountPage />}
       <AvatarPopup
         open={showAvatarPopup}

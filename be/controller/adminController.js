@@ -653,7 +653,33 @@ const getDashboardStats = async (req, res) => {
     }
 };
 
+// Lấy danh sách user chờ duyệt CCCD
+const getPendingCCCDRequests = async (req, res) => {
+  try {
+    const users = await require('../models/User').find({ cccd_verification_status: 'pending' });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi lấy danh sách CCCD chờ duyệt.' });
+  }
+};
 
+// Cập nhật trạng thái xác thực CCCD
+const updateCCCDStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { status } = req.body;
+    if (!['verified', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: 'Trạng thái không hợp lệ.' });
+    }
+    const user = await require('../models/User').findById(userId);
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy user.' });
+    user.cccd_verification_status = status;
+    await user.save({ validateBeforeSave: false });
+    res.json({ message: `CCCD đã được ${status === 'verified' ? 'chấp thuận' : 'từ chối'}.` });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi cập nhật trạng thái CCCD.' });
+  }
+};
 
 
 // ✅ Export tất cả ở một chỗ duy nhất
@@ -670,5 +696,7 @@ module.exports = {
     getPendingDepositRefundRequests,
     approveDepositRefund,
     approvePayoutBooking,
-    createOrUpdateDriverLicense
+    createOrUpdateDriverLicense,
+    getPendingCCCDRequests,
+    updateCCCDStatus
 };

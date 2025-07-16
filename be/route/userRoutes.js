@@ -49,5 +49,8 @@ router.post('/create-cccd', protect, uploadMemory.fields([
   { name: 'cccd_back', maxCount: 1 }
 ]), userController.createCCCD);
 
+// New route for verifying CCCD with AI OCR
+router.post('/verify-cccd', protect, upload.single('cccd_image'), userController.verifyCCCD);
+
 
 module.exports = router;

@@ -20,9 +20,15 @@ const userSchema = new mongoose.Schema({
   avatar_url: String,
 
 
+  cccd_full_name:String,
   cccd_number: String,
-  cccd_front_url: String,
-  cccd_back_url: String,
+  cccd_image: String,
+  cccd_birth_date:Date,
+  cccd_verification_status: {
+    type: String,
+    enum: ['none', 'pending', 'verified', 'rejected'],
+    default: 'none',
+  },
 
   driver_license_number: String,
   driver_license_front_url: String,
