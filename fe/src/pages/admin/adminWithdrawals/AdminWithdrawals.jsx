@@ -4,12 +4,15 @@ import moment from 'moment';
 import { FaCheck, FaTimes, FaEye, FaSpinner } from 'react-icons/fa';
 import SidebarAdmin from '../../../components/SidebarAdmin/SidebarAdmin';
 import './AdminWithdrawals.css';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const AdminWithdrawals = () => {
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+  const [confirmApproveId, setConfirmApproveId] = useState(null);
 
   useEffect(() => {
     fetchPendingWithdrawals();
@@ -32,21 +35,21 @@ const AdminWithdrawals = () => {
   };
 
   const handleApprove = async (transactionId) => {
+    setProcessingId(transactionId);
     try {
-      setProcessingId(transactionId);
       await axios.put(
         `${process.env.REACT_APP_BACKEND_URL}/api/wallet/withdraw/${transactionId}`,
         { action: 'approve' },
         { withCredentials: true }
       );
-      
       // Refresh danh sách
       await fetchPendingWithdrawals();
-      alert('Đã duyệt yêu cầu rút tiền thành công!');
+      toast.success('Duyệt yêu cầu rút tiền thành công!');
     } catch (err) {
-      alert('Lỗi khi duyệt yêu cầu: ' + (err.response?.data?.message || 'Lỗi không xác định'));
+      toast.error('Lỗi khi duyệt yêu cầu: ' + (err.response?.data?.message || 'Lỗi không xác định'));
     } finally {
       setProcessingId(null);
+      setConfirmApproveId(null);
     }
   };
 
@@ -65,9 +68,9 @@ const AdminWithdrawals = () => {
       
       // Refresh danh sách
       await fetchPendingWithdrawals();
-      alert('Đã từ chối yêu cầu rút tiền!');
+      toast.success('Đã từ chối yêu cầu rút tiền!');
     } catch (err) {
-      alert('Lỗi khi từ chối yêu cầu: ' + (err.response?.data?.message || 'Lỗi không xác định'));
+      toast.error('Lỗi khi từ chối yêu cầu: ' + (err.response?.data?.message || 'Lỗi không xác định'));
     } finally {
       setProcessingId(null);
     }
@@ -190,7 +193,7 @@ const AdminWithdrawals = () => {
                           <div className="action-buttons">
                             <button
                               className="approve-btn"
-                              onClick={() => handleApprove(withdrawal._id)}
+                              onClick={() => setConfirmApproveId(withdrawal._id)}
                               disabled={processingId === withdrawal._id}
                             >
                               {processingId === withdrawal._id ? (
@@ -223,6 +226,33 @@ const AdminWithdrawals = () => {
           </div>
         </main>
       </div>
+      {/* Modal for approve confirmation */}
+      {confirmApproveId && (
+        <div className="modal-overlay">
+          <div className="modal-confirm-box">
+            <span style={{ fontSize: 18, fontWeight: 600, marginBottom: 18 }}>Bạn có muốn duyệt yêu cầu này không?</span>
+            <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
+              <button
+                className="approve-btn"
+                onClick={() => handleApprove(confirmApproveId)}
+                disabled={processingId === confirmApproveId}
+                style={{ minWidth: 90 }}
+              >
+                {processingId === confirmApproveId ? <FaSpinner className="spinning" /> : <FaCheck />} Có
+              </button>
+              <button
+                className="reject-btn"
+                onClick={() => setConfirmApproveId(null)}
+                disabled={processingId === confirmApproveId}
+                style={{ minWidth: 90 }}
+              >
+                <FaTimes /> Không
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <ToastContainer position="top-right" autoClose={2000} />
     </>
   );
 };

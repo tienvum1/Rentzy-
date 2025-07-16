@@ -3,6 +3,7 @@ import axios from 'axios';
 import SidebarOwner from '../../../components/SidebarOwner/SidebarOwner';
 import moment from 'moment';
 import './OwnerBookingManagement.css';
+import './OwnerActionButtons.css';
 
 const OwnerBookingManagement = () => {
   const [bookings, setBookings] = useState([]);
@@ -115,7 +116,7 @@ const OwnerBookingManagement = () => {
                     <td>{b.renter?.name || b.renter?.email}</td>
                     <td>{b.status}</td>
                     <td>
-                      {b.pickupTime} {moment(b.startDate).format('DD/MM/YYYY')} - {b.returnTime} {moment(b.endDate).format('DD/MM/YYYY')}
+                      {b.pickupTime} {moment(b.startDate).format('DD/MM/YYYY')}  {b.returnTime} {moment(b.endDate).format('DD/MM/YYYY')}
                     </td>
                     <td>{moment(b.createdAt).format('DD/MM/YYYY HH:mm')}</td>
                     <td>
@@ -125,7 +126,20 @@ const OwnerBookingManagement = () => {
                       {b.payoutStatus === 'rejected' && <span className="payout-status payout-status-rejected">Từ chối</span>}
                     </td>
                     <td>
-                      <a className="owner-booking-view-link" href={`/ownerpage/booking-detail/${b._id}`}>Xem</a>
+                      <div className="owner-booking-action-group">
+                        <a
+                          className="owner-booking-action-btn view"
+                          href={`/ownerpage/booking-detail/${b._id}`}
+                        >
+                          {/* <FaEye style={{marginRight: 6}} /> */} Xem
+                        </a>
+                        <a
+                          className="owner-booking-action-btn contract"
+                          href={`/ownerpage/contract/${b._id}`}
+                        >
+                          {/* <FaFileContract style={{marginRight: 6}} /> */} Hợp đồng
+                        </a>
+                      </div>
                     </td>
                   </tr>
                 ))}

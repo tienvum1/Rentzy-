@@ -7,6 +7,8 @@ import { useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { FaCheck, FaCar, FaFileSignature, FaRegCircle } from "react-icons/fa";
 import Header from '../../components/Header/Header';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function ProgressBar({ currentStep }) {
   return (
@@ -90,20 +92,58 @@ const ContractPage = () => {
         type,
         signature: dataUrl
       }, { withCredentials: true });
+      toast.success('Lưu chữ ký thành công!');
     } catch (err) {
-      alert('Lưu chữ ký thất bại!');
+      toast.error('Lưu chữ ký thất bại!');
     }
   };
 
   return (
     <>
       <Header />
+      <ToastContainer position="top-right" autoClose={2000} />
       <div className="contract-page-bg">
         <div className="progress-bar-wrapper">
           <ProgressBar currentStep={3} />
         </div>
         <div className="contract-a4-container">
-       
+          {/* Thông báo cần ký hợp đồng */}
+          {canSignRenter && !renterSignature && (
+            <div style={{
+              background: '#fffbe6',
+              color: '#ad8b00',
+              border: '1px solid #ffe58f',
+              borderRadius: 8,
+              padding: '12px 20px',
+              marginBottom: 18,
+              fontWeight: 500,
+              fontSize: '1.05rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}>
+              <span style={{fontSize: 20, marginRight: 8}}>⚠️</span>
+              Bạn cần ký hợp đồng để hoàn thành thủ tục nhận xe.
+            </div>
+          )}
+          {canSignRenter && renterSignature && (
+            <div style={{
+              background: '#e6fffb',
+              color: '#08979c',
+              border: '1px solid #87e8de',
+              borderRadius: 8,
+              padding: '10px 18px',
+              marginBottom: 16,
+              fontWeight: 500,
+              fontSize: '1.01rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}>
+              <span style={{fontSize: 20, marginRight: 8}}>✅</span>
+              Bạn đã ký hợp đồng. Có thể hoàn thành bước này.
+            </div>
+          )}
           <main className="contract-content">
             {/* Nội dung hợp đồng */}
             <div className="contract-header-row">
@@ -232,9 +272,14 @@ const ContractPage = () => {
                   ) : null}
                 </div>
                 {!ownerSignature && canSignOwner && (
-                  <div style={{marginTop: 10, display: 'flex', gap: 12, justifyContent: 'center'}}>
-                    <button onClick={() => { ownerSigRef.current.clear(); setIsOwnerSigEmpty(true); }}>Xóa</button>
-                    <button onClick={() => handleSaveSignature('owner')}>Lưu chữ ký</button>
+                  <div style={{marginTop: 10, display: 'flex', gap: 12, justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
+                    <div style={{fontSize: 13, color: '#888', marginBottom: 4}}>
+                      Chữ ký sẽ được lưu lên hệ thống và không thể chỉnh sửa lại.
+                    </div>
+                    <div style={{display: 'flex', gap: 12}}>
+                      <button onClick={() => { ownerSigRef.current.clear(); setIsOwnerSigEmpty(true); }}>Xóa</button>
+                      <button onClick={() => handleSaveSignature('owner')}>Lưu chữ ký</button>
+                    </div>
                   </div>
                 )}
                 <div className="contract-signature-name">{owner?.name}</div>
@@ -267,13 +312,21 @@ const ContractPage = () => {
                   ) : null}
                 </div>
                 {!renterSignature && canSignRenter && (
-                  <div style={{marginTop: 10, display: 'flex', gap: 12, justifyContent: 'center'}}>
-                    <button onClick={() => { renterSigRef.current.clear(); setIsSigEmpty(true); }}>Xóa</button>
-                    <button onClick={() => handleSaveSignature('renter')}>Lưu chữ ký</button>
+                  <div style={{marginTop: 10, display: 'flex', gap: 12, justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
+                    <div style={{fontSize: 13, color: '#888', marginBottom: 4}}>
+                      Chữ ký sẽ được lưu lên hệ thống và không thể chỉnh sửa lại.
+                    </div>
+                    <div style={{display: 'flex', gap: 12}}>
+                      <button onClick={() => { renterSigRef.current.clear(); setIsSigEmpty(true); }}>Xóa</button>
+                      <button onClick={() => handleSaveSignature('renter')}>Lưu chữ ký</button>
+                    </div>
                   </div>
                 )}
                 <div className="contract-signature-name">{renter?.driver_license_full_name || renter?.name}</div>
               </div>
+            </div>
+            <div className="contract-footer-note">
+              Hợp đồng này được tạo và lưu trữ tự động trên hệ thống Rentzy. Mọi thông tin, chữ ký điện tử và nội dung hợp đồng sẽ được sử dụng làm căn cứ pháp lý trong quá trình thuê xe, giải quyết tranh chấp (nếu có) và tuân thủ theo quy định của pháp luật Việt Nam cũng như chính sách của nền tảng.
             </div>
             {canSignRenter && renterSignature && (
               <div style={{ textAlign: 'center', marginTop: 24 }}>
@@ -296,7 +349,7 @@ const ContractPage = () => {
                 </button>
               </div>
             )}
-            <div className="contract-footer-note">Hợp đồng được tạo tự động bởi hệ thống. Mọi tranh chấp sẽ được giải quyết theo quy định pháp luật Việt Nam và chính sách của nền tảng.</div>
+
           </main>
         </div>
       </div>

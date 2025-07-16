@@ -295,14 +295,21 @@ const BookingDetailOwner = () => {
             {user && booking.vehicle?.owner === user._id && (
               <div style={{marginTop: 18, display: 'flex', gap: 18}}>
                 {!booking.ownerHandoverConfirmed && booking.status && booking.status.toLowerCase() === 'fully_paid' && (
-                  <button
-                    onClick={handleConfirmHandover}
-                    style={{ background: '#2b7a78', color: '#fff', fontWeight: 600, fontSize: 18, border: 'none', borderRadius: 10, padding: '14px 32px', boxShadow: '0 2px 8px #e3e8ef', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}
-                    disabled={isUploading}
-                  >
-                    <FaTruck style={{fontSize: 20}} />
-                    {isUploading ? 'Đang xử lý...' : 'Đã giao xe'}
-                  </button>
+                  <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6}}>
+                    <button
+                      onClick={handleConfirmHandover}
+                      style={{ background: '#2b7a78', color: '#fff', fontWeight: 600, fontSize: 18, border: 'none', borderRadius: 10, padding: '14px 32px', boxShadow: '0 2px 8px #e3e8ef', cursor: (!!booking.renterSignature && !!booking.ownerSignature && !isUploading) ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: 10 }}
+                      disabled={isUploading || !booking.renterSignature || !booking.ownerSignature}
+                    >
+                      <FaTruck style={{fontSize: 20}} />
+                      {isUploading ? 'Đang xử lý...' : 'Đã giao xe'}
+                    </button>
+                    {(!booking.renterSignature || !booking.ownerSignature) && (
+                      <div style={{color: '#e67e22', fontSize: 14, marginTop: 2, fontWeight: 500}}>
+                        Cần chữ ký của cả chủ xe và người thuê để giao xe.
+                      </div>
+                    )}
+                  </div>
                 )}
                 {booking.ownerHandoverConfirmed && !booking.ownerReturnConfirmed && (
                   <button
@@ -318,7 +325,7 @@ const BookingDetailOwner = () => {
             )}
           </div>
         </div>
-        {user && booking.vehicle?.owner === user._id && (!booking.preRentalImages || booking.preRentalImages.length < 5) && !booking.ownerHandoverConfirmed && (
+        {user && booking.vehicle?.owner === user._id && (!booking.preRentalImages || booking.preRentalImages.length < 5) && !booking.ownerHandoverConfirmed && booking.status !== 'canceled' && (
           <ImageUploaderCard
             title="Ảnh xe trước khi giao"
             images={preDeliveryImages}
@@ -331,7 +338,7 @@ const BookingDetailOwner = () => {
             max={5}
           />
         )}
-        {booking.preRentalImages && booking.preRentalImages.length === 5 && (
+        {booking.preRentalImages && booking.preRentalImages.length === 5 && booking.status !== 'canceled' && (
           <div className={styles.card} style={{marginBottom: 24}}>
             <div className={styles.cardTitle}><FaCamera /> Ảnh xe trước khi giao (đã upload)</div>
             <div style={{display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 12}}>

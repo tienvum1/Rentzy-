@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import SidebarAdmin from '../../../components/SidebarAdmin/SidebarAdmin';
 import './AdminPayoutRequests.css';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const AdminPayoutRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -26,12 +28,26 @@ const AdminPayoutRequests = () => {
   };
 
   const handleApprovePayout = async (bookingId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn duyệt giải ngân cho đơn này?')) return;
     setActionLoading(prev => ({ ...prev, [bookingId]: 'payout' }));
     try {
       await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/admin/approve-payout/${bookingId}`, {}, { withCredentials: true });
       setRequests(prev => prev.map(r => r.id === bookingId ? { ...r, payoutStatus: 'approved' } : r));
+      toast.success('Duyệt giải ngân thành công!');
     } catch (err) {
-      alert('Duyệt giải ngân thất bại!');
+      toast.error('Duyệt giải ngân thất bại!');
+    }
+    setActionLoading(prev => ({ ...prev, [bookingId]: null }));
+  };
+
+  const handleCancelPayout = async (bookingId) => {
+    setActionLoading(prev => ({ ...prev, [bookingId]: 'cancel' }));
+    try {
+      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/admin/cancel-payout/${bookingId}`, {}, { withCredentials: true });
+      setRequests(prev => prev.filter(r => r.id !== bookingId));
+      toast.success('Đã huỷ giải ngân thành công!');
+    } catch (err) {
+      toast.error('Huỷ giải ngân thất bại!');
     }
     setActionLoading(prev => ({ ...prev, [bookingId]: null }));
   };
@@ -50,6 +66,7 @@ const AdminPayoutRequests = () => {
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f6f8fa' }}>
       <SidebarAdmin />
       <div style={{ flex: 1, minWidth: 0 }}>
+        <ToastContainer position="top-right" autoClose={2000} />
         <div className="admin-payout-requests-container">
           <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Duyệt giải ngân cho chủ xe</h2>
           {loading ? (

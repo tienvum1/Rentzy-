@@ -57,6 +57,8 @@ import OwenerCancelRequest from "./pages/owner/ownerBookings/OwnerCancelRequests
 import OwnerBookingDetail from "./pages/owner/bookingDetail/BookingDetailOwner";
 import RevenuePage from "./pages/owner/ownerRevenue/RevenuePage";
 import OwnerVehicleReviews from "./pages/owner/vehicleReviews/OwnerVehicleReviews";
+import OwnerContractPage from './pages/owner/ownerBookings/OwnerContractPage';
+
 // admin
 import AdminDashboard from "./pages/admin/adminDashboard/AdminDashboard";
 import OwnerRequestsPage from "./pages/admin/adminOwnerRequestsPage/OwnerRequestsPage";
@@ -74,6 +76,8 @@ import AdminChatPage from "./pages/admin/adminChatPage/AdminChatPage";
 
 import PaymentSuccess from "./pages/payment/PaymentSuccess";
 import PaymentFailed from "./pages/payment/PaymentFailed";
+
+
 
 function App() {
   return (
@@ -133,8 +137,7 @@ function App() {
             <Route path="/payment/failed" element={<PaymentFailed />} />
             {/* Add route for OwnerPage */}
             <Route path="/consignForm" element={<ConsignForm />} />
-
-            {/* Add a root route if needed */}
+            <Route path="/ownerpage/contract/:bookingId" element={<OwnerContractPage />} />
 
             {/* admin route */}
             {/* chỉ admin có quyền truy cập */}

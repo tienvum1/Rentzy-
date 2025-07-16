@@ -310,3 +310,38 @@
     font-size: 0.8rem;
   }
 } 
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.32);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-confirm-box {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(25, 118, 210, 0.18);
+  padding: 32px 32px 24px 32px;
+  min-width: 320px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: modalPopIn 0.18s cubic-bezier(.4,2,.6,1) both;
+}
+
+@keyframes modalPopIn {
+  from { transform: scale(0.92) translateY(30px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@media (max-width: 500px) {
+  .modal-confirm-box {
+    min-width: 90vw;
+    padding: 18px 8px 14px 8px;
+  }
+} 

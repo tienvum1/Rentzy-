@@ -236,6 +236,13 @@ const UserBookings = () => {
                                 >
                                   <FaInfoCircle /> Xem chi tiết
                                 </button>
+                                <button
+                                  className="view-contract-button"
+                                  style={{ marginLeft: 8, background: '#1976d2', color: '#fff', borderRadius: 6, padding: '6px 14px', fontWeight: 500, border: 'none', cursor: 'pointer' }}
+                                  onClick={() => navigate(`/contracts/${booking._id}`)}
+                                >
+                                  Xem hợp đồng
+                                </button>
                                 {booking.status === 'DEPOSIT_PAID' && remainingAmount > 0 && (
                                   <button 
                                     className="pay-remaining-button"

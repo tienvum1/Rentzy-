@@ -80,7 +80,7 @@ function PreRentalImagesViewer({ preRentalImages, renterHandoverConfirmed, onCon
               </span>
             ) : (
               <>
-                {renterHandoverConfirmed ? 'Đã xác nhận nhận xe' : 'Đã nhận xe'}
+                {renterHandoverConfirmed ? 'Đã xác nhận nhận xe' : 'Xác nhận '}
               </>
             )}
           </button>
@@ -139,7 +139,7 @@ function PostRentalImagesViewer({ postRentalImages, renterReturnConfirmed, onCon
         <span className="pre-rental-title">Ảnh xe khi nhận lại (do chủ xe upload)</span>
       </div>
       <div className="pre-rental-desc">
-        Đây là ảnh xe khi chủ xe nhận lại, lưu trữ cho mục đích đối chiếu và giải quyết tranh chấp (nếu có).
+        Đây là ảnh xe khi chủ xe nhận lại ,  lưu trữ cho mục đích đối chiếu và giải quyết tranh chấp (nếu có) . Vui lòng kiểm tra thực tế trước khi bấm xác nhận hoàn thành chuyến đi .
       </div>
       <div className="pre-rental-count">
         Đã upload {postRentalImages.length}/5 ảnh
@@ -173,7 +173,7 @@ function PostRentalImagesViewer({ postRentalImages, renterReturnConfirmed, onCon
               </span>
             ) : (
               <>
-                {renterReturnConfirmed ? 'Đã xác nhận trả xe' : 'Đã trả xe'}
+                {renterReturnConfirmed ? 'Đã xác nhận trả xe' : 'Hoàn thành chuyến đi'}
               </>
             )}
           </button>
@@ -833,28 +833,28 @@ const BookingDetailsPage = () => {
                           <div style={{ background:'#e0f2fe', borderRadius:8, fontWeight:600, border:'2px solid #38bdf8', boxShadow:'0 2px 12px rgba(56,189,248,0.10)', padding:12, marginBottom:12 }}>
                             <span role="img" aria-label="star">⭐</span> <b>Huỷ trong vòng 1 giờ sau khi đặt cọc</b>:<br/>
                             Hoàn <b style={{color:'#059669'}}>{expectedRefund.refund?.toLocaleString('vi-VN')}đ</b> (100%)<br/>
-                            Số tiền bị mất: <b style={{color:'#ef4444'}}>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b>
+                            Số tiền phí: <b style={{color:'#ef4444'}}>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b>
                           </div>
                         )}
                         {expectedRefund.policy === 'refund_50' && (
                           <div style={{ background:'#fff7ed', borderRadius:8, fontWeight:600, border:'2px solid #f59e42', boxShadow:'0 2px 12px rgba(245,158,66,0.10)', padding:12, marginBottom:12 }}>
                             <span role="img" aria-label="half">🌓</span> <b>Huỷ trước 7 ngày</b>:<br/>
                             Hoàn <b style={{color:'#f59e42'}}>{expectedRefund.refund?.toLocaleString('vi-VN')}đ</b> (50%)<br/>
-                            Số tiền bị mất: <b style={{color:'#ef4444'}}>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b> (50%)
+                            Số tiền phí: <b style={{color:'#ef4444'}}>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b> (50%)
                           </div>
                         )}
                         {expectedRefund.policy === 'lost_100_7days' && (
                           <div style={{ background:'#fef2f2', borderRadius:8, fontWeight:600, border:'2px solid #ef4444', boxShadow:'0 2px 12px rgba(239,68,68,0.10)', padding:12, marginBottom:12 }}>
-                            <span role="img" aria-label="cross">❌</span> <b>Huỷ trong vòng 7 ngày trước khi nhận xe (kể cả 1h cuối)</b>:<br/>
+                            <span role="img" aria-label="cross">❌</span> <b>Huỷ trong vòng 7 ngày trước khi nhận xe </b>:<br/>
                             Hoàn <b style={{color:'#ef4444'}}>{expectedRefund.refund?.toLocaleString('vi-VN')}đ</b><br/>
-                            Số tiền bị mất: <b style={{color:'#ef4444'}}>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b> (100%)
+                            Số tiền phí: <b style={{color:'#ef4444'}}>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b> (100%)
                           </div>
                         )}
                         {expectedRefund.policy === 'lost_100_after' && (
                           <div style={{ background:'#fef2f2', borderRadius:8, fontWeight:600, border:'2px solid #ef4444', boxShadow:'0 2px 12px rgba(239,68,68,0.10)', padding:12, marginBottom:12 }}>
                             <span role="img" aria-label="cross">❌</span> <b>Huỷ sau thời điểm nhận xe hoặc không tới nhận xe/quá giờ:</b><br/>
                             Hoàn <b style={{color:'#ef4444'}}>{expectedRefund.refund?.toLocaleString('vi-VN')}đ</b><br/>
-                            Số tiền bị mất: <b style={{color:'#ef4444'}}>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b> (100%)
+                            Số tiền phí: <b style={{color:'#ef4444'}}>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b> (100%)
                           </div>
                         )}
                         <div style={{ fontSize: 14, color: '#64748b', marginTop: 10 }}>
@@ -877,7 +877,7 @@ const BookingDetailsPage = () => {
                         )}
                         {expectedRefund.lost > 0 && (
                           <div style={{ fontSize: 15, color: '#ef4444', marginTop: 4, fontWeight: 500 }}>
-                            <span role="img" aria-label="lost">⚠️</span> Số tiền bạn sẽ bị mất: <b>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b>
+                            <span role="img" aria-label="lost">⚠️</span> Số tiền phí: <b>{expectedRefund.lost?.toLocaleString('vi-VN')}đ</b>
                           </div>
                         )}
                       </div>

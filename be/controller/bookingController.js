@@ -726,11 +726,12 @@ const ownerApproveCancel = async (req, res) => {
     // Ưu tiên lấy số tiền hoàn đã lưu trong booking (nếu có)
     if (typeof booking.totalRefund === 'number' && booking.totalRefund > 0) totalRefund = booking.totalRefund;
 
-    // Nếu vẫn chưa có, fallback về logic cũ
-    if (typeof totalRefund !== 'number' || totalRefund <= 0) {
-      // fallback: tự tính lại như cũ (chỉ hoàn cọc)
+    // Nếu vẫn chưa có, fallback về logic cũ (chỉ khi getDepositRefund có tồn tại)
+    if ((typeof totalRefund !== 'number' || totalRefund < 0) && typeof getDepositRefund === 'function') {
       totalRefund = getDepositRefund(booking);
     }
+    // Nếu vẫn không có, đảm bảo totalRefund là 0
+    if (typeof totalRefund !== 'number' || totalRefund < 0) totalRefund = 0;
 
     const wallet = await Wallet.findOne({ user: booking.renter._id });
     if (!wallet) return res.status(404).json({ success: false, message: 'Không tìm thấy ví của người thuê.' });
@@ -758,6 +759,9 @@ const ownerApproveCancel = async (req, res) => {
       });
       await refundTransaction.save();
       booking.transactions.push(refundTransaction._id);
+      // Set payoutStatus and payoutAmount for admin to approve payout
+      booking.payoutStatus = 'pending';
+      booking.payoutAmount = totalRefund;
       await booking.save();
       wallet.balance += totalRefund;
       await wallet.save();
@@ -1367,19 +1371,26 @@ const saveBookingSignature = async (req, res) => {
     const booking = await Booking.findById(id).populate('vehicle');
     if (!booking) return res.status(404).json({ message: 'Không tìm thấy booking' });
 
+    // Upload chữ ký lên Cloudinary
+    const uploadRes = await cloudinary.uploader.upload(signature, {
+      folder: 'rentzy/signatures',
+      format: 'png',
+    });
+    const signatureUrl = uploadRes.secure_url;
+
     if (type === 'renter') {
       if (booking.renter.toString() !== req.user._id.toString())
         return res.status(403).json({ message: 'Bạn không có quyền ký bên B' });
-      booking.renterSignature = signature;
+      booking.renterSignature = signatureUrl;
     } else if (type === 'owner') {
       if (booking.vehicle.owner.toString() !== req.user._id.toString())
         return res.status(403).json({ message: 'Bạn không có quyền ký bên A' });
-      booking.ownerSignature = signature;
+      booking.ownerSignature = signatureUrl;
     } else {
       return res.status(400).json({ message: 'Loại chữ ký không hợp lệ' });
     }
     await booking.save();
-    res.json({ success: true });
+    res.json({ success: true, url: signatureUrl });
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server khi lưu chữ ký', error: err.message });
   }

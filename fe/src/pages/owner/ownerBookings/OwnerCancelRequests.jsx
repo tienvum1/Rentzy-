@@ -28,6 +28,7 @@ const OwnerCancelRequests = () => {
   };
 
   const handleApprove = async (bookingId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn duyệt huỷ đơn này?')) return;
     setActionLoading(bookingId + '-approve');
     try {
       await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${bookingId}/owner-approve-cancel`, {}, { withCredentials: true });
@@ -86,7 +87,7 @@ const OwnerCancelRequests = () => {
                       <td>{new Date(r.startDate).toLocaleDateString('vi-VN')} - {new Date(r.endDate).toLocaleDateString('vi-VN')}</td>
                       <td>{r.cancellationReason || '-'}</td>
                       <td style={{ color: '#1976d2', fontWeight: 600 }}>
-                        {typeof r.totalRefund === 'number' && r.totalRefund > 0
+                        {typeof r.totalRefund === 'number'
                           ? r.totalRefund.toLocaleString('vi-VN') + ' ₫'
                           : '-'}
                       </td>
