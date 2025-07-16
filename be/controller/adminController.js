@@ -10,6 +10,7 @@ const Wallet = require('../models/Wallet');
 const Transaction = require('../models/Transaction');
 const mongoose = require('mongoose');
 
+
 // Hàm gọi FPT.AI OCR
 async function extractDriverLicenseInfoFPT(imageUrl) {
   // Tải ảnh về file tạm nếu là URL
@@ -18,7 +19,7 @@ async function extractDriverLicenseInfoFPT(imageUrl) {
   fs.writeFileSync(tempPath, response.data);
   const form = new FormData();
   form.append('image', fs.createReadStream(tempPath));
-  const apiKey = process.env.FPT_AI_API_KEY ; // Đặt key thật ở .env
+  const apiKey = process.env.FPT_AI_API_KEY  || 'ncs4OhsljMoirb4bbqDkt9tdDaU0lBNw';
   try {
     const ocrRes = await axios.post(
       'https://api.fpt.ai/vision/dlr/vnm',
@@ -39,16 +40,22 @@ async function extractDriverLicenseInfoFPT(imageUrl) {
     throw error;
   }
 }
-
+function removeVietnameseTones(str) {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+    .toLowerCase();
+}
 // Controller nhận upload GPLX và xác thực AI
-exports.createDriverLicense = async (req, res) => {
+const createOrUpdateDriverLicense = async (req, res) => {
   try {
     const { driver_license_full_name, driver_license_birth_date, driver_license_number } = req.body;
     const user = await User.findById(req.user._id);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
-    // Upload ảnh lên cloudinary như cũ...
+    // Nếu có file mới thì upload, không thì giữ ảnh cũ
     let imageUrl = user.driver_license_image;
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
@@ -56,27 +63,54 @@ exports.createDriverLicense = async (req, res) => {
       });
       imageUrl = result.secure_url;
     }
-    // Gọi FPT.AI OCR để trích xuất thông tin từ ảnh
+    // Gọi FPT.AI OCR để trích xuất thông tin từ ảnh hiện tại
     const ocrInfo = await extractDriverLicenseInfoFPT(imageUrl);
-    // So sánh với thông tin user nhập
-    if (
-      ocrInfo.name.trim().toLowerCase() !== driver_license_full_name.trim().toLowerCase() ||
-      ocrInfo.date_of_birth !== driver_license_birth_date ||
-      ocrInfo.id !== driver_license_number
-    ) {
-      return res.status(400).json({ message: 'Thông tin trên ảnh GPLX không khớp với thông tin bạn nhập. Vui lòng kiểm tra lại!' });
+    const ocr = Array.isArray(ocrInfo) ? ocrInfo[0] : ocrInfo;
+    // So sánh trực tiếp, không chuẩn hóa
+    const ocrName = (ocr?.name || '').trim();
+    const ocrDob = ocr?.dob ? ocr.dob.split('/').reverse().join('-') : '';
+    const ocrId = (ocr?.id || '').trim();
+    const inputName = (driver_license_full_name || '').trim();
+    const inputDob = (driver_license_birth_date || '').trim();
+    const inputId = (driver_license_number || '').trim();
+    // Log dữ liệu để debug
+    console.log('--- AI OCR fields ---');
+    console.log('id:', ocr?.id);
+    console.log('name:', ocr?.name);
+    console.log('dob:', ocr?.dob);
+    console.log('nation:', ocr?.nation);
+    console.log('address:', ocr?.address);
+    console.log('class:', ocr?.class);
+    console.log('date:', ocr?.date);
+    console.log('doe:', ocr?.doe);
+    console.log('--- User input fields ---');
+    console.log('driver_license_number:', driver_license_number);
+    console.log('driver_license_full_name:', driver_license_full_name);
+    console.log('driver_license_birth_date:', driver_license_birth_date);
+    console.log('--- So sánh trực tiếp ---');
+    console.log({ ocrName, inputName, ocrDob, inputDob, ocrId, inputId });
+    let warning = '';
+    if (!ocrName || !ocrDob || !ocrId) {
+      return res.status(400).json({ success: false, message: 'Không nhận diện được đủ thông tin từ ảnh GPLX.' });
     }
-    // Nếu khớp, lưu thông tin và đặt trạng thái chờ duyệt
+    if (
+      ocrName !== inputName ||
+      ocrDob !== inputDob ||
+      ocrId !== inputId
+    ) {
+      return res.status(400).json({ success: false, message: 'Thông tin trên ảnh GPLX không khớp với thông tin bạn nhập. Vui lòng kiểm tra lại!' });
+    }
+    // Nếu khớp hoàn toàn, lưu và trả về thành công
     user.driver_license_full_name = driver_license_full_name;
     user.driver_license_birth_date = driver_license_birth_date;
     user.driver_license_number = driver_license_number;
     user.driver_license_image = imageUrl;
     user.driver_license_verification_status = 'pending';
     await user.save({ validateBeforeSave: false });
-    res.status(200).json({ message: 'Thông tin GPLX đã được gửi để chờ admin duyệt!', user });
+    res.status(200).json({ success: true, message: 'Thông tin GPLX đã được gửi để chờ admin duyệt!', user, ocr, input: { driver_license_full_name, driver_license_birth_date, driver_license_number } });
   } catch (error) {
     console.error("Error creating/updating driver license:", error);
-    res.status(500).json({ message: 'Lỗi khi xử lý thông tin GPLX.' });
+    res.status(500).json({ success: false, message: 'Lỗi khi xử lý thông tin GPLX.' });
   }
 };
 
@@ -636,5 +670,5 @@ module.exports = {
     getPendingDepositRefundRequests,
     approveDepositRefund,
     approvePayoutBooking,
-    createDriverLicense: exports.createDriverLicense, // Add the new function to exports
+    createOrUpdateDriverLicense
 };

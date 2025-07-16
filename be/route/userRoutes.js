@@ -6,6 +6,7 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' }); // Thay đổi: Lưu file tạm thời vào thư mục 'uploads/'
 const { addBankAccount } = require('../controller/userController');
 const uploadMemory = require('../middleware/upload');
+const { createOrUpdateDriverLicense } = require('../controller/adminController');
 
 
 router.get("/profile", protect, userController.getProfile);
@@ -18,7 +19,7 @@ router.put('/update-profile', protect, upload.fields([
 ]), userController.updateProfile);
 
 // New route for creating driver license info
-router.post('/create-driver-license', protect, upload.single('driver_license_image'), userController.createDriverLicense);
+router.post('/create-driver-license', protect, upload.single('driver_license_image'), createOrUpdateDriverLicense);
 
 // New routes for email update and verification
 router.put('/update-email', protect, userController.updateEmail);

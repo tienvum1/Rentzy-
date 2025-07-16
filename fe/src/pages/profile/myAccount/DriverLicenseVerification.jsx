@@ -3,6 +3,8 @@ import './DriverLicenseVerification.css';
 import { FaPen } from 'react-icons/fa';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
+import { toast,ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999';
 
@@ -17,6 +19,10 @@ const DriverLicenseVerification = () => {
   const [file, setFile] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [status, setStatus] = useState('none');
+  const [ocrData, setOcrData] = useState(null);
+  const [ocrMatch, setOcrMatch] = useState(true);
+  const [ocrChecked, setOcrChecked] = useState(false);
+  const [warning, setWarning] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -70,24 +76,25 @@ const DriverLicenseVerification = () => {
     formData.append('driver_license_full_name', form.driver_license_full_name);
     formData.append('driver_license_birth_date', form.driver_license_birth_date);
     if (file) {
-      formData.append('driver_license_image', file);
+      formData.append('driver_license_image', file); // file là File object từ input
     }
-
     try {
       const response = await axios.post(`${backendUrl}/api/user/create-driver-license`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true
       });
-
-      if (response.data) {
-        alert('Thông tin GPLX đã được gửi để chờ duyệt!');
+      if (response.data && response.success) {
+        toast.success(response.message);
         await login(); // Refresh user data from context
+      } else {
+        toast.error(response.data.message || 'Có lỗi xảy ra khi gửi thông tin.');
       }
     } catch (error) {
-      console.error("Lỗi khi cập nhật GPLX:", error);
-      alert('Đã xảy ra lỗi khi gửi thông tin.');
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Đã xảy ra lỗi khi gửi thông tin.');
+      }
     }
   };
   
@@ -167,9 +174,7 @@ const DriverLicenseVerification = () => {
           <button onClick={handleSubmit} className="dlx-save-btn">Lưu lại</button>
         </div>
       )}
-      <div className="dlx-faq">
-        <a href="#">Vì sao tôi phải xác thực GPLX ?</a>
-      </div>
+      <ToastContainer position="top-right" autoClose={2000} />
     </div>
   );
 };

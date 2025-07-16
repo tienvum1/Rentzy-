@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 const adminController = require("../controller/adminController");
+const upload = require('../middleware/upload');
 
 // Route để lấy thống kê tổng quan cho admin dashboard
 router.get(
@@ -10,7 +11,8 @@ router.get(
   adminOnly,
   adminController.getDashboardStats
 );
-
+// duyệt gplx
+router.post('/create-driver-license', protect,upload.single('driver_license_image'), adminController.createOrUpdateDriverLicense);
 // Route để lấy danh sách các yêu cầu trở thành chủ xe
 router.get(
   "/owner-requests",
