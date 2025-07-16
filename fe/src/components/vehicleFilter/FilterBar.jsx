@@ -70,7 +70,7 @@ export const brandOptions = [
   "Mercedes-Benz"
 ].map(b => ({ value: b, label: b, icon: <FaIndustry /> }));
 
-const FilterBar = ({ onFilter, onSort }) => {
+const FilterBar = ({ onFilter, onClearAllFilters, onSort }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [selected, setSelected] = useState({
     seat: null,
@@ -110,16 +110,8 @@ const FilterBar = ({ onFilter, onSort }) => {
 
   // Clear tất cả filter
   const clearAllFilters = () => {
-    setSelected({
-      seat: null,
-      fuel: null,
-      transmission: null,
-      area: null,
-      brand: null,
-    });
-    if (onFilter) {
-      Object.keys(selected).forEach(type => onFilter(type, null));
-    }
+    setSelected({ seat: null, fuel: null, transmission: null, area: null, brand: null });
+    if (onClearAllFilters) onClearAllFilters();
   };
 
   // Helper render dropdown với animation
