@@ -38,7 +38,12 @@ const ConsignForm = () => {
         setError(response.data.message || 'Gửi yêu cầu thất bại.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Gửi yêu cầu thất bại.');
+      // Nếu lỗi xác thực CCCD, hiển thị thông báo rõ ràng
+      if (err.response?.data?.message === 'Bạn cần xác thực CCCD thành công trước khi đăng ký làm chủ xe.') {
+        setError('Bạn cần xác thực CCCD thành công trước khi đăng ký làm chủ xe.');
+      } else {
+        setError(err.response?.data?.message || 'Gửi yêu cầu thất bại.');
+      }
     } finally {
       setLoading(false);
     }

@@ -104,18 +104,19 @@ const Profile = () => {
         >
           Giấy phép lái xe
         </button>
-        <button
-          onClick={() => setActiveTab('cccd')}
-          style={{ padding: '8px 16px', background: activeTab === 'cccd' ? '#1976d2' : '#eee', color: activeTab === 'cccd' ? '#fff' : '#333', border: 'none', borderRadius: 4 }}
-        >
-          CCCD truyền thống
-        </button>
+        
         <button
           onClick={() => setActiveTab('cccdAI')}
           style={{ padding: '8px 16px', background: activeTab === 'cccdAI' ? '#1976d2' : '#eee', color: activeTab === 'cccdAI' ? '#fff' : '#333', border: 'none', borderRadius: 4 }}
         >
-          CCCD AI (FPT.AI)
+          CCCD 
         </button>
+        {/* <button
+          onClick={() => setActiveTab('cccd')}
+          style={{ padding: '8px 16px', background: activeTab === 'cccd' ? '#1976d2' : '#eee', color: activeTab === 'cccd' ? '#fff' : '#333', border: 'none', borderRadius: 4 }}
+        >
+          CCCD 
+        </button> */}
         <button
           onClick={() => setActiveTab('bank')}
           style={{ padding: '8px 16px', background: activeTab === 'bank' ? '#1976d2' : '#eee', color: activeTab === 'bank' ? '#fff' : '#333', border: 'none', borderRadius: 4 }}

@@ -165,7 +165,7 @@ const OwnerContractPage = () => {
             <div className="contract-between">Hợp đồng này được lập giữa các bên:</div>
             <div className="contract-party contract-party-a">
               <b>Bên A (Người cho thuê):</b>
-              <div>Họ tên: <b>{owner?.name}</b></div>
+              <div>Họ tên: <b>{owner?.cccd_full_name || owner?.name}</b></div>
               <div>Email: <b>{owner?.email}</b></div>
               <div>Số điện thoại: <b>{owner?.phone}</b></div>
               <div>Số CCCD: <b>{owner?.cccd_number}</b></div>
@@ -275,7 +275,7 @@ const OwnerContractPage = () => {
                     </div>
                   </div>
                 )}
-                <div className="contract-signature-name">{owner?.name}</div>
+                <div className="contract-signature-name">{owner?.cccd_full_name || owner?.name}</div>
               </div>
               <div className="contract-signature-col">
                 <b>BÊN B (người thuê xe)</b>

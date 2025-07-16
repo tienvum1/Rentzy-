@@ -18,6 +18,7 @@ dotenv.config();
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password_hash');
+    
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -685,5 +686,39 @@ exports.verifyCCCD = async (req, res) => {
   } catch (error) {
     console.error("Error verifying CCCD:", error);
     res.status(500).json({ success: false, message: 'Lỗi khi xử lý thông tin CCCD.' });
+  }
+};
+
+// @desc    Block user (set is_verified = false) and send email
+// @route   PUT /api/admin/users/:id/block
+// @access  Private/Admin
+exports.blockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.role.includes('admin')) return res.status(403).json({ message: 'Không thể block admin.' });
+    user.is_verified = false;
+    await user.save({ validateBeforeSave: false });
+
+    // Gửi email thông báo
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+    await transporter.sendMail({
+      to: user.email,
+      subject: 'Tài khoản của bạn đã bị khóa',
+      html: `<p>Tài khoản của bạn trên Rentzy đã bị khóa bởi quản trị viên. Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ hỗ trợ.</p>`
+    });
+
+    res.json({ success: true, message: 'User has been blocked and notified by email.' });
+  } catch (error) {
+    console.error('Block user error:', error);
+    res.status(500).json({ message: 'Lỗi server khi block user.' });
   }
 };

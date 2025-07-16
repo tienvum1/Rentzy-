@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
   emailVerificationToken: String, // Field to store the email verification token (OTP)
   emailVerificationExpires: Date, // Field to store the expiration time for the token
   is_verified: { type: Boolean, default: false }, // Email verification status
-
+  
    // Phone verification fields
    phoneVerificationToken: String, // Field to store the phone verification token (OTP)
    phoneVerificationExpires: Date, // Field to store the expiration time for the phone token

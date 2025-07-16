@@ -18,10 +18,19 @@ exports.getTransactionHistory = async (req, res) => {
       sortOrder = 'desc'
     } = req.query;
 
-    // 1. Query only by user field
-    const query = { user: userId };
+    // Lấy tất cả transaction liên quan đến user (user là chủ ví hoặc là user của transaction)
+    // (1) Giao dịch liên quan đến user (user field)
+    // (2) Giao dịch nạp tiền vào ví của user (wallet field)
+    const Wallet = require('../models/Wallet');
+    const userWallets = await Wallet.find({ user: userId }).select('_id');
+    const walletIds = userWallets.map(w => w._id);
 
-    // 2. Apply filters
+    const query = {
+      $or: [
+        { user: userId },
+        { wallet: { $in: walletIds } }
+      ]
+    };
     if (status) query.status = status;
     if (type) query.type = type;
     if (paymentMethod) query.paymentMethod = paymentMethod;
@@ -31,12 +40,10 @@ exports.getTransactionHistory = async (req, res) => {
       if (endDate) query.createdAt.$lte = new Date(endDate);
     }
 
-    // 3. Pagination & sort
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    // 4. Query transaction
     const transactions = await Transaction.find(query)
       .sort(sort)
       .skip(skip)
@@ -45,19 +52,22 @@ exports.getTransactionHistory = async (req, res) => {
     const totalTransactions = await Transaction.countDocuments(query);
     const totalPages = Math.ceil(totalTransactions / parseInt(limit));
 
-    // 5. Format response
     const formattedTransactions = transactions.map(transaction => ({
       _id: transaction._id,
-      booking: transaction.booking,
-      wallet: transaction.wallet,
-      user: transaction.user,
+      booking: transaction.booking || null,
+      user: transaction.user || null,
+      wallet: transaction.wallet || null,
       amount: transaction.amount,
       type: transaction.type,
       status: transaction.status,
       paymentMethod: transaction.paymentMethod,
-      paymentMetadata: transaction.paymentMetadata,
+      paymentMetadata: transaction.paymentMetadata || {},
+      description: transaction.description || '',
+      isRefunded: transaction.isRefunded,
+      refundedTransaction: transaction.refundedTransaction || null,
       createdAt: transaction.createdAt,
-      updatedAt: transaction.updatedAt
+      updatedAt: transaction.updatedAt,
+      __v: transaction.__v
     }));
 
     res.status(200).json({

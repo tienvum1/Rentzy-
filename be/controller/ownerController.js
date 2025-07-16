@@ -14,6 +14,11 @@ const becomeOwner = async (req, res) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Chỉ cho phép nếu CCCD đã xác thực
+    if (user.cccd_verification_status !== 'verified') {
+      return res.status(400).json({ message: 'Bạn cần xác thực CCCD thành công trước khi đăng ký làm chủ xe.' });
+    }
+
     if (user.owner_request_status === "pending") {
       return res.status(409).json({ message: "Bạn đã gửi yêu cầu và đang chờ duyệt." });
     }

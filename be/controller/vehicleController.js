@@ -358,7 +358,7 @@ exports.getVehicleById = async (req, res) => {
       return res.status(200).json({ vehicle });
     }
     // Nếu không phải, chỉ trả về nếu available + approved
-    if (vehicle.status !== 'available' || vehicle.approvalStatus !== 'approved') {
+    if (vehicle.status !== 'available' ) {
       return res.status(403).json({ message: 'Xe này hiện không khả dụng.' });
     }
     res.status(200).json({ vehicle });
@@ -370,6 +370,7 @@ exports.getVehicleById = async (req, res) => {
     });
   }
 };
+
 
 // tìm kiếm xe 
 exports.searchVehicles = async (req, res) => {

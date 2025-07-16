@@ -676,6 +676,24 @@ const updateCCCDStatus = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'Không tìm thấy user.' });
     user.cccd_verification_status = status;
     await user.save({ validateBeforeSave: false });
+
+    // Gửi thông báo cho user
+    const Notification = require('../models/Notification');
+    let notifyTitle = 'Kết quả xác thực CCCD';
+    let notifyMessage = '';
+    if (status === 'verified') {
+      notifyMessage = 'CCCD của bạn đã được xác thực thành công.';
+    } else {
+      notifyMessage = 'CCCD của bạn đã bị từ chối xác thực.';
+    }
+    await Notification.create({
+      user: user._id,
+      type: 'system',
+      title: notifyTitle,
+      message: notifyMessage,
+      data: { cccd_verification_status: status },
+    });
+
     res.json({ message: `CCCD đã được ${status === 'verified' ? 'chấp thuận' : 'từ chối'}.` });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server khi cập nhật trạng thái CCCD.' });

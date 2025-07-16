@@ -7,6 +7,16 @@ const upload = multer({ dest: 'uploads/' }); // Thay đổi: Lưu file tạm th�
 const { addBankAccount } = require('../controller/userController');
 const uploadMemory = require('../middleware/upload');
 const { createOrUpdateDriverLicense } = require('../controller/adminController');
+const { blockUser } = require('../controller/userController');
+
+// Middleware kiểm tra admin
+const adminOnly = (req, res, next) => {
+  if (req.user && req.user.role && req.user.role.includes('admin')) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Admin access required.' });
+  }
+};
 
 
 router.get("/profile", protect, userController.getProfile);
@@ -51,6 +61,9 @@ router.post('/create-cccd', protect, uploadMemory.fields([
 
 // New route for verifying CCCD with AI OCR
 router.post('/verify-cccd', protect, upload.single('cccd_image'), userController.verifyCCCD);
+
+// Admin block user
+router.put('/admin/users/:id/block', protect, adminOnly, blockUser);
 
 
 module.exports = router;
