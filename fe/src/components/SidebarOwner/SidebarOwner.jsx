@@ -74,15 +74,7 @@ const SidebarOwner = ({ handleLogout }) => {
                         </NavLink>
                     </li>
                     <li className="divider"></li>
-                    <li>
-                        <NavLink
-                            to="/ownerpage/profile"
-                            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                        >
-                            <MdAccountCircle />
-                            Hồ sơ cá nhân
-                        </NavLink>
-                    </li>
+                 
                     <li className="divider"></li>
                  
                     <li>

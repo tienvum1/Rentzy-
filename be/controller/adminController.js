@@ -105,6 +105,7 @@ const updateOwnerRequestStatus = async (req, res) => {
         user.owner_request_status = status;
         if (status === 'approved') {
             user.role = 'owner';
+            user.owner_request_status='approved';
         }
         
         await user.save({ validateBeforeSave: false });

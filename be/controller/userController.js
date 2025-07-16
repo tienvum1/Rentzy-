@@ -583,3 +583,41 @@ exports.addBankAccount = async (req, res) => {
     res.status(500).json({ message: 'Lỗi server khi thêm tài khoản ngân hàng.' });
   }
 };
+
+// @desc    Create or update CCCD info
+// @route   POST /api/user/create-cccd
+// @access  Private
+exports.createCCCD = async (req, res) => {
+  try {
+    const { cccd_number, cccd_full_name } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    let frontUrl = user.cccd_front_url;
+    let backUrl = user.cccd_back_url;
+    // Upload ảnh nếu có file mới
+    if (req.files && req.files.cccd_front && req.files.cccd_front[0]) {
+      const resultFront = await cloudinary.uploader.upload_stream_promise(req.files.cccd_front[0].buffer, {
+        folder: 'rentzy/cccd'
+      });
+      frontUrl = resultFront.secure_url;
+    }
+    if (req.files && req.files.cccd_back && req.files.cccd_back[0]) {
+      const resultBack = await cloudinary.uploader.upload_stream_promise(req.files.cccd_back[0].buffer, {
+        folder: 'rentzy/cccd'
+      });
+      backUrl = resultBack.secure_url;
+    }
+    user.cccd_number = cccd_number;
+    user.name = cccd_full_name;
+    user.cccd_front_url = frontUrl;
+    user.cccd_back_url = backUrl;
+    user.owner_request_status = 'pending';
+    await user.save({ validateBeforeSave: false });
+    res.status(200).json({ message: 'Thông tin CCCD đã được gửi để chờ duyệt!', user });
+  } catch (error) {
+    console.error("Error creating/updating CCCD:", error);
+    res.status(500).json({ message: 'Lỗi khi xử lý thông tin CCCD.' });
+  }
+};
