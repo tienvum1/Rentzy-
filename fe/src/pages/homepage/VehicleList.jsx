@@ -28,7 +28,7 @@ const VehicleList = () => {
         <div className="no-vehicles-message">Đang tải...</div>
       ) : Array.isArray(vehicles) && vehicles.length > 0 ? (
         <div className="vehicle-list">
-          {vehicles.map((v) => (
+          {vehicles.filter(v => v.status === 'available' && v.approvalStatus === 'approved').map((v) => (
             <VehicleCard key={v._id} vehicle={v} />
           ))}
         </div>

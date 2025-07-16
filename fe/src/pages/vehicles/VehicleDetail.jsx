@@ -50,11 +50,20 @@ const VehicleDetail = () => {
             setError(null);
             try {
                 const response = await axios.get(`${backendUrl}/api/vehicles/${id}`);
-                setVehicle(response.data.vehicle);
-                setSelectedImage(response.data.vehicle.primaryImage);
+                // Nếu BE trả lỗi 403 hoặc xe không khả dụng, set error
+                if (response.data?.vehicle) {
+                  // Nếu là chủ xe hoặc admin thì vẫn xem được
+                  setVehicle(response.data.vehicle);
+                  setSelectedImage(response.data.vehicle.primaryImage);
+                } else {
+                  setError('Xe này hiện không khả dụng.');
+                }
             } catch (err) {
-                console.error('Error fetching vehicle details:', err);
-                setError(err.response?.data?.message || 'Failed to fetch vehicle details.');
+                if (err.response && err.response.status === 403) {
+                  setError('Xe này hiện không khả dụng.');
+                } else {
+                  setError(err.response?.data?.message || 'Failed to fetch vehicle details.');
+                }
             }
             setLoading(false);
         };
@@ -171,10 +180,9 @@ const VehicleDetail = () => {
     // Error state
     if (error) {
         return (
-            <div className="error-container">
-                <h2>Lỗi</h2>
-                <p>{error}</p>
-                <button onClick={() => navigate('/vehicles')}>Quay lại danh sách xe</button>
+            <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p style={{color: 'red'}}>{error}</p>
             </div>
         );
     }
@@ -294,6 +302,7 @@ const VehicleDetail = () => {
                                 initialEndDate={selectedDates.endDate}
                                 initialPickupTime={pickupTime}
                                 initialReturnTime={returnTime}
+                                disableBookedRanges={true}
                             />
                         )}
                     </div>
