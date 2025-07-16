@@ -109,7 +109,7 @@ const VehicleListPage = () => {
         <div className="vehicle-list-loading">Đang tải danh sách xe...</div>
       ) : Array.isArray(vehicles) && vehicles.length > 0 ? (
         <div className="vehicle-list-grid">
-          {vehicles.map(vehicle => (
+          {vehicles.filter(v => v.status === 'available' && v.approvalStatus === 'approved').map(vehicle => (
             <VehicleCard key={vehicle._id} vehicle={vehicle} />
           ))}
         </div>

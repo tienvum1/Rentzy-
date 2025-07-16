@@ -193,6 +193,15 @@ const bookingSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+    // Chữ ký điện tử
+    renterSignature: {
+      type: String,
+      default: ''
+    },
+    ownerSignature: {
+      type: String,
+      default: ''
+    },
   },
   { timestamps: true }
 );

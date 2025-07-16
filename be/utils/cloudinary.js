@@ -18,4 +18,21 @@ cloudinary.config({
 });
 console.log("Cloudinary SDK configured with:", cloudinary.config());
 
-module.exports = cloudinary;
+// Helper for upload buffer (Promise)
+const upload_stream_promise = (buffer, options) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (result) resolve(result);
+      else reject(error);
+    });
+    stream.end(buffer);
+  });
+};
+
+module.exports = {
+  ...cloudinary,
+  uploader: {
+    ...cloudinary.uploader,
+    upload_stream_promise,
+  },
+};

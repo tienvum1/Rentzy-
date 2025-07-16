@@ -1321,11 +1321,9 @@ const requestCancelBooking = async (req, res) => {
 const getMyBookingReviews = async (req, res) => {
   try {
     let userId = req.user._id;
-    // Nếu userId là object, chuyển sang string
     if (typeof userId === 'object' && userId.toString) {
       userId = userId.toString();
     }
-    // Kiểm tra ObjectId hợp lệ
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: 'UserId không hợp lệ.' });
     }
@@ -1333,13 +1331,57 @@ const getMyBookingReviews = async (req, res) => {
       renter: userId,
       review: { $exists: true, $ne: '' }
     })
-      .select('vehicle rating review createdAt')
+      .select('vehicle rating review createdAt startDate endDate totalAmount renter')
       .populate('vehicle', 'brand model licensePlate')
+      .populate('renter', 'name avatar_url')
       .sort({ createdAt: -1 });
 
-    res.json({ reviews });
+    const formatted = reviews.map(b => ({
+      bookingId: b._id,
+      vehicle: b.vehicle ? {
+        brand: b.vehicle.brand,
+        model: b.vehicle.model,
+        licensePlate: b.vehicle.licensePlate
+      } : null,
+      rating: b.rating,
+      review: b.review,
+      createdAt: b.createdAt,
+      startDate: b.startDate,
+      endDate: b.endDate,
+      totalAmount: b.totalAmount,
+      name: b.renter?.name || 'Ẩn danh',
+      avatarUrl: b.renter?.avatar_url || null
+    }));
+
+    res.json({ reviews: formatted });
   } catch (err) {
     res.status(500).json({ message: 'Lỗi lấy đánh giá của bạn.', error: err.message });
+  }
+};
+
+// Save signature for booking
+const saveBookingSignature = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type, signature } = req.body;
+    const booking = await Booking.findById(id).populate('vehicle');
+    if (!booking) return res.status(404).json({ message: 'Không tìm thấy booking' });
+
+    if (type === 'renter') {
+      if (booking.renter.toString() !== req.user._id.toString())
+        return res.status(403).json({ message: 'Bạn không có quyền ký bên B' });
+      booking.renterSignature = signature;
+    } else if (type === 'owner') {
+      if (booking.vehicle.owner.toString() !== req.user._id.toString())
+        return res.status(403).json({ message: 'Bạn không có quyền ký bên A' });
+      booking.ownerSignature = signature;
+    } else {
+      return res.status(400).json({ message: 'Loại chữ ký không hợp lệ' });
+    }
+    await booking.save();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server khi lưu chữ ký', error: err.message });
   }
 };
 
@@ -1372,5 +1414,6 @@ module.exports = {
   getBookingContract,
   getExpectedDepositRefund,
   getMyBookingReviews,
+  saveBookingSignature,
 
 };

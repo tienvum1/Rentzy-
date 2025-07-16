@@ -1,8 +1,10 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import './SidebarAdmin.css';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import "./SidebarAdmin.css";
 
 const SidebarAdmin = () => {
+
+
     const navigate = useNavigate();
 
     const handleMenuItemClick = (path) => {
@@ -43,7 +45,8 @@ const SidebarAdmin = () => {
         <li onClick={() => handleMenuItemClick('/admin/vehicle-reports')}>Quản lý báo cáo</li>
     
 
-
+{/* Admin Chat */}
+        <li onClick={() => handleMenuItemClick("/admin/chat")}>Admin Chat</li>
               
 
                 {/* Notifications */}
@@ -56,6 +59,7 @@ const SidebarAdmin = () => {
             </ul>
         </div>
     );
+
 };
 
 export default SidebarAdmin;

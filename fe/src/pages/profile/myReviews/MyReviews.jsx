@@ -38,29 +38,55 @@ const MyReviews = () => {
         ) : reviews.length === 0 ? (
           <div className="my-reviews-empty">Bạn chưa có đánh giá nào.</div>
         ) : (
-          <div className="my-reviews-table-wrapper">
-            <table className="my-reviews-table">
-              <thead>
-                <tr>
-                  <th>Xe</th>
-                  <th>Biển số</th>
-                  <th>Số sao</th>
-                  <th>Nội dung</th>
-                  <th>Ngày đánh giá</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reviews.map((r) => (
-                  <tr key={r._id}>
-                    <td>{r.vehicle ? `${r.vehicle.brand} ${r.vehicle.model}` : 'N/A'}</td>
-                    <td>{r.vehicle?.licensePlate || 'N/A'}</td>
-                    <td>{r.rating || '-'}</td>
-                    <td>{r.review || '-'}</td>
-                    <td>{new Date(r.createdAt).toLocaleString('vi-VN')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="my-reviews-list">
+            {reviews.map((r) => (
+              <div className="my-review-card new-style" key={r._id}>
+                <div className="my-review-card-header">
+                  <div className="my-review-avatar">
+                    {r.avatarUrl
+                      ? <img src={r.avatarUrl} alt={r.name} />
+                      : <span className="my-review-avatar-fallback">{r.name?.charAt(0) || "?"}</span>
+                    }
+                  </div>
+                  <div className="my-review-header-info">
+                    <div className="my-review-name">{r.name || "Ẩn danh"}</div>
+                    <div className="my-review-rating">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <span key={i} style={{ color: i < r.rating ? '#ffb400' : '#e0e0e0', fontSize: 20 }}>★</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="my-review-date-top">
+                    {new Date(r.createdAt).toLocaleDateString('vi-VN')}
+                  </div>
+                </div>
+                <div className="my-review-content-box">
+                  {r.review || '-'}
+                </div>
+                <div className="my-review-divider" />
+                <div className="my-review-booking-row">
+                  <div className="my-review-booking-info">
+                    <span className="icon">#️⃣</span>
+                    <b>ID đơn thuê:</b> {r.bookingId}
+                  </div>
+                  <div className="my-review-booking-info">
+                    <span className="icon">🚗</span>
+                    <b>Xe:</b> {r.vehicle ? `${r.vehicle.brand} ${r.vehicle.model}` : 'N/A'}
+                  </div>
+                  <div className="my-review-booking-info">
+                    <span className="icon">📅</span>
+                    <b>Ngày thuê:</b> {r.startDate ? new Date(r.startDate).toLocaleDateString('vi-VN') : ''} - {r.endDate ? new Date(r.endDate).toLocaleDateString('vi-VN') : ''}
+                  </div>
+                  <div className="my-review-booking-info">
+                    <span className="icon">💵</span>
+                    <b>Tổng tiền:</b> {r.totalAmount?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                  </div>
+                </div>
+                <div className="my-review-card-footer">
+                  <button className="my-review-detail-btn" onClick={() => window.location.href = `/bookings/${r.bookingId}`}>Xem đơn</button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

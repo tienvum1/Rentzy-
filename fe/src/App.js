@@ -5,11 +5,15 @@ import "./App.css";
 import { AuthProvider } from "./context/AuthContext"; // Import AuthProvider
 import OwnerRouteGuard from "./components/OwnerRouteGuard/OwnerRouteGuard"; // Import OwnerRouteGuard
 import AdminRouteGuard from "./components/AdminRouteGuard/AdminRouteGuard"; // Import AdminRouteGuard
+
+import RenterRouteGuard from "./components/RenterRouteGuard/RenterRouteGuard";
+import UserChatPage from "./pages/profile/myAccount/UserChatPage";
+
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 
-// page 
+// page
 import Homepage from "./pages/homepage/Homepage";
 import VehiclePage from "./pages/vehiclePage/VehicleListPage";
 import Login from "./pages/login/Login";
@@ -23,18 +27,14 @@ import VehicleDetail from "./pages/vehicles/VehicleDetail"; // Import VehicleDet
 import BookingDetailsPage from "./pages/bookings/BookingDetailsPage"; // Import BookingDetailsPage
 
 import ConsignForm from "./pages/consignForm/ConsignForm";
-// profile  owner 
-import OwnerProfilePage from "./pages/owner/ownerProfilePage/OwnerProfilePage"
-
+// profile  owner
+import OwnerProfilePage from "./pages/owner/ownerProfilePage/OwnerProfilePage";
 
 // order booking  payment
 import OrderConfirmation from "./pages/payment/paymentConfirm/OrderConfirmation";
 import PaymentDeposit from "./pages/payment/paymentDeposit/PaymentDeposit";
-import PaymentRemaining from './pages/payment/paymentRemaining/PaymentRemaining';
-import ContractPage from './pages/bookings/ContractPage';
-
-
-
+import PaymentRemaining from "./pages/payment/paymentRemaining/PaymentRemaining";
+import ContractPage from "./pages/bookings/ContractPage";
 
 // user
 import Profile from "./pages/profile/myAccount/Profile"; // IMPORT: New ProfilePage component
@@ -57,17 +57,20 @@ import OwnerBookingManagement from "./pages/owner/ownerBookings/OwnerBookingMana
 import OwenerCancelRequest from "./pages/owner/ownerBookings/OwnerCancelRequests";
 import OwnerBookingDetail from "./pages/owner/bookingDetail/BookingDetailOwner";
 import RevenuePage from "./pages/owner/ownerRevenue/RevenuePage";
-// admin 
+import OwnerVehicleReviews from "./pages/owner/vehicleReviews/OwnerVehicleReviews";
+// admin
 import AdminDashboard from "./pages/admin/adminDashboard/AdminDashboard";
 import OwnerRequestsPage from "./pages/admin/adminOwnerRequestsPage/OwnerRequestsPage";
 import VehiclesRequestPage from "./pages/admin/adminVehiclesRequestPage/VehiclesRequestPage";
 import AdminWithdrawals from "./pages/admin/adminWithdrawals/AdminWithdrawals";
 import DriverLicenseRequestsPage from "./pages/admin/adminDriverLicenseRequestsPage/DriverLicenseRequestsPage";
+
 import AdminVehicleDetailPage from './pages/admin/adminAdminVehicleDetailPage/AdminVehicleDetailPage';
 import AdminPayoutRequests from './pages/admin/payoutRequests/AdminPayoutRequests';
 import AdminNotificationPage from './pages/admin/adminNotificationPage/AdminNotificationPage';
 import AdminPromotionPage from './pages/admin/adminPromotionPage/AdminPromotionPage';
 import AdminVehicleReports from './pages/admin/adminVehicleReports/AdminVehicleReports';
+import AdminChatPage from "./pages/admin/adminChatPage/AdminChatPage";
 
 
 import PaymentSuccess from "./pages/payment/PaymentSuccess";
@@ -83,6 +86,7 @@ function App() {
           <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
           <Routes>
             {/* Profile*/}
+            <Route path="/" element={<Homepage />} />
             <Route path="/homepage" element={<Homepage />} />
             <Route path="/vehicles" element={<VehiclePage />} />
             <Route path="/owner/:ownerId" element={<OwnerProfilePage />} />
@@ -130,8 +134,9 @@ function App() {
             <Route path="/payment/failed" element={<PaymentFailed />} />
             {/* Add route for OwnerPage */}
             <Route path="/consignForm" element={<ConsignForm />} />
+
             {/* Add a root route if needed */}
-            <Route path="/" element={<Homepage />} />
+
             {/* admin route */}
             {/* chỉ admin có quyền truy cập */}
             <Route path="/admin" element={<AdminRouteGuard />}>
@@ -154,8 +159,11 @@ function App() {
               />
               <Route path="payout-requests" element={<AdminPayoutRequests />} />
               <Route path="notifications" element={<AdminNotificationPage />} />
+              <Route path="chat" element={<AdminChatPage />} />
+
               <Route path="vehicle-reports" element={<AdminVehicleReports />} />
         
+
             </Route>
             {/* Route Guard owner  managemnt route */}
             {/*  Chỉ có user đăng kí chủ xe mới dăng nhập được  đăng nhập được */}
@@ -174,9 +182,12 @@ function App() {
                 element={<OwnerBookingManagement />}
               />
               <Route path="cancel-requests" element={<OwenerCancelRequest />} />
-              <Route path="booking-detail/:id" element={<OwnerBookingDetail />} />
+              <Route
+                path="booking-detail/:id"
+                element={<OwnerBookingDetail />}
+              />
               <Route path="revenue" element={<RevenuePage />} />
-
+              <Route path="/ownerpage/vehicle-reviews" element={<OwnerVehicleReviews />} />
             </Route>
             {/* 404 Route - Thêm route cho trang không tìm thấy */}
             {/* 404 Route - Thêm route cho trang không tìm thấy */}

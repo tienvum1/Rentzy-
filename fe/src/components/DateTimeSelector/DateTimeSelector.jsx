@@ -7,7 +7,7 @@ import "react-time-picker/dist/TimePicker.css";
 import "react-toastify/dist/ReactToastify.css";
 import './DateTimeSelector.css'; // Assuming some basic styling
 
-const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, initialEndDate, initialPickupTime, initialReturnTime }) => {
+const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, initialEndDate, initialPickupTime, initialReturnTime, disableBookedRanges }) => {
     const [startDate, setStartDate] = useState(initialStartDate ? new Date(initialStartDate) : null);
     const [endDate, setEndDate] = useState(initialEndDate ? new Date(initialEndDate) : null);
     const [pickupTime, setPickupTime] = useState(initialPickupTime || null);
@@ -71,6 +71,17 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
 
         if (!bookedDates || bookedDates.length === 0) return true;
 
+        // Nếu disableBookedRanges, disable hoàn toàn các ngày đã bị đặt
+        if (disableBookedRanges) {
+            for (const booking of bookedDates) {
+                const bookingStart = new Date(booking.startDateTime || booking.startDate);
+                const bookingEnd = new Date(booking.endDateTime || booking.endDate);
+                if (currentDate >= bookingStart && currentDate <= bookingEnd) {
+                    return false;
+                }
+            }
+        }
+
         // Kiểm tra từng booking
         for (const booking of bookedDates) {
             const bookingStart = new Date(booking.startDate);
@@ -93,7 +104,7 @@ const DateTimeSelector = ({ bookedDates, onDateTimeChange, initialStartDate, ini
             }
         }
         return true;
-    }, [bookedDates]);
+    }, [bookedDates, disableBookedRanges]);
 
     const getDateClassName = useCallback((date) => {
         if (!isDateAvailable(date)) {

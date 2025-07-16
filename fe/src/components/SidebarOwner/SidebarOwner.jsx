@@ -54,16 +54,8 @@ const SidebarOwner = ({ handleLogout }) => {
                         </NavLink>
                     </li>
                     <li className="divider"></li>
-                    <li>
-                        <NavLink
-                            to="/ownerpage/notifications"
-                            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                        >
-                            <MdNotifications />
-                            Thông báo
-                        </NavLink>
-                    </li>
-                    <li className="divider"></li>
+                  
+            
                     <li>
                         <NavLink
                             to="/ownerpage/revenue"
@@ -76,13 +68,25 @@ const SidebarOwner = ({ handleLogout }) => {
                     <li className="divider"></li>
                     <li>
                         <NavLink
-                            to="/ownerpage/profile"
+                            to="/ownerpage/vehicle-reviews"
                             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                         >
-                            <MdAccountCircle />
-                            Hồ sơ cá nhân
+                            <FaClipboardList style={{ marginRight: 8, fontSize: 18 }} />
+                            Đánh giá về xe của tôi
                         </NavLink>
                     </li>
+                    <li className="divider"></li>
+                    <li>
+                        <NavLink
+                            to="/ownerpage/notifications"
+                            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                        >
+                            <MdNotifications />
+                            Thông báo
+                        </NavLink>
+                    </li>
+              
+                 
                     <li className="divider"></li>
                  
                     <li>

@@ -5,6 +5,7 @@ const { protect } = require("../middleware/authMiddleware");
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' }); // Thay đổi: Lưu file tạm thời vào thư mục 'uploads/'
 const { addBankAccount } = require('../controller/userController');
+const uploadMemory = require('../middleware/upload');
 
 
 router.get("/profile", protect, userController.getProfile);
@@ -40,6 +41,12 @@ router.post('/verify-phone-otp', protect, userController.verifyPhoneOtp);
 router.post('/resend-phone-otp', protect, userController.resendPhoneOtp);
 
 router.post('/bank-account', protect, addBankAccount);
+
+// New route for creating CCCD info
+router.post('/create-cccd', protect, uploadMemory.fields([
+  { name: 'cccd_front', maxCount: 1 },
+  { name: 'cccd_back', maxCount: 1 }
+]), userController.createCCCD);
 
 
 module.exports = router;

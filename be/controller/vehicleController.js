@@ -250,12 +250,14 @@ exports.updateVehicleStatus = async (req, res) => {
     // Kiểm tra tính hợp lệ của status
     const allowedStatuses = ["available", "blocked"];
     if (!allowedStatuses.includes(status)) {
+      console.error('Trạng thái không hợp lệ:', status);
       return res.status(400).json({ message: "Trạng thái không hợp lệ." });
     }
 
     const vehicle = await Vehicle.findOne({ _id: id, owner: ownerId });
 
     if (!vehicle) {
+      console.error('Không tìm thấy xe hoặc không phải chủ xe:', { id, ownerId, status });
       return res.status(404).json({ message: "Không tìm thấy xe hoặc bạn không phải chủ xe." });
     }
 
@@ -264,6 +266,7 @@ exports.updateVehicleStatus = async (req, res) => {
 
     res.status(200).json({ message: `Xe đã được ${status === "blocked" ? "khoá" : "mở khoá"} thành công!`, vehicle });
   } catch (error) {
+    console.error('Lỗi khi cập nhật trạng thái xe:', error);
     res.status(500).json({ message: "Không thể cập nhật trạng thái xe.", error: error.message });
   }
 };
@@ -312,29 +315,23 @@ exports.getApprovedVehicles = async (req, res) => {
   }
 };
 
-// Add function to get a single vehicle by ID 
-exports.getVehicleById = async (req, res) => {
+// API: Top 10 xe có rentalCount cao nhất (homepage)
+exports.getTopRentedVehicles = async (req, res) => {
   try {
-    const { id } = req.params;
-    const vehicle = await Vehicle.findById(id).populate('owner', 'name email');
-    if (!vehicle) {
-      return res.status(404).json({ message: "Vehicle not found." });
-    }
-    res.status(200).json({ vehicle });
-  } catch (error) {
-    console.error("Error getting vehicle by ID:", error);
-    res.status(500).json({
-      message: "Failed to fetch vehicle details.",
-      error: error.message,
-    });
+    const vehicles = await Vehicle.find({ status: 'available', approvalStatus: 'approved' })
+      .sort({ rentalCount: -1 })
+      .limit(10);
+    res.json(vehicles);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-// tìm kiếm xe 
+// API: Lọc xe (public)
 exports.filterVehicles = async (req, res) => {
   try {
     const { brand, seatCount, bodyType, transmission, fuelType } = req.query;
-    let filter = {};
+    let filter = { status: 'available', approvalStatus: 'approved' };
     if (brand) filter.brand = brand;
     if (seatCount) filter.seatCount = Number(seatCount);
     if (bodyType) filter.bodyType = bodyType;
@@ -348,21 +345,34 @@ exports.filterVehicles = async (req, res) => {
   }
 };
 
-// API: Top 10 xe có rentalCount cao nhất
-exports.getTopRentedVehicles = async (req, res) => {
+// API: Lấy xe theo id (public, chỉ trả về nếu available + approved, trừ chủ xe hoặc admin)
+exports.getVehicleById = async (req, res) => {
   try {
-    const vehicles = await Vehicle.find()
-      .sort({ rentalCount: -1 })
-      .limit(10);
-    res.json(vehicles);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const { id } = req.params;
+    const vehicle = await Vehicle.findById(id).populate('owner', 'name email');
+    if (!vehicle) {
+      return res.status(404).json({ message: "Vehicle not found." });
+    }
+    // Nếu là chủ xe hoặc admin thì trả về mọi trạng thái
+    if (req.user && (vehicle.owner._id.equals(req.user._id) || req.user.role.includes('admin'))) {
+      return res.status(200).json({ vehicle });
+    }
+    // Nếu không phải, chỉ trả về nếu available + approved
+    if (vehicle.status !== 'available' || vehicle.approvalStatus !== 'approved') {
+      return res.status(403).json({ message: 'Xe này hiện không khả dụng.' });
+    }
+    res.status(200).json({ vehicle });
+  } catch (error) {
+    console.error("Error getting vehicle by ID:", error);
+    res.status(500).json({
+      message: "Failed to fetch vehicle details.",
+      error: error.message,
+    });
   }
 };
 
-
-// API đơn giản chỉ cần thời gian thuê để tìm xe có rảnh
-exports.searchVehiclesByTime = async (req, res) => {
+// tìm kiếm xe 
+exports.searchVehicles = async (req, res) => {
   try {
     const {
       pickupDate,
@@ -420,6 +430,7 @@ exports.searchVehiclesByTime = async (req, res) => {
   }
 };
 
+// API: Lấy xe của 1 owner (public, chỉ trả về available + approved)
 exports.getVehiclesByOwnerId = async (req, res) => {
   try {
     const { ownerId } = req.params;
