@@ -282,7 +282,7 @@ const ContractPage = () => {
                     </div>
                   </div>
                 )}
-                <div className="contract-signature-name">{owner?.cccd_full_name}</div>
+                <div className="contract-signature-name">{owner?.cccd_full_name || owner?.name}</div>
               </div>
               <div className="contract-signature-col">
                 <b>BÊN B (người thuê xe)</b>

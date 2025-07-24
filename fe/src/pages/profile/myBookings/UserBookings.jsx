@@ -251,7 +251,7 @@ const UserBookings = () => {
                                     <FaCreditCard /> Thanh toán
                                   </button>
                                 )}
-                                { booking.status === 'completed' && !booking.rating && !booking.review && (
+                                { booking.status =='completed' && !booking.rating && !booking.review && (
                                   <button
                                     className="review-button"
                                     onClick={() => handleOpenReview(booking._id)}

@@ -877,6 +877,7 @@ const confirmReturn = async (req, res) => {
     const booking = await Booking.findById(req.params.id).populate('vehicle');
     if (!booking) return res.status(404).json({ message: 'Không tìm thấy booking' });
     let changed = false;
+    let isRenterConfirmed = false;
     // Chủ xe xác nhận
     if (booking.vehicle.owner.toString() === req.user._id.toString()) {
       if (!booking.ownerReturnConfirmed) {
@@ -889,6 +890,7 @@ const confirmReturn = async (req, res) => {
       if (!booking.renterReturnConfirmed) {
         booking.renterReturnConfirmed = true;
         changed = true;
+        isRenterConfirmed = true; // Đánh dấu người thuê vừa xác nhận
       }
     }
     if (!changed) return res.status(400).json({ message: 'Bạn đã xác nhận rồi hoặc không có quyền.' });
@@ -907,6 +909,16 @@ const confirmReturn = async (req, res) => {
     }
 
     await booking.save();
+
+    // Tăng rentalCount lên 1 khi người thuê xác nhận trả xe
+    if (isRenterConfirmed) {
+      const Vehicle = require('../models/Vehicle');
+      await Vehicle.findByIdAndUpdate(
+        booking.vehicle._id,
+        { $inc: { rentalCount: 1 } }
+      );
+    }
+
     // Gửi notification cho bên còn lại
     const notifyUser = (booking.vehicle.owner.toString() === req.user._id.toString()) ? booking.renter : booking.vehicle.owner;
     await Notification.create({
