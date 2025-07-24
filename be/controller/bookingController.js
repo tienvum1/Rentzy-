@@ -21,9 +21,6 @@ const createBooking = async (req, res) => {
       pickupTime,
       returnTime,
       totalDays,
-      totalAmount,
-      totalCost,
-      deposit,
       promoCode,
       discountAmount,
       deliveryFee,
@@ -113,27 +110,22 @@ const createBooking = async (req, res) => {
         .json({ message: "Xe đã được đặt trong thời gian này." });
     }
 
-    // Calculate/validate all price fields
-    // totalCost: phí thuê xe
-    // deliveryFee: phí giao xe (2 chiều)
-    // deposit: tiền đặt cọc
-    // discountAmount: giảm giá
-    // totalAmount: tổng cộng (không còn reservationFee)
-    let _totalCost = typeof totalCost === 'number' ? totalCost : 0;
-    let _deliveryFee = typeof deliveryFee === 'number' ? deliveryFee : 0;
-    let _deposit = typeof deposit === 'number' ? deposit : 0;
-    let _discountAmount = typeof discountAmount === 'number' ? discountAmount : 0;
-    // Tổng cộng là tổng tất cả tiền (không có reservationFee):
-    let _totalAmount = _totalCost + _deliveryFee + _deposit - _discountAmount;
-
+    // Tính lại các trường tiền trên backend
+    console.log('DEBUG BACKEND pickupLocation:', pickupLocation);
+    console.log('DEBUG BACKEND vehicle.location:', vehicle.location);
+    let _deliveryFee = 0;
+    if (vehicle.location && pickupLocation && pickupLocation.trim().toLowerCase() !== vehicle.location.trim().toLowerCase()) {
+      _deliveryFee = 200000;
+    } else if (!vehicle.location) {
+      _deliveryFee = 0;
+    }
+    const _totalCost = vehicle.pricePerDay * totalDays;
+    const _discountAmount = typeof discountAmount === 'number' ? discountAmount : 0;
+    const _deposit = 0; // Không lưu deposit từ FE, sẽ tính khi thanh toán
+    const _totalAmount = _totalCost + _deliveryFee - _discountAmount;
     // Ensure all values are >= 0
-    _totalCost = Math.max(0, _totalCost);
-    _deliveryFee = Math.max(0, _deliveryFee);
-    _deposit = Math.max(0, _deposit);
-    _discountAmount = Math.max(0, _discountAmount);
-    _totalAmount = Math.max(0, _totalAmount);
-
-    // Create new booking with explicit mapping (KHÔNG LƯU reservationFee)
+    // (Không cần Math.max cho _totalCost vì đã nhân số dương)
+    // Create new booking
     const booking = new Booking({
       renter: req.user._id,
       vehicle: vehicle._id,
@@ -144,12 +136,12 @@ const createBooking = async (req, res) => {
       pickupTime,
       returnTime,
       totalDays,
-      totalCost: _totalCost, // Phí thuê xe
-      deliveryFee: _deliveryFee, // Phí giao xe (2 chiều)
-      deposit: _deposit, // Tiền đặt cọc
-      discountAmount: _discountAmount, // Giảm giá
-      totalAmount: _totalAmount, // Tổng cộng
-      status: "pending", // Trạng thái ban đầu là pending
+      totalCost: _totalCost,
+      deliveryFee: _deliveryFee,
+      deposit: _deposit,
+      discountAmount: _discountAmount,
+      totalAmount: _totalAmount,
+      status: "pending",
       promoCode,
     });
 
@@ -708,7 +700,27 @@ const cancelBookingByUser = async (req, res) => {
   }
 };
 
-
+// Xoá booking khỏi DB (chỉ renter hoặc admin)
+const deleteBookingByUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+    }
+    // Chỉ renter hoặc admin được xoá
+    if (
+      booking.renter.toString() !== req.user._id.toString() &&
+      !req.user.role.includes('admin')
+    ) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền xoá đơn này.' });
+    }
+    await booking.deleteOne();
+    return res.json({ success: true, message: 'Đã xoá đơn đặt xe.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Lỗi server khi xoá đơn.' });
+  }
+};
 
 
 // Owner approves cancellation
@@ -1426,5 +1438,6 @@ module.exports = {
   getExpectedDepositRefund,
   getMyBookingReviews,
   saveBookingSignature,
+  deleteBookingByUser,
 
 };

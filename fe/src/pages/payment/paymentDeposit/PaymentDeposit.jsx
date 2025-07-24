@@ -111,45 +111,37 @@ const PaymentDeposit = () => {
     return () => clearInterval(timer);
   }, [step, countdown]);
 
-  // Tính toán số tiền cọc (30%) và còn lại (70%)
+  // Tính toán số tiền cọc (30%) và còn lại (70%) dựa trên totalAmount từ backend
   const getPaidAndRemaining = () => {
     if (!booking) return { paid: 0, remaining: 0, deposit: 0, total: 0 };
-    // Tổng tiền = phí thuê + phí giao xe - giảm giá
-    const totalCost = booking.totalCost || 0;
-    const deliveryFee = booking.pickupLocation !== booking.vehicle?.location ? 200000 : 0;
-    const discountAmount = booking.discountAmount || 0;
-    const total = totalCost + deliveryFee - discountAmount;
+    const total = booking.totalAmount || 0;
     const deposit = Math.round(total * 0.3);
     const remaining = total - deposit;
     return { paid: deposit, remaining, deposit, total };
   };
   const { paid, remaining, deposit, total } = getPaidAndRemaining();
 
-  // Thanh toán cọc
-  const handleDepositPayment = async () => {
-    if (!booking || !wallet || wallet.balance < deposit) return;
+  // Thanh toán cọc qua PayOS
+  const handleDepositPaymentPayOS = async () => {
+    if (!booking) return;
     setIsPaying(true);
     try {
       const res = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/payment/wallet/deposit`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/payment/payos/link`,
         {
-          amount: deposit,
-          orderInfo: `Thanh toán tiền cọc cho đơn hàng ${booking._id}`,
-          orderCode: booking._id,
+          bookingId: booking._id,
+          returnUrl: window.location.origin + `/contracts/${booking._id}`,
+          cancelUrl: window.location.origin + `/payment-deposit/${booking._id}`
         },
         { withCredentials: true }
       );
-      if (res.data.success) {
-        toast.success('Thanh toán tiền cọc thành công!');
-        setTimeout(() => {
-          // Redirect to contract signing page after deposit
-          navigate(`/contracts/${booking._id}`);
-        }, 1200);
+      if (res.data.payUrl) {
+        window.location.href = res.data.payUrl;
       } else {
-        toast.error(res.data.message || 'Thanh toán thất bại.');
+        toast.error('Không lấy được link thanh toán!');
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Có lỗi khi thanh toán tiền cọc.');
+      toast.error(err.response?.data?.error || 'Có lỗi khi tạo link thanh toán!');
     } finally {
       setIsPaying(false);
     }
@@ -183,24 +175,25 @@ const PaymentDeposit = () => {
     }
   };
 
-  // Huỷ booking
+  // Huỷ booking (xoá khỏi DB)
   const handleCancelBooking = async () => {
     if (!booking) return;
     setIsPaying(true);
     try {
-      const res = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}/cancel`,
-        {},
+      const res = await axios.delete(
+        `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}`,
         { withCredentials: true }
       );
       if (res.data.success) {
-        toast.success('Huỷ đơn thành công!');
-        await fetchBooking();
+        toast.success('Đã xoá đơn đặt xe!');
+        setTimeout(() => {
+          navigate('/'); // hoặc navigate('/my-bookings') nếu có trang danh sách đơn
+        }, 1200);
       } else {
-        toast.error(res.data.message || 'Huỷ đơn thất bại.');
+        toast.error(res.data.message || 'Xoá đơn thất bại.');
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Có lỗi khi huỷ đơn.');
+      toast.error(err.response?.data?.message || 'Có lỗi khi xoá đơn.');
     } finally {
       setIsPaying(false);
       setShowCancelModal(false);
@@ -234,10 +227,24 @@ const PaymentDeposit = () => {
         <div className="modal-actions">
           <button onClick={async () => {
             setShowConfirmModal(false);
-            if (confirmType === 'deposit') await handleDepositPayment();
+            if (confirmType === 'deposit') await handleDepositPaymentPayOS();
             else if (confirmType === 'remaining') await handleRemainingPayment();
           }} className="confirm-button">Đồng ý</button>
           <button onClick={() => setShowConfirmModal(false)} className="cancel-button">Huỷ</button>
+        </div>
+      </Modal>
+      <Modal
+        isOpen={showCancelModal}
+        onRequestClose={() => setShowCancelModal(false)}
+        className="confirm-modal"
+        overlayClassName="modal-overlay"
+        ariaHideApp={false}
+      >
+        <h2>Xác nhận huỷ đơn</h2>
+        <p>Bạn có chắc chắn muốn xoá đơn đặt xe này? Hành động này không thể hoàn tác.</p>
+        <div className="modal-actions">
+          <button onClick={handleCancelBooking} className="confirm-button">Đồng ý</button>
+          <button onClick={() => setShowCancelModal(false)} className="cancel-button">Huỷ</button>
         </div>
       </Modal>
       <div className="reservation-payment-container">
@@ -278,20 +285,11 @@ const PaymentDeposit = () => {
                   <span className="deposit-label">Mã đơn đặt xe:</span>
                   <span className="deposit-order-id">{booking._id}</span>
                 </div>
+                {/* Bỏ phần ví điện tử, chỉ để nút thanh toán PayOS */}
                 <div className="wallet-payment-section beautiful-wallet">
-                  <h3 className="section-subtitle">Thanh toán bằng ví điện tử</h3>
-                  {!walletLoading && wallet && (
-                    <div className="wallet-info">
-                      <p className="wallet-balance">Số dư ví: <strong>{formatCurrency(wallet.balance)}</strong></p>
-                      {wallet.balance < deposit && (
-                        <p className="wallet-insufficient">
-                          ⚠️ Số dư không đủ. <a href="/profile/wallet" className="navigate-wallet">Nạp thêm tiền</a>
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  <p className="wallet-instruction">Nhấn nút bên dưới để thanh toán trước 30% bằng tiền trong ví.</p>
-                  <button className="wallet-pay-button beautiful-pay-btn" onClick={() => { setConfirmType('deposit'); setShowConfirmModal(true); }} disabled={isPaying || walletLoading || !wallet || wallet.balance < deposit}>
+                  <h3 className="section-subtitle">Thanh toán trực tuyến qua PayOS</h3>
+                  <p className="wallet-instruction">Nhấn nút bên dưới để thanh toán trước 30% qua cổng PayOS.</p>
+                  <button className="wallet-pay-button beautiful-pay-btn" onClick={() => { setConfirmType('deposit'); setShowConfirmModal(true); }} disabled={isPaying}>
                     {isPaying ? 'Đang xử lý...' : 'Thanh toán trước 30%'}
                   </button>
                 </div>

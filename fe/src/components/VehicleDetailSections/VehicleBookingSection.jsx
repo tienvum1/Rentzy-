@@ -441,7 +441,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
             <span>Giá thuê xe</span>
             <span>{bookingDetails.rentalFee.toLocaleString('vi-VN')} VND</span>
           </div>
-          {bookingDetails.deliveryFee > 0 && (
+          {pickupLocation !== vehicle.location && bookingDetails.deliveryFee > 0 && (
             <div className="cost-item">
               <span>Phí giao xe (2 chiều)</span>
               <span>{bookingDetails.deliveryFee.toLocaleString('vi-VN')} VND</span>

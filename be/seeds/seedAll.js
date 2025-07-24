@@ -96,7 +96,8 @@ async function seedAll() {
         "wagon",
       ][i % 7];
 
-      const pricePerDay = 400000 + Math.floor(Math.random() * 800000);
+      // Tăng giá thuê xe để test số tiền đặt cọc lớn hơn
+      const pricePerDay = 1000000 + Math.floor(Math.random() * 1000000);
       const rentalCount = Math.floor(Math.random() * 50); // Số lần thuê ngẫu nhiên
 
       // Một số xe chờ duyệt

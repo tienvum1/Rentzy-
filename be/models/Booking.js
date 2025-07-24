@@ -54,6 +54,20 @@ const bookingSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    // Mã đơn hàng PayOS (orderCode)
+    orderCode: {
+      type: Number,
+      index: true, // giúp tìm kiếm nhanh khi xử lý webhook
+      unique: true, // đảm bảo không trùng
+      sparse: true, // chỉ unique nếu có giá trị
+    },
+    // Mã đơn hàng PayOS cho phần còn lại
+    orderCodeRemaining: {
+      type: Number,
+      index: true,
+      unique: true,
+      sparse: true,
+    },
     // tiền thuê xe , vd : 500k/day => 5 days = 2tr5
     totalCost: {
       type: Number,

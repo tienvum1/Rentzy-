@@ -7,7 +7,10 @@ const {
     handleWebhook,
     verifyMoMoPayment,
     createWalletDepositPayment,
-    createWalletRentalPayment
+    createWalletRentalPayment,
+    createPayOSLink,
+    handlePayOSWebhook,
+    createPayOSLinkForRemaining
 } = require('../controller/paymentController');
 
 // MoMo Payment Routes
@@ -19,5 +22,12 @@ router.post('/momo/verify', protect, verifyMoMoPayment);
 // Wallet Payment Routes
 router.post('/wallet/deposit', protect, createWalletDepositPayment);
 router.post('/wallet/rental', protect, createWalletRentalPayment);
+
+// PayOS Payment Route
+router.post('/payos/link', protect, createPayOSLink);
+// PayOS Remaining Payment Route
+router.post('/payos/remaining-link', protect, createPayOSLinkForRemaining);
+// PayOS Webhook Route
+router.post('/payos/webhook', handlePayOSWebhook);
 
 module.exports = router; 
