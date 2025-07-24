@@ -74,6 +74,7 @@ import AdminPromotionPage from './pages/admin/adminPromotionPage/AdminPromotionP
 import AdminVehicleReports from './pages/admin/adminVehicleReports/AdminVehicleReports';
 import AdminChatPage from "./pages/admin/adminChatPage/AdminChatPage";
 import CCCDRequestsPage from './pages/admin/adminCCCDRequestsPage/CCCDRequestsPage';
+import UserManagement from './pages/admin/adminManagementUser/UserManagement';
 
 
 import PaymentSuccess from "./pages/payment/PaymentSuccess";
@@ -164,8 +165,8 @@ function App() {
               <Route path="payout-requests" element={<AdminPayoutRequests />} />
               <Route path="notifications" element={<AdminNotificationPage />} />
               <Route path="chat" element={<AdminChatPage />} />
-              <Route path="/admin/cccd-requests" element={<CCCDRequestsPage />} />
-
+              <Route path="cccd-requests" element={<CCCDRequestsPage />} />
+              <Route path="user-management" element={<UserManagement />} />
               <Route path="vehicle-reports" element={<AdminVehicleReports />} />
         
 

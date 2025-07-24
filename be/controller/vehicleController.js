@@ -31,16 +31,54 @@ const uploadImageToCloudinary = async (imageFile) => {
     uploadStream.end(imageFile.buffer);
   });
 };
-// Add new function to get vehicles owned by the authenticated user
+// Add new function to get vehicles owned by the authenticated user with pagination and search
 exports.getOwnerVehicles = async (req, res) => {
   const ownerId = req.user ? req.user._id : null;
   if (!ownerId) {
     return res.status(401).json({ message: "User not authenticated." });
   }
   try {
-    // Only fetch vehicles from Vehicle model, no joins
-    const ownerVehicles = await Vehicle.find({ owner: ownerId }).populate('owner', 'name email');
-    res.status(200).json({ count: ownerVehicles.length, vehicles: ownerVehicles });
+    const { page = 1, limit = 10, search = '', sortBy = '', sortOrder = 'desc' } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build search query
+    let searchQuery = { owner: ownerId };
+    if (search) {
+      searchQuery.$or = [
+        { brand: { $regex: search, $options: 'i' } },
+        { model: { $regex: search, $options: 'i' } },
+        { licensePlate: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Build sort query
+    let sortQuery = { createdAt: -1 }; // Default sort
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortQuery = { [sortBy]: order };
+    }
+
+    // Get total count for pagination
+    const totalVehicles = await Vehicle.countDocuments(searchQuery);
+    
+    // Fetch vehicles with pagination and sorting
+    const ownerVehicles = await Vehicle.find(searchQuery)
+      .populate('owner', 'name email')
+      .sort(sortQuery)
+      .skip(skip)
+      .limit(limitNum);
+
+    const totalPages = Math.ceil(totalVehicles / limitNum);
+
+    res.status(200).json({ 
+      count: ownerVehicles.length,
+      totalVehicles,
+      totalPages,
+      currentPage: pageNum,
+      vehicles: ownerVehicles 
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch owner vehicles.", error: error.message });
   }

@@ -12,19 +12,38 @@ const VehicleManagement = () => {
     const [message, setMessage] = useState(null); // Add message state (success/error)
     const [ownerVehicles, setOwnerVehicles] = useState([]); // State to store the list of owner vehicles
     const [error, setError] = useState(null); // State to store fetch errors for owner vehicles
+    const [searchTerm, setSearchTerm] = useState(''); // State for search
+    const [currentPage, setCurrentPage] = useState(1); // State for pagination
+    const [totalPages, setTotalPages] = useState(1); // State for total pages
+    const [totalVehicles, setTotalVehicles] = useState(0); // State for total vehicles count
+    const [sortBy, setSortBy] = useState(''); // State for sorting
+    const [sortOrder, setSortOrder] = useState('desc'); // State for sort order (asc/desc)
+    const vehiclesPerPage = 10; // Number of vehicles per page
     const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999'; // Cung cấp giá trị default
 
-    // Function to fetch danh sách xe từ backend (lấy xe của chủ sở hữu)
-    const fetchOwnerVehicles = async () => {
+    // Function to fetch danh sách xe từ backend với phân trang, tìm kiếm và sắp xếp
+    const fetchOwnerVehicles = async (page = 1, search = '', sort = '', order = 'desc') => {
         setLoading(true);
         setError(null); // Reset lỗi trước khi fetch mới
         try {
-            // Gọi đúng API lấy xe của chủ sở hữu (dựa vào route backend hiện tại GET /api/vehicles sử dụng getOwnerVehicles)
+            const params = {
+                page: page,
+                limit: vehiclesPerPage,
+                search: search,
+                sortBy: sort,
+                sortOrder: order
+            };
+            
             const response = await axios.get(`${backendUrl}/api/vehicles/owner`, {
+                params,
                 withCredentials: true, // Quan trọng để gửi cookie chứa token xác thực
             });
-            console.log('Fetched owner vehicles:', response.data.vehicles);
-            setOwnerVehicles(response.data.vehicles); // Giả định backend trả về { vehicles: [...] }
+            
+            console.log('Fetched owner vehicles:', response.data);
+            setOwnerVehicles(response.data.vehicles);
+            setTotalPages(response.data.totalPages);
+            setTotalVehicles(response.data.totalVehicles);
+            setCurrentPage(response.data.currentPage);
         } catch (err) {
             console.error('Error fetching owner vehicles:', err);
             setError('Không thể tải danh sách xe của bạn.'); // Thông báo lỗi thân thiện với người dùng
@@ -36,10 +55,76 @@ const VehicleManagement = () => {
         }
     };
 
-    // Fetch owner vehicles when the component mounts
+    // Fetch owner vehicles when the component mounts or when page/search/sort changes
     useEffect(() => {
-        fetchOwnerVehicles();
-    }, []); // Empty dependency array means this runs once on mount
+        fetchOwnerVehicles(currentPage, searchTerm, sortBy, sortOrder);
+    }, [currentPage, sortBy, sortOrder]); // Re-fetch when page, sort or order changes
+
+    // Handle search
+    const handleSearch = (e) => {
+        const value = e.target.value;
+        setSearchTerm(value);
+        setCurrentPage(1); // Reset to first page when searching
+        fetchOwnerVehicles(1, value, sortBy, sortOrder);
+    };
+
+    // Handle sort
+    const handleSort = (field) => {
+        const newOrder = sortBy === field && sortOrder === 'desc' ? 'asc' : 'desc';
+        setSortBy(field);
+        setSortOrder(newOrder);
+        setCurrentPage(1); // Reset to first page when sorting
+    };
+
+    // Handle page change
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    // Generate pagination buttons
+    const renderPagination = () => {
+        const pages = [];
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+        
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+
+        // Previous button
+        if (currentPage > 1) {
+            pages.push(
+                <button key="prev" onClick={() => handlePageChange(currentPage - 1)} className="pagination-btn">
+                    « Trước
+                </button>
+            );
+        }
+
+        // Page numbers
+        for (let i = startPage; i <= endPage; i++) {
+            pages.push(
+                <button
+                    key={i}
+                    onClick={() => handlePageChange(i)}
+                    className={`pagination-btn ${i === currentPage ? 'active' : ''}`}
+                >
+                    {i}
+                </button>
+            );
+        }
+
+        // Next button
+        if (currentPage < totalPages) {
+            pages.push(
+                <button key="next" onClick={() => handlePageChange(currentPage + 1)} className="pagination-btn">
+                    Sau »
+                </button>
+            );
+        }
+
+        return pages;
+    };
 
     // Placeholder function for handling edit action
     const handleEdit = async (vehicleId) => {
@@ -93,58 +178,134 @@ const VehicleManagement = () => {
             {/* SidebarOwner không ở đây. Nó nằm trong OwnerPage và hiển thị cố định. */}
             {/* Nội dung của VehicleManagement được hiển thị bên cạnh sidebar. */}
             <div className="vehicle-management-content">
-                <h2>Your Vehicles</h2>
+                <h2>Quản lý xe của bạn</h2>
                 {error && <p className="error">{error}</p>}
-                <div className="add-buttons">
-                    <button className="btn-add-car" onClick={handleNavigateToAddCar}>+ Thêm xe mới</button>
+                
+                <div className="vehicle-management-header">
+                    <div className="search-container">
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm theo tên xe, biển số..."
+                            value={searchTerm}
+                            onChange={handleSearch}
+                            className="search-input"
+                        />
+                    </div>
+                    <div className="sort-container">
+                        <select 
+                            value={sortBy} 
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value) {
+                                    handleSort(value);
+                                } else {
+                                    setSortBy('');
+                                    setSortOrder('desc');
+                                    setCurrentPage(1);
+                                }
+                            }}
+                            className="sort-select"
+                        >
+                            <option value="">Sắp xếp theo</option>
+                            <option value="rentalCount">Lượt thuê</option>
+                            <option value="pricePerDay">Giá thuê</option>
+                            <option value="createdAt">Ngày tạo</option>
+                        </select>
+                        {sortBy && (
+                            <button 
+                                onClick={() => handleSort(sortBy)}
+                                className="sort-order-btn"
+                                title={`Sắp xếp ${sortOrder === 'asc' ? 'tăng dần' : 'giảm dần'}`}
+                            >
+                                {sortOrder === 'asc' ? '↑' : '↓'}
+                            </button>
+                        )}
+                    </div>
+                    <div className="add-buttons">
+                        <button className="btn-add-car" onClick={handleNavigateToAddCar}>+ Thêm xe mới</button>
+                    </div>
                 </div>
+                
+                <div className="vehicle-stats">
+                    <p>Tổng số xe: <strong>{totalVehicles}</strong></p>
+                </div>
+                
                 {loading && <p>Đang tải danh sách xe...</p>}
                 {!loading && ownerVehicles.length === 0 && !error && (
-                    <p>Bạn chưa có xe nào được đăng.</p>
+                    <p>{searchTerm ? 'Không tìm thấy xe nào phù hợp.' : 'Bạn chưa có xe nào được đăng.'}</p>
                 )}
                 {!loading && ownerVehicles.length > 0 && (
-                    <table className="vehicle-table">
-                        <thead>
-                            <tr>
-                                <th>Ảnh</th>
-                                <th>Xe</th>
-                                <th>Biển số</th>
-                                <th>Giá/Ngày</th>
-                                <th>Trạng thái</th>
-                                <th>Duyệt</th>
-                                <th>Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {ownerVehicles.map(vehicle => (
-                                <tr key={vehicle._id}>
-                                    <td>
-                                        {vehicle.primaryImage ? (
-                                            <img src={vehicle.primaryImage} alt={`${vehicle.brand} ${vehicle.model}`} style={{ width: '80px', height: 'auto', borderRadius: '4px' }} />
-                                        ) : (
-                                            <span>No Image</span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <strong>{vehicle.brand}   {vehicle.model}</strong>
-                                    </td>
-                                    <td>{vehicle.licensePlate}</td>
-                                    <td>{vehicle.pricePerDay?.toLocaleString()} VND</td>
-                                    <td>{vehicle.status}</td>
-                                    <td>{vehicle.approvalStatus}</td>
-                                    <td>
-                                    <button className="detail-button" onClick={() => handleViewDetail(vehicle._id)}>Xem chi tiết</button>
-                                        <button className="edit-button" onClick={() => handleEdit(vehicle._id)}>Sửa</button>
-                                        {vehicle.status === "blocked" ? (
-                                            <button className="unlock-button" onClick={() => handleToggleLock(vehicle._id, "available")}>Mở khoá</button>
-                                        ) : (
-                                            <button className="lock-button" onClick={() => handleToggleLock(vehicle._id, "blocked")}>Khoá</button>
-                                        )}
-                                    </td>
+                    <>
+                        <table className="vehicle-table">
+                            <thead>
+                                <tr>
+                                    <th>Ảnh</th>
+                                    <th>Xe</th>
+                                    <th>Biển số</th>
+                                    <th>Giá/Ngày</th>
+                                    <th>Lượt thuê</th>
+                                    <th>Trạng thái</th>
+                                    <th>Duyệt</th>
+                                    <th>Hành động</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {ownerVehicles.map(vehicle => (
+                                    <tr key={vehicle._id}>
+                                        <td>
+                                            {vehicle.primaryImage ? (
+                                                <img src={vehicle.primaryImage} alt={`${vehicle.brand} ${vehicle.model}`} style={{ width: '80px', height: 'auto', borderRadius: '4px' }} />
+                                            ) : (
+                                                <span>No Image</span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <strong>{vehicle.brand} {vehicle.model}</strong>
+                                        </td>
+                                        <td>{vehicle.licensePlate}</td>
+                                        <td>{vehicle.pricePerDay?.toLocaleString()} VND</td>
+                                        <td>
+                                            <span className="rental-count">{vehicle.rentalCount || 0} lượt</span>
+                                        </td>
+                                        <td>
+                                            <span className={`status-badge ${vehicle.status}`}>
+                                                {vehicle.status === 'available' ? 'Có sẵn' : 'Bị khóa'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className={`approval-badge ${vehicle.approvalStatus}`}>
+                                                {vehicle.approvalStatus === 'approved' ? 'Đã duyệt' : 
+                                                 vehicle.approvalStatus === 'pending' ? 'Chờ duyệt' : 'Từ chối'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="action-buttons">
+                                                <button className="detail-button" onClick={() => handleViewDetail(vehicle._id)}>Chi tiết</button>
+                                                <button className="edit-button" onClick={() => handleEdit(vehicle._id)}>Sửa</button>
+                                                {vehicle.status === "blocked" ? (
+                                                    <button className="unlock-button" onClick={() => handleToggleLock(vehicle._id, "available")}>Mở khóa</button>
+                                                ) : (
+                                                    <button className="lock-button" onClick={() => handleToggleLock(vehicle._id, "blocked")}>Khóa</button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div className="pagination-container">
+                                <div className="pagination-info">
+                                    Hiển thị {((currentPage - 1) * vehiclesPerPage) + 1} - {Math.min(currentPage * vehiclesPerPage, totalVehicles)} của {totalVehicles} xe
+                                </div>
+                                <div className="pagination">
+                                    {renderPagination()}
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
             <ToastContainer position="top-right" autoClose={2500} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />

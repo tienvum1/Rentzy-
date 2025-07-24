@@ -191,3 +191,238 @@
    background-color: #c82333;
 }
 
+/* Search and Filter Section */
+.search-filter-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    gap: var(--spacing-md);
+}
+
+.vehicle-management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.search-container {
+    flex: 1;
+    min-width: 250px;
+}
+
+.sort-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.sort-select {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 0.9em;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.sort-order-btn {
+    padding: var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 1.2em;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    min-width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sort-order-btn:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+.search-input {
+    flex: 1;
+    max-width: 400px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1em;
+    transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.total-vehicles {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background-color: #d4edda;
+    color: var(--success-color);
+}
+
+.status-badge.blocked {
+    background-color: #f8d7da;
+    color: var(--danger-color);
+}
+
+.approval-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.approval-badge.approved {
+    background-color: #d4edda;
+    color: var(--success-color);
+}
+
+.approval-badge.pending {
+    background-color: #fff3cd;
+    color: var(--warning-color);
+}
+
+.approval-badge.rejected {
+    background-color: #f8d7da;
+    color: var(--danger-color);
+}
+
+/* Rental Count */
+.rental-count {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Pagination */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.pagination-info {
+    font-size: 0.9em;
+    color: var(--secondary-color);
+}
+
+.pagination {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.pagination button {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    background-color: white;
+    color: var(--dark-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9em;
+}
+
+.pagination button:hover:not(:disabled) {
+    background-color: var(--light-color);
+    border-color: var(--primary-color);
+}
+
+.pagination button.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination .page-info {
+    margin: 0 var(--spacing-sm);
+    font-size: 0.9em;
+    color: var(--secondary-color);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+
+.action-buttons button {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.view-button {
+    background-color: var(--info-color);
+    color: white;
+}
+
+.view-button:hover {
+    background-color: #138496;
+}
+
+.lock-button {
+    background-color: var(--warning-color);
+    color: var(--dark-color);
+}
+
+.lock-button:hover {
+    background-color: #e0a800;
+}
+
+.unlock-button {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.unlock-button:hover {
+    background-color: #218838;
+}
+

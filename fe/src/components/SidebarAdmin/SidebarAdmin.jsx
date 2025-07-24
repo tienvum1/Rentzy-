@@ -22,7 +22,7 @@ const SidebarAdmin = () => {
                 <li onClick={() => handleMenuItemClick('/admin')}>Dashboard</li>
 
                 {/* User management */}
-                <li onClick={() => handleMenuItemClick('/admin/users')}>Quản lý người dùng</li>
+                <li onClick={() => handleMenuItemClick('/admin/user-management')}>Quản lý người dùng</li>
 
                 {/* Driver License Requests */}
                 <li onClick={() => handleMenuItemClick('/admin/driver-license-requests')}>Duyệt GPLX</li>

@@ -72,15 +72,145 @@ const becomeOwner = async (req, res) => {
 const getOwnerBookings = async (req, res) => {
   try {
     const ownerId = req.user._id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const sortBy = req.query.sortBy || 'createdAt';
+    const sortOrder = req.query.sortOrder || 'desc';
+    const status = req.query.status || '';
 
     const vehicles = await Vehicle.find({ owner: ownerId }).select("_id");
     const vehicleIds = vehicles.map((v) => v._id);
 
-    const bookings = await Booking.find({ vehicle: { $in: vehicleIds } })
-      .populate("vehicle", "brand model")
-      .populate("renter", "name email");
+    // Build search query
+    let searchQuery = { vehicle: { $in: vehicleIds } };
+    
+    // Add status filter if provided
+    if (status) {
+      searchQuery.status = status;
+    }
 
-    res.json({ success: true, bookings });
+    // Build sort query
+    let sortQuery = {};
+    if (sortBy === 'createdAt') {
+      sortQuery.createdAt = sortOrder === 'asc' ? 1 : -1;
+    } else if (sortBy === 'status') {
+      sortQuery.status = sortOrder === 'asc' ? 1 : -1;
+    } else if (sortBy === 'totalAmount') {
+      sortQuery.totalAmount = sortOrder === 'asc' ? 1 : -1;
+    } else {
+      sortQuery.createdAt = -1; // default sort
+    }
+
+    // Get total count for pagination
+    let totalBookings;
+    if (search) {
+      // If search is provided, we need to use aggregation to search in populated fields
+      const searchPipeline = [
+        { $match: searchQuery },
+        {
+          $lookup: {
+            from: 'vehicles',
+            localField: 'vehicle',
+            foreignField: '_id',
+            as: 'vehicleData'
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'renter',
+            foreignField: '_id',
+            as: 'renterData'
+          }
+        },
+        {
+          $match: {
+            $or: [
+              { 'vehicleData.brand': { $regex: search, $options: 'i' } },
+              { 'vehicleData.model': { $regex: search, $options: 'i' } },
+              { 'renterData.name': { $regex: search, $options: 'i' } },
+              { 'renterData.email': { $regex: search, $options: 'i' } }
+            ]
+          }
+        }
+      ];
+      
+      const countResult = await Booking.aggregate([...searchPipeline, { $count: 'total' }]);
+      totalBookings = countResult.length > 0 ? countResult[0].total : 0;
+      
+      const bookings = await Booking.aggregate([
+        ...searchPipeline,
+        { $sort: sortQuery },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: 'vehicles',
+            localField: 'vehicle',
+            foreignField: '_id',
+            as: 'vehicle'
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'renter',
+            foreignField: '_id',
+            as: 'renter'
+          }
+        },
+        {
+          $addFields: {
+            vehicle: { $arrayElemAt: ['$vehicle', 0] },
+            renter: { $arrayElemAt: ['$renter', 0] }
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            status: 1,
+            startDate: 1,
+            endDate: 1,
+            pickupTime: 1,
+            returnTime: 1,
+            totalAmount: 1,
+            payoutStatus: 1,
+            createdAt: 1,
+            'vehicle.brand': 1,
+            'vehicle.model': 1,
+            'renter.name': 1,
+            'renter.email': 1
+          }
+        }
+      ]);
+      
+      res.json({ 
+        success: true, 
+        bookings,
+        totalBookings,
+        totalPages: Math.ceil(totalBookings / limit),
+        currentPage: page
+      });
+    } else {
+      // No search, use regular query
+      totalBookings = await Booking.countDocuments(searchQuery);
+      
+      const bookings = await Booking.find(searchQuery)
+        .populate("vehicle", "brand model")
+        .populate("renter", "name email")
+        .sort(sortQuery)
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      res.json({ 
+        success: true, 
+        bookings,
+        totalBookings,
+        totalPages: Math.ceil(totalBookings / limit),
+        currentPage: page
+      });
+    }
   } catch (err) {
     console.error("Error in getOwnerBookings:", err);
     res
@@ -111,7 +241,7 @@ const getOwnerCancelRequests = async (req, res) => {
   }
 };
 
-// donah thu 
+// doanh thu 
 // --- 4. Lấy doanh thu của chủ xe ---
 const getOwnerRevenue = async (req, res) => {
   try {
@@ -145,11 +275,26 @@ const getOwnerRevenue = async (req, res) => {
       groupId = { year: { $year: '$createdAt' } };
     }
 
+    // Tính doanh thu thực tế của chủ xe (trừ phí platform 10%)
+    const PLATFORM_FEE_RATE = 0.1; // 10% phí platform
+    
     const revenue = await Booking.aggregate([
       { $match: match },
+      {
+        $addFields: {
+          ownerRevenue: {
+            $multiply: [
+              '$totalAmount',
+              { $subtract: [1, PLATFORM_FEE_RATE] }
+            ]
+          }
+        }
+      },
       { $group: {
         _id: groupId,
-        totalRevenue: { $sum: '$totalAmount' },
+        totalRevenue: { $sum: '$ownerRevenue' },
+        grossRevenue: { $sum: '$totalAmount' },
+        platformFee: { $sum: { $multiply: ['$totalAmount', PLATFORM_FEE_RATE] } },
         count: { $sum: 1 },
       }},
       { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1, '_id.week': 1 } }
@@ -158,10 +303,31 @@ const getOwnerRevenue = async (req, res) => {
     // Tổng doanh thu toàn bộ
     const total = await Booking.aggregate([
       { $match: match },
-      { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' }, count: { $sum: 1 } } }
+      {
+        $addFields: {
+          ownerRevenue: {
+            $multiply: [
+              '$totalAmount',
+              { $subtract: [1, PLATFORM_FEE_RATE] }
+            ]
+          }
+        }
+      },
+      { $group: { 
+        _id: null, 
+        totalRevenue: { $sum: '$ownerRevenue' },
+        grossRevenue: { $sum: '$totalAmount' },
+        platformFee: { $sum: { $multiply: ['$totalAmount', PLATFORM_FEE_RATE] } },
+        count: { $sum: 1 } 
+      } }
     ]);
 
-    res.json({ success: true, revenue, total: total[0] || { totalRevenue: 0, count: 0 } });
+    res.json({ 
+      success: true, 
+      revenue, 
+      total: total[0] || { totalRevenue: 0, grossRevenue: 0, platformFee: 0, count: 0 },
+      platformFeeRate: PLATFORM_FEE_RATE
+    });
   } catch (err) {
     console.error('Error in getOwnerRevenue:', err);
     res.status(500).json({ success: false, message: 'Không thể lấy doanh thu.' });

@@ -79,5 +79,9 @@ router.post('/approve-payout/:bookingId', protect, adminOnly, adminController.ap
 router.get('/cccd-requests', protect, adminOnly, adminController.getPendingCCCDRequests);
 router.put('/cccd-status/:userId', protect, adminOnly, adminController.updateCCCDStatus);
 
+// Routes cho quản lý người dùng
+router.get('/users', protect, adminOnly, adminController.getAllUsers);
+router.get('/users/:userId', protect, adminOnly, adminController.getUserDetail);
+router.put('/users/:userId/block', protect, adminOnly, adminController.blockUser);
 
 module.exports = router;

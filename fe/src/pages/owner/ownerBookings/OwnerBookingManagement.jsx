@@ -9,90 +9,193 @@ const OwnerBookingManagement = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalBookings, setTotalBookings] = useState(0);
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [statusFilter, setStatusFilter] = useState('');
+  const bookingsPerPage = 10;
   const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999';
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await axios.get(`${backendUrl}/api/owner/owner-bookings`, { withCredentials: true });
-        if (res.data.success) {
-          setBookings(res.data.bookings);
-        } else {
-          setError(res.data.message || 'Không thể tải danh sách đơn thuê.');
-        }
-      } catch (err) {
-        setError('Không thể tải danh sách đơn thuê.');
-      } finally {
-        setLoading(false);
+  const fetchOwnerBookings = async (page = 1, search = '', sort = 'createdAt', order = 'desc', status = '') => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: bookingsPerPage.toString(),
+        sortBy: sort,
+        sortOrder: order
+      });
+      
+      if (search) params.append('search', search);
+      if (status) params.append('status', status);
+      
+      const res = await axios.get(`${backendUrl}/api/owner/owner-bookings?${params}`, { withCredentials: true });
+      if (res.data.success) {
+        setBookings(res.data.bookings);
+        setTotalPages(res.data.totalPages);
+        setTotalBookings(res.data.totalBookings);
+        setCurrentPage(res.data.currentPage);
+      } else {
+        setError(res.data.message || 'Không thể tải danh sách đơn thuê.');
       }
-    };
-    fetchBookings();
-  }, []);
+    } catch (err) {
+      setError('Không thể tải danh sách đơn thuê.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortAsc, setSortAsc] = useState(false);
-  const [search, setSearch] = useState('');
+  useEffect(() => {
+    fetchOwnerBookings(currentPage, searchTerm, sortBy, sortOrder, statusFilter);
+  }, [currentPage, sortBy, sortOrder, statusFilter]);
+
+  useEffect(() => {
+    const delayedSearch = setTimeout(() => {
+      if (currentPage === 1) {
+        fetchOwnerBookings(1, searchTerm, sortBy, sortOrder, statusFilter);
+      } else {
+        setCurrentPage(1);
+      }
+    }, 500);
+    return () => clearTimeout(delayedSearch);
+  }, [searchTerm]);
 
   const handleSortChange = (e) => {
     setSortBy(e.target.value);
+    setCurrentPage(1);
   };
-  const handleSortToggle = () => setSortAsc((s) => !s);
-  const handleSearchChange = (e) => setSearch(e.target.value);
-
-  const filteredBookings = bookings.filter(b => {
-    const keyword = search.trim().toLowerCase();
-    if (!keyword) return true;
-    const brand = b.vehicle?.brand?.toLowerCase() || '';
-    const model = b.vehicle?.model?.toLowerCase() || '';
-    return brand.includes(keyword) || model.includes(keyword);
-  });
-
-  const sortedBookings = [...filteredBookings].sort((a, b) => {
-    if (sortBy === 'createdAt') {
-      return sortAsc
-        ? new Date(a.createdAt) - new Date(b.createdAt)
-        : new Date(b.createdAt) - new Date(a.createdAt);
+  
+  const handleSortToggle = () => {
+    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    setCurrentPage(1);
+  };
+  
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+  
+  const handleStatusFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1);
+  };
+  
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+  
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+    
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-    if (sortBy === 'status') {
-      return sortAsc
-        ? a.status.localeCompare(b.status)
-        : b.status.localeCompare(a.status);
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`pagination-btn ${currentPage === i ? 'active' : ''}`}
+        >
+          {i}
+        </button>
+      );
     }
-    return 0;
-  });
+    
+    return (
+      <div className="pagination-container">
+        <div className="pagination-info">
+          Hiển thị {Math.min((currentPage - 1) * bookingsPerPage + 1, totalBookings)} - {Math.min(currentPage * bookingsPerPage, totalBookings)} của {totalBookings} đơn thuê
+        </div>
+        <div className="pagination">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="pagination-btn"
+          >
+            ‹ Trước
+          </button>
+          {pages}
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="pagination-btn"
+          >
+            Sau ›
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="owner-booking-layout">
       <SidebarOwner />
       <div className="owner-booking-content">
-        <div className="owner-booking-sortbar">
-          <label>Sắp xếp:&nbsp;</label>
-          <select
-            value={sortBy}
-            onChange={handleSortChange}
-            className="owner-booking-sort-select"
-          >
-            <option value="createdAt">Ngày tạo</option>
-            <option value="status">Trạng thái</option>
-          </select>
-          <button onClick={handleSortToggle} className="owner-booking-sort-btn">
-            {sortAsc ? '↑' : '↓'}
-          </button>
-          <input
-            type="text"
-            className="owner-booking-search-input"
-            placeholder="Tìm kiếm tên xe..."
-            value={search}
-            onChange={handleSearchChange}
-            style={{ marginLeft: 16, minWidth: 180 }}
-          />
+        <div className="owner-booking-header">
+          <div className="search-container">
+            <input
+              type="text"
+              className="owner-booking-search-input"
+              placeholder="Tìm kiếm xe, khách thuê..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+            />
+          </div>
+          <div className="filter-container">
+            <select
+              value={statusFilter}
+              onChange={handleStatusFilterChange}
+              className="status-filter-select"
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="pending">Chờ xác nhận</option>
+              <option value="confirmed">Đã xác nhận</option>
+              <option value="ongoing">Đang thuê</option>
+              <option value="completed">Hoàn thành</option>
+              <option value="cancelled">Đã hủy</option>
+              <option value="cancel_requested">Yêu cầu hủy</option>
+            </select>
+          </div>
+          <div className="sort-container">
+            <select
+              value={sortBy}
+              onChange={handleSortChange}
+              className="owner-booking-sort-select"
+            >
+              <option value="createdAt">Ngày tạo</option>
+              <option value="status">Trạng thái</option>
+              <option value="totalAmount">Tổng tiền</option>
+            </select>
+            <button onClick={handleSortToggle} className="sort-order-btn">
+              {sortOrder === 'asc' ? '↑' : '↓'}
+            </button>
+          </div>
         </div>
-        <h2 className="owner-booking-title">Quản lý đơn thuê</h2>
+        
+        <div className="booking-stats">
+          <h2 className="owner-booking-title">Quản lý đơn thuê</h2>
+          {totalBookings > 0 && (
+            <p className="booking-count">Tổng số: {totalBookings} đơn thuê</p>
+          )}
+        </div>
+        
         {loading && <p>Đang tải...</p>}
         {error && <p className="owner-booking-error">{error}</p>}
-        {!loading && bookings.length === 0 && <p className="owner-booking-empty">Bạn chưa có đơn thuê nào.</p>}
+        {!loading && bookings.length === 0 && (
+          <p className="owner-booking-empty">
+            {searchTerm || statusFilter ? 'Không tìm thấy đơn thuê nào phù hợp.' : 'Bạn chưa có đơn thuê nào.'}
+          </p>
+        )}
         {!loading && bookings.length > 0 && (
           <div className="owner-booking-table-wrapper">
             <table className="owner-booking-table">
@@ -102,6 +205,7 @@ const OwnerBookingManagement = () => {
                   <th>Xe</th>
                   <th>Khách thuê</th>
                   <th>Trạng thái</th>
+                  <th>Tổng tiền</th>
                   <th>Giờ & Ngày thuê</th>
                   <th>Ngày tạo</th>
                   <th>Giải ngân</th>
@@ -109,47 +213,61 @@ const OwnerBookingManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {sortedBookings.map((b) => (
-                  <tr key={b._id}>
-                    <td>#{b._id.slice(-6)}</td>
-                    <td>{b.vehicle?.brand} {b.vehicle?.model}</td>
-                    <td>{b.renter?.name || b.renter?.email}</td>
-                    <td>{b.status}</td>
-                    <td>
-                      {b.pickupTime} {moment(b.startDate).format('DD/MM/YYYY')}  {b.returnTime} {moment(b.endDate).format('DD/MM/YYYY')}
-                    </td>
-                    <td>{moment(b.createdAt).format('DD/MM/YYYY HH:mm')}</td>
-                    <td>
-                      {b.payoutStatus === 'none' && <span className="payout-status payout-status-none">Chưa đến bước</span>}
-                      {b.payoutStatus === 'pending' && <span className="payout-status payout-status-pending">Chờ duyệt</span>}
-                      {b.payoutStatus === 'approved' && <span className="payout-status payout-status-approved">Đã giải ngân</span>}
-                      {b.payoutStatus === 'rejected' && <span className="payout-status payout-status-rejected">Từ chối</span>}
-                    </td>
-                    <td>
-                      <div className="owner-booking-action-group">
-                        <a
-                          className="owner-booking-action-btn view"
-                          href={`/ownerpage/booking-detail/${b._id}`}
-                        >
-                          {/* <FaEye style={{marginRight: 6}} /> */} Xem
-                        </a>
-                        <a
-                          className="owner-booking-action-btn contract"
-                          href={`/ownerpage/contract/${b._id}`}
-                        >
-                          {/* <FaFileContract style={{marginRight: 6}} /> */} Hợp đồng
-                        </a>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+                {bookings.map((b) => (
+                   <tr key={b._id}>
+                     <td>#{b._id.slice(-6)}</td>
+                     <td>{b.vehicle?.brand} {b.vehicle?.model}</td>
+                     <td>{b.renter?.name || b.renter?.email}</td>
+                     <td>
+                       <span className={`status-badge status-${b.status}`}>
+                         {b.status === 'pending' && 'Chờ xác nhận'}
+                         {b.status === 'confirmed' && 'Đã xác nhận'}
+                         {b.status === 'ongoing' && 'Đang thuê'}
+                         {b.status === 'completed' && 'Hoàn thành'}
+                         {b.status === 'cancelled' && 'Đã hủy'}
+                         {b.status === 'cancel_requested' && 'Yêu cầu hủy'}
+                         {!['pending', 'confirmed', 'ongoing', 'completed', 'cancelled', 'cancel_requested'].includes(b.status) && b.status}
+                       </span>
+                     </td>
+                     <td className="total-amount">
+                       {b.totalAmount ? `${b.totalAmount.toLocaleString('vi-VN')} VNĐ` : 'N/A'}
+                     </td>
+                     <td>
+                       {b.pickupTime} {moment(b.startDate).format('DD/MM/YYYY')} - {b.returnTime} {moment(b.endDate).format('DD/MM/YYYY')}
+                     </td>
+                     <td>{moment(b.createdAt).format('DD/MM/YYYY HH:mm')}</td>
+                     <td>
+                       {b.payoutStatus === 'none' && <span className="payout-status payout-status-none">Chưa đến bước</span>}
+                       {b.payoutStatus === 'pending' && <span className="payout-status payout-status-pending">Chờ duyệt</span>}
+                       {b.payoutStatus === 'approved' && <span className="payout-status payout-status-approved">Đã giải ngân</span>}
+                       {b.payoutStatus === 'rejected' && <span className="payout-status payout-status-rejected">Từ chối</span>}
+                     </td>
+                     <td>
+                       <div className="owner-booking-action-group">
+                         <a
+                           className="owner-booking-action-btn view"
+                           href={`/ownerpage/booking-detail/${b._id}`}
+                         >
+                           Xem
+                         </a>
+                         <a
+                           className="owner-booking-action-btn contract"
+                           href={`/ownerpage/contract/${b._id}`}
+                         >
+                           Hợp đồng
+                         </a>
+                       </div>
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+             {renderPagination()}
+           </div>
+         )}
+       </div>
+     </div>
+   );
+ };
 
-export default OwnerBookingManagement; 
+export default OwnerBookingManagement;

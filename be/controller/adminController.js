@@ -701,6 +701,195 @@ const updateCCCDStatus = async (req, res) => {
 };
 
 
+// Lấy danh sách tất cả người dùng với phân trang
+const getAllUsers = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const search = req.query.search || '';
+    const role = req.query.role || '';
+    const status = req.query.status || '';
+
+    // Tạo query filter
+    let filter = {};
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
+      ];
+    }
+    if (role) {
+      filter.role = role;
+    }
+    if (status) {
+      filter.status = status;
+    }
+
+    const users = await User.find(filter)
+      .select('-password -googleId')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await User.countDocuments(filter);
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        users,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalUsers: total,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi lấy danh sách người dùng' });
+  }
+};
+
+// Lấy chi tiết người dùng
+const getUserDetail = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const user = await User.findById(userId).select('-password -googleId');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
+    }
+
+    // Lấy thống kê liên quan đến user
+    const userStats = {};
+    
+    if (user.role === 'owner') {
+      const vehicleCount = await Vehicle.countDocuments({ owner: userId });
+      const totalBookings = await Booking.countDocuments({ 'vehicle.owner': userId });
+      const completedBookings = await Booking.countDocuments({ 
+        'vehicle.owner': userId, 
+        status: 'completed' 
+      });
+      
+      userStats.vehicleCount = vehicleCount;
+      userStats.totalBookings = totalBookings;
+      userStats.completedBookings = completedBookings;
+    }
+    
+    if (user.role === 'renter') {
+      const totalBookings = await Booking.countDocuments({ renter: userId });
+      const completedBookings = await Booking.countDocuments({ 
+        renter: userId, 
+        status: 'completed' 
+      });
+      
+      userStats.totalBookings = totalBookings;
+      userStats.completedBookings = completedBookings;
+    }
+
+    // Lấy ví của user
+    const wallet = await Wallet.findOne({ user: userId });
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        user,
+        stats: userStats,
+        wallet: wallet ? { balance: wallet.balance, currency: wallet.currency } : null
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user detail:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi lấy chi tiết người dùng' });
+  }
+};
+
+// Khóa/mở khóa người dùng
+const blockUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { reason, action } = req.body; // action: 'block' hoặc 'unblock'
+    
+    if (!reason && action === 'block') {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập lý do khóa tài khoản' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
+    }
+
+    // Cập nhật trạng thái
+    user.status = action === 'block' ? 'blocked' : 'active';
+    await user.save({ validateBeforeSave: false });
+
+    // Tạo thông báo cho user
+    const notificationTitle = action === 'block' ? 'Tài khoản bị khóa' : 'Tài khoản được mở khóa';
+    const notificationMessage = action === 'block' 
+      ? `Tài khoản của bạn đã bị khóa. Lý do: ${reason}`
+      : 'Tài khoản của bạn đã được mở khóa và có thể sử dụng bình thường.';
+
+    await Notification.create({
+      user: userId,
+      type: 'system',
+      title: notificationTitle,
+      message: notificationMessage,
+      data: { 
+        action,
+        reason: action === 'block' ? reason : null,
+        blockedAt: action === 'block' ? new Date() : null
+      }
+    });
+
+    // Gửi email thông báo khi khóa tài khoản
+    if (action === 'block') {
+      try {
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransporter({
+          service: 'gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
+        
+        await transporter.sendMail({
+          to: user.email,
+          subject: 'Tài khoản Rentzy của bạn đã bị khóa',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #d32f2f;">Thông báo khóa tài khoản</h2>
+              <p>Xin chào ${user.name},</p>
+              <p>Tài khoản của bạn trên hệ thống Rentzy đã bị khóa bởi quản trị viên.</p>
+              <p><strong>Lý do:</strong> ${reason}</p>
+              <p>Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ với bộ phận hỗ trợ khách hàng của chúng tôi.</p>
+              <p>Trân trọng,<br/>Đội ngũ Rentzy</p>
+            </div>
+          `
+        });
+      } catch (emailError) {
+        console.error('Error sending block notification email:', emailError);
+        // Không throw error để không ảnh hưởng đến việc khóa tài khoản
+      }
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: action === 'block' 
+        ? 'Đã khóa tài khoản người dùng thành công'
+        : 'Đã mở khóa tài khoản người dùng thành công'
+    });
+  } catch (error) {
+    console.error('Error blocking/unblocking user:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi cập nhật trạng thái người dùng' });
+  }
+};
+
 // ✅ Export tất cả ở một chỗ duy nhất
 module.exports = {
     getOwnerRequests,
@@ -717,5 +906,8 @@ module.exports = {
     approvePayoutBooking,
     createOrUpdateDriverLicense,
     getPendingCCCDRequests,
-    updateCCCDStatus
+    updateCCCDStatus,
+    getAllUsers,
+    getUserDetail,
+    blockUser
 };
