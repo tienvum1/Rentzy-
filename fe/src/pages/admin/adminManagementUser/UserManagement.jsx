@@ -58,8 +58,8 @@ const UserManagement = () => {
         // Calculate stats
         const stats = {
           total: response.data.data.pagination.totalUsers,
-          active: response.data.data.users.filter(u => u.status === 'active').length,
-          blocked: response.data.data.users.filter(u => u.status === 'blocked').length,
+          active: response.data.data.users.filter(u => u.isActive === true).length,
+          blocked: response.data.data.users.filter(u => u.isActive === false).length,
           admins: response.data.data.users.filter(u => u.role === 'admin').length,
           owners: response.data.data.users.filter(u => u.role === 'owner').length,
           renters: response.data.data.users.filter(u => u.role === 'renter').length
@@ -115,16 +115,15 @@ const UserManagement = () => {
     fetchUsers(pagination.current, pagination.pageSize);
   };
 
-  // Get status tag
-  const getStatusTag = (status) => {
-    const statusConfig = {
-      active: { color: 'green', text: 'Hoạt động' },
-      blocked: { color: 'red', text: 'Bị khóa' },
-      pending: { color: 'orange', text: 'Chờ duyệt' }
-    };
-    
-    const config = statusConfig[status] || { color: 'default', text: status };
-    return <Tag color={config.color}>{config.text}</Tag>;
+  // Get status tag based on isActive field
+  const getStatusTag = (isActive) => {
+    if (isActive === true) {
+      return <Tag color="green">Hoạt động</Tag>;
+    } else if (isActive === false) {
+      return <Tag color="red">Bị khóa</Tag>;
+    } else {
+      return <Tag color="orange">Chờ duyệt</Tag>;
+    }
   };
 
   // Get role tag
@@ -182,9 +181,9 @@ const UserManagement = () => {
     },
     {
       title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => getStatusTag(status)
+      dataIndex: 'isActive',
+      key: 'isActive',
+      render: (isActive) => getStatusTag(isActive)
     },
     {
       title: 'Ngày tạo',
@@ -206,13 +205,13 @@ const UserManagement = () => {
             Chi tiết
           </Button>
           <Button
-            type={record.status === 'blocked' ? 'default' : 'danger'}
-            icon={record.status === 'blocked' ? <UnlockOutlined /> : <LockOutlined />}
+            type={record.isActive === false ? 'default' : 'danger'}
+            icon={record.isActive === false ? <UnlockOutlined /> : <LockOutlined />}
             size="small"
             onClick={() => handleBlockUser(record)}
             disabled={record.role === 'admin'}
           >
-            {record.status === 'blocked' ? 'Mở khóa' : 'Khóa'}
+            {record.isActive === false ? 'Mở khóa' : 'Khóa'}
           </Button>
         </Space>
       )

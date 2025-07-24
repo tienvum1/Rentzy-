@@ -34,6 +34,11 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ message: "Người dùng không tồn tại." });
     }
 
+    // Kiểm tra tài khoản có bị khóa không
+    if (user.isActive === false) {
+        return res.status(403).json({ message: "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên." });
+    }
+
     req.user = user;
     
     next();

@@ -11,7 +11,7 @@ const BlockUserModal = ({ visible, user, onClose, onSuccess }) => {
 
   if (!user) return null;
 
-  const isBlocked = user.status === 'blocked';
+  const isBlocked = user.isActive === false;
   const action = isBlocked ? 'unblock' : 'block';
   const title = isBlocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản';
   const buttonText = isBlocked ? 'Mở khóa' : 'Khóa tài khoản';

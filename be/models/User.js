@@ -6,6 +6,9 @@ const userSchema = new mongoose.Schema({
   password_hash: { type: String, required: false },
   phone: String,
   role: { type: [String], enum: ['renter', 'owner', 'admin'], default: ['renter'] },
+  
+  // Account status - true: active, false: blocked
+  isActive: { type: Boolean, default: true },
 
   // Verification email status fields
   emailVerificationToken: String, // Field to store the email verification token (OTP)

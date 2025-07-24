@@ -61,7 +61,7 @@ exports.register = async (req, res) => {
       phone,
       is_verified: false,
       role: "renter",
-
+      isActive: true, // Set account as active by default
       loginMethods: ["password"], // Set login method to password
 
     });
@@ -121,10 +121,10 @@ exports.verifyEmail = async (req, res) => {
     // console.log('Received Token:', token); // Có thể bỏ log này sau khi debug
 
     // *** SỬA LỖI Ở ĐÂY: Dùng Mongoose method để cập nhật ***
-    // Tìm user bằng user_id từ token và cập nhật is_verified
+    // Tìm user bằng user_id từ token và cập nhật is_verified và isActive
     const updatedUser = await User.findByIdAndUpdate(
       decoded.user_id, // Corrected: Use decoded.user_id as the token payload contains user_id
-      { is_verified: true },
+      { is_verified: true, isActive: true },
       { new: true } // Trả về document sau khi cập nhật
     );
 
@@ -243,6 +243,7 @@ exports.googleCallback = async (req, res) => {
       }
 
       user.is_verified = true;
+      user.isActive = true;
       await user.save();
 
       // Kiểm tra nếu user chưa có ví thì tạo ví mới
@@ -276,6 +277,7 @@ exports.googleCallback = async (req, res) => {
         }
 
         user.is_verified = true;
+        user.isActive = true;
         await user.save();
 
         // Kiểm tra nếu user chưa có ví thì tạo ví mới
@@ -299,6 +301,7 @@ exports.googleCallback = async (req, res) => {
           googleId: googleProfile.id,
           is_verified: true,
           role: "renter",
+          isActive: true, // Set account as active for Google users
           avatar_url:
             googleProfile.photos?.[0]?.value || null, // ✅ Chỉ set avatar khi tạo mới
           loginMethods: ["google"],

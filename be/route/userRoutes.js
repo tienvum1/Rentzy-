@@ -51,7 +51,10 @@ router.post('/verify-phone-otp', protect, userController.verifyPhoneOtp);
 // New route for resending phone OTP
 router.post('/resend-phone-otp', protect, userController.resendPhoneOtp);
 
-router.post('/bank-account', protect, addBankAccount);
+// Bank account management routes
+router.get('/bank-account', protect, userController.getBankAccounts);
+router.post('/bank-account', protect, userController.addBankAccount);
+router.delete('/bank-account/:accountId', protect, userController.deleteBankAccount);
 
 // New route for creating CCCD info
 router.post('/create-cccd', protect, uploadMemory.fields([

@@ -202,6 +202,12 @@ const updateDriverLicenseStatus = async (req, res) => {
         }
 
         user.driver_license_verification_status = status;
+        
+        // Tự động cập nhật tên người dùng khi admin duyệt GPLX
+        if (status === 'verified' && user.driver_license_full_name) {
+            user.name = user.driver_license_full_name;
+        }
+        
         await user.save({ validateBeforeSave: false });
 
         // --- Notification logic ---
@@ -209,6 +215,9 @@ const updateDriverLicenseStatus = async (req, res) => {
         let notifyMessage = '';
         if (status === 'verified') {
           notifyMessage = 'Giấy phép lái xe của bạn đã được xác thực thành công.';
+          if (user.driver_license_full_name) {
+            notifyMessage += ` Tên của bạn đã được cập nhật thành: ${user.driver_license_full_name}.`;
+          }
         } else {
           notifyMessage = 'Giấy phép lái xe của bạn đã bị từ chối xác thực.';
         }
@@ -497,6 +506,8 @@ const approvePayoutBooking = async (req, res) => {
 const getDashboardStats = async (req, res) => {
     try {
         const totalUsers = await User.countDocuments();
+        const activeUsers = await User.countDocuments({ isActive: true });
+        const blockedUsers = await User.countDocuments({ isActive: false });
         const totalAdmins = await User.countDocuments({ role: { $in: ['admin'] } });
         const totalOwners = await User.countDocuments({ role: { $in: ['owner'] } });
         const totalRenters = await User.countDocuments({ role: { $in: ['renter'] } });
@@ -617,6 +628,8 @@ const getDashboardStats = async (req, res) => {
             data: {
                 userStats: {
                     total: totalUsers,
+                    active: activeUsers,
+                    blocked: blockedUsers,
                     admins: totalAdmins,
                     owners: totalOwners,
                     renters: totalRenters
@@ -674,7 +687,14 @@ const updateCCCDStatus = async (req, res) => {
     }
     const user = await require('../models/User').findById(userId);
     if (!user) return res.status(404).json({ message: 'Không tìm thấy user.' });
+    
     user.cccd_verification_status = status;
+    
+    // Tự động cập nhật tên người dùng khi admin duyệt CCCD
+    if (status === 'verified' && user.cccd_full_name) {
+        user.name = user.cccd_full_name;
+    }
+    
     await user.save({ validateBeforeSave: false });
 
     // Gửi thông báo cho user
@@ -683,6 +703,9 @@ const updateCCCDStatus = async (req, res) => {
     let notifyMessage = '';
     if (status === 'verified') {
       notifyMessage = 'CCCD của bạn đã được xác thực thành công.';
+      if (user.cccd_full_name) {
+        notifyMessage += ` Tên của bạn đã được cập nhật thành: ${user.cccd_full_name}.`;
+      }
     } else {
       notifyMessage = 'CCCD của bạn đã bị từ chối xác thực.';
     }
@@ -724,7 +747,11 @@ const getAllUsers = async (req, res) => {
       filter.role = role;
     }
     if (status) {
-      filter.status = status;
+      if (status === 'active') {
+        filter.isActive = true;
+      } else if (status === 'blocked') {
+        filter.isActive = false;
+      }
     }
 
     const users = await User.find(filter)
@@ -824,8 +851,8 @@ const blockUser = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
     }
 
-    // Cập nhật trạng thái
-    user.status = action === 'block' ? 'blocked' : 'active';
+    // Cập nhật trạng thái isActive
+    user.isActive = action === 'block' ? false : true;
     await user.save({ validateBeforeSave: false });
 
     // Tạo thông báo cho user
@@ -846,36 +873,13 @@ const blockUser = async (req, res) => {
       }
     });
 
-    // Gửi email thông báo khi khóa tài khoản
-    if (action === 'block') {
-      try {
-        const nodemailer = require('nodemailer');
-        const transporter = nodemailer.createTransporter({
-          service: 'gmail',
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-          },
-        });
-        
-        await transporter.sendMail({
-          to: user.email,
-          subject: 'Tài khoản Rentzy của bạn đã bị khóa',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #d32f2f;">Thông báo khóa tài khoản</h2>
-              <p>Xin chào ${user.name},</p>
-              <p>Tài khoản của bạn trên hệ thống Rentzy đã bị khóa bởi quản trị viên.</p>
-              <p><strong>Lý do:</strong> ${reason}</p>
-              <p>Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ với bộ phận hỗ trợ khách hàng của chúng tôi.</p>
-              <p>Trân trọng,<br/>Đội ngũ Rentzy</p>
-            </div>
-          `
-        });
-      } catch (emailError) {
-        console.error('Error sending block notification email:', emailError);
-        // Không throw error để không ảnh hưởng đến việc khóa tài khoản
-      }
+    // Gửi email thông báo khi khóa/mở khóa tài khoản
+    try {
+      const { sendAccountStatusEmail } = require('../utils/emailService');
+      await sendAccountStatusEmail(user.email, user.name, action, reason);
+    } catch (emailError) {
+      console.error('Error sending account status notification email:', emailError);
+      // Không throw error để không ảnh hưởng đến việc cập nhật trạng thái tài khoản
     }
     
     res.status(200).json({

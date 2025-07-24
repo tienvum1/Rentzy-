@@ -569,20 +569,93 @@ exports.getWalletAndTransactions = async (req, res) => {
   }
 };
 
+exports.getBankAccounts = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('bankAccounts');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.status(200).json({ accounts: user.bankAccounts || [] });
+  } catch (err) {
+    console.error('getBankAccounts error:', err);
+    res.status(500).json({ message: 'Lỗi server khi lấy danh sách tài khoản ngân hàng.' });
+  }
+};
+
 exports.addBankAccount = async (req, res) => {
   try {
     const { accountNumber, bankName, accountHolder } = req.body;
     if (!accountNumber || !bankName || !accountHolder) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng.' });
     }
+    
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    // Kiểm tra tên chủ tài khoản phải trùng với tên trong GPLX hoặc CCCD
+    const validNames = [];
+    if (user.driver_license_full_name) {
+      validNames.push(user.driver_license_full_name.trim().toLowerCase());
+    }
+    if (user.cccd_full_name) {
+      validNames.push(user.cccd_full_name.trim().toLowerCase());
+    }
+    if (user.name) {
+      validNames.push(user.name.trim().toLowerCase());
+    }
+    
+    const accountHolderLower = accountHolder.trim().toLowerCase();
+    const isValidName = validNames.some(name => name === accountHolderLower);
+    
+    if (!isValidName) {
+      let errorMessage = 'Tên chủ tài khoản phải trùng với tên trong ';
+      const availableNames = [];
+      if (user.driver_license_full_name) availableNames.push('GPLX');
+      if (user.cccd_full_name) availableNames.push('CCCD');
+      if (user.name && !user.driver_license_full_name && !user.cccd_full_name) availableNames.push('hồ sơ cá nhân');
+      
+      if (availableNames.length > 0) {
+        errorMessage += availableNames.join(' hoặc ');
+        errorMessage += '. Tên hợp lệ: ';
+        const validNamesDisplay = [];
+        if (user.driver_license_full_name) validNamesDisplay.push(user.driver_license_full_name);
+        if (user.cccd_full_name) validNamesDisplay.push(user.cccd_full_name);
+        if (user.name && !user.driver_license_full_name && !user.cccd_full_name) validNamesDisplay.push(user.name);
+        errorMessage += validNamesDisplay.join(', ');
+      } else {
+        errorMessage = 'Vui lòng xác thực GPLX hoặc CCCD trước khi thêm tài khoản ngân hàng.';
+      }
+      
+      return res.status(400).json({ message: errorMessage });
+    }
+    
+    // Kiểm tra trùng lặp tài khoản
+    const existingAccount = user.bankAccounts.find(acc => 
+      acc.accountNumber === accountNumber && acc.bankName === bankName
+    );
+    if (existingAccount) {
+      return res.status(400).json({ message: 'Tài khoản ngân hàng này đã được thêm trước đó.' });
+    }
+    
     user.bankAccounts.push({ accountNumber, bankName, accountHolder });
     await user.save();
     res.status(200).json({ message: 'Thêm tài khoản ngân hàng thành công!', user });
   } catch (err) {
     console.error('addBankAccount error:', err);
     res.status(500).json({ message: 'Lỗi server khi thêm tài khoản ngân hàng.' });
+  }
+};
+
+exports.deleteBankAccount = async (req, res) => {
+  try {
+    const { accountId } = req.params;
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    user.bankAccounts = user.bankAccounts.filter(acc => acc._id.toString() !== accountId);
+    await user.save();
+    res.status(200).json({ message: 'Xóa tài khoản ngân hàng thành công!', accounts: user.bankAccounts });
+  } catch (err) {
+    console.error('deleteBankAccount error:', err);
+    res.status(500).json({ message: 'Lỗi server khi xóa tài khoản ngân hàng.' });
   }
 };
 
@@ -698,23 +771,17 @@ exports.blockUser = async (req, res) => {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     if (user.role.includes('admin')) return res.status(403).json({ message: 'Không thể block admin.' });
-    user.is_verified = false;
+    user.isActive = false;
     await user.save({ validateBeforeSave: false });
 
-    // Gửi email thông báo
-    const nodemailer = require('nodemailer');
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-    await transporter.sendMail({
-      to: user.email,
-      subject: 'Tài khoản của bạn đã bị khóa',
-      html: `<p>Tài khoản của bạn trên Rentzy đã bị khóa bởi quản trị viên. Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ hỗ trợ.</p>`
-    });
+    // Gửi email thông báo khóa tài khoản
+    try {
+      const { sendAccountBlockedEmail } = require('../utils/emailService');
+      await sendAccountBlockedEmail(user.email, user.name, 'Vi phạm chính sách sử dụng dịch vụ');
+    } catch (emailError) {
+      console.error('Error sending block notification email:', emailError);
+      // Không throw error để không ảnh hưởng đến việc khóa tài khoản
+    }
 
     res.json({ success: true, message: 'User has been blocked and notified by email.' });
   } catch (error) {
