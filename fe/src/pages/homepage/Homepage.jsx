@@ -8,6 +8,7 @@ import BrandsSection from '../../components/BrandsSection/BrandsSection';
 import VehicleList from './VehicleList';
 import FilterBar from '../../components/vehicleFilter/FilterBar';
 import DateTimeSelector from '../../components/DateTimeSelector/DateTimeSelector';
+import ChatChooseCar from '../../components/ChatBox/ChatChooseCar';
 
 // Testimonial Section
 const testimonials = [
@@ -80,6 +81,9 @@ function Homepage() {
           <VehicleList />
         </section>
         <TestimonialSection />
+        {/* chatbox to help choose car : */}
+        <ChatChooseCar />
+        
       </div>
       <Footer />
     </div>

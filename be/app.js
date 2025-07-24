@@ -21,6 +21,7 @@ const userRoutes = require("./route/userRoutes");
 const vehicleRoutes = require("./route/vehicleRoutes");
 const ownerRoutes = require("./route/ownerRoutes");
 const adminRoutes = require("./route/adminRoutes");
+const chatBoxRoutes = require('./route/chatBoxRoute')
 
 const bookingRoutes = require('./route/bookingRoutes');
 const paymentRoutes = require('./route/paymentRoute');
@@ -106,6 +107,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/report', reportRoutes);
 app.use("/api/messages", messageRoutes);
+app.use('/api/chat' , chatBoxRoutes)
 
 
 
