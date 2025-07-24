@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Descriptions, Tag, Spin, message, Card, Row, Col, Statistic, Avatar, Divider } from 'antd';
-import { UserOutlined, MailOutlined, PhoneOutlined, CalendarOutlined, WalletOutlined, CarOutlined, BookOutlined } from '@ant-design/icons';
+import { UserOutlined, MailOutlined, PhoneOutlined, CalendarOutlined, CarOutlined, BookOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const UserDetailModal = ({ visible, user, onClose }) => {
@@ -164,17 +164,7 @@ const UserDetailModal = ({ visible, user, onClose }) => {
             </Row>
           </Card>
 
-          {/* Wallet Info */}
-          {userDetail.wallet && (
-            <Card title="Thông tin ví" style={{ marginBottom: '16px' }}>
-              <Statistic
-                title="Số dư"
-                value={userDetail.wallet.balance}
-                formatter={(value) => formatCurrency(value)}
-                prefix={<WalletOutlined />}
-              />
-            </Card>
-          )}
+
 
           {/* Statistics */}
           {userDetail.stats && Object.keys(userDetail.stats).length > 0 && (

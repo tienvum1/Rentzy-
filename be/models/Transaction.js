@@ -5,10 +5,7 @@ const transactionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Booking',
     },
-    wallet: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Wallet',
-    },
+
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -29,7 +26,7 @@ const transactionSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['PAYOS', 'CASH', 'BANK_TRANSFER', 'MOMO', 'WALLET', 'VNPAY', 'ZALOPAY', 'bank_transfer'],
+        enum: ['PAYOS', 'CASH', 'BANK_TRANSFER', 'MOMO', 'VNPAY', 'ZALOPAY', 'bank_transfer'],
         required: true
     },
     paymentMetadata: {

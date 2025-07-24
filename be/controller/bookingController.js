@@ -4,7 +4,6 @@ const Vehicle = require("../models/Vehicle");
 // const Car = require("../models/Car");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
-const Wallet = require("../models/Wallet");
 const Notification = require("../models/Notification");
 const cloudinary = require('../utils/cloudinary');
 const mongoose = require('mongoose'); // Đảm bảo đã import mongoose
@@ -1694,7 +1693,7 @@ const renterCancelBooking = async (req, res) => {
       amount: refundAmount,
       type: 'REFUND',
       status: 'PENDING',
-      paymentMethod: 'WALLET',
+      paymentMethod: 'BANK_TRANSFER',
       paymentMetadata: {
         originalBookingId: booking._id,
         cancellationReason: reason || 'Renter hủy chuyến',

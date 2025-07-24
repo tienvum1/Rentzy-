@@ -227,7 +227,7 @@ async function seedAll() {
       booking: booking._id,
       user: renter._id,
       amount: booking.deposit || 100000, // đảm bảo luôn có amount
-      type: "WALLET_DEPOSIT", // Đúng enum
+      type: "DEPOSIT", // Đúng enum
       status: "COMPLETED",
       paymentMethod: ["PAYOS", "MOMO", "VNPAY", "ZALOPAY"][
         Math.floor(Math.random() * 4)
@@ -265,7 +265,7 @@ async function seedAll() {
           amount: booking.payoutAmount,
           type: "PAYOUT",
           status: "COMPLETED",
-          paymentMethod: "WALLET",
+          paymentMethod: "BANK_TRANSFER",
           paymentMetadata: {},
           description: `Giải ngân cho chủ xe sau khi hoàn thành đơn thuê`,
           isRefunded: false,
@@ -281,7 +281,7 @@ async function seedAll() {
         booking: booking._id,
         user: renter._id,
         amount: 50000 + Math.floor(Math.random() * 100000),
-        type: "WALLET_DEPOSIT",
+        type: "DEPOSIT",
         status: "COMPLETED",
         paymentMethod: ["PAYOS", "MOMO", "VNPAY"][
           Math.floor(Math.random() * 3)

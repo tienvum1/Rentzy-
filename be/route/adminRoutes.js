@@ -68,13 +68,7 @@ router.put(
 );
 
 
-// Route để lấy danh sách booking chờ hoàn tiền cọc cho người thuê
-router.get('/deposit-refund-requests', protect, adminOnly, adminController.getPendingDepositRefundRequests);
-router.post('/approve-deposit-refund/:bookingId', protect, adminOnly, adminController.approveDepositRefund);
 
-// Route để lấy danh sách booking chờ duyệt giải ngân cho chủ xe
-router.get('/payout-requests', protect, adminOnly, adminController.getPendingPayoutRequests);
-router.post('/approve-payout/:bookingId', protect, adminOnly, adminController.approvePayoutBooking);
 
 // Route để lấy danh sách đơn hủy chờ admin duyệt
 router.get('/cancel-requests', protect, adminOnly, adminController.getPendingCancelRequests);
@@ -84,9 +78,7 @@ router.post('/approve-cancel/:id', protect, adminOnly, require('../controller/bo
 // Route để lấy tất cả các yêu cầu pending (cả renter và owner)
 router.get('/all-pending-refunds', protect, adminOnly, adminController.getAllPendingRefundRequests);
 
-// Routes để duyệt hoàn tiền và bồi thường
-router.post('/approve-refund/:bookingId', protect, adminOnly, adminController.approveRefund);
-router.post('/approve-owner-compensation/:bookingId', protect, adminOnly, adminController.approveOwnerCompensation);
+
 
 router.get('/cccd-requests', protect, adminOnly, adminController.getPendingCCCDRequests);
 router.put('/cccd-status/:userId', protect, adminOnly, adminController.updateCCCDStatus);

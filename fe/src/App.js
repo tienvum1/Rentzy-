@@ -39,8 +39,7 @@ import ContractPage from "./pages/bookings/ContractPage";
 // user
 import Profile from "./pages/profile/myAccount/Profile"; // IMPORT: New ProfilePage component
 import UserBookings from "./pages/profile/myBookings/UserBookings"; // Import UserBookings
-import TransactionHistory from "./pages/profile/myTransactions/TransactionHistory";
-import WalletInfo from "./pages/profile/myWallet/WalletInfo";
+
 import NotificationPage from "./pages/profile/myNotifications/NotificationPage";
 import MyReviews from './pages/profile/myReviews/MyReviews';
 import FavoritesPage from "./pages/profile/FavoritesPage";
@@ -64,7 +63,7 @@ import OwnerContractPage from './pages/owner/ownerBookings/OwnerContractPage';
 import AdminDashboard from "./pages/admin/adminDashboard/AdminDashboard";
 import OwnerRequestsPage from "./pages/admin/adminOwnerRequestsPage/OwnerRequestsPage";
 import VehiclesRequestPage from "./pages/admin/adminVehiclesRequestPage/VehiclesRequestPage";
-import AdminWithdrawals from "./pages/admin/adminWithdrawals/AdminWithdrawals";
+
 import DriverLicenseRequestsPage from "./pages/admin/adminDriverLicenseRequestsPage/DriverLicenseRequestsPage";
 
 import AdminVehicleDetailPage from './pages/admin/adminAdminVehicleDetailPage/AdminVehicleDetailPage';
@@ -124,11 +123,7 @@ function App() {
               path="/profile/change-password"
               element={<ChangePassword />}
             />
-            <Route
-              path="/profile/transactions"
-              element={<TransactionHistory />}
-            />
-            <Route path="/profile/wallet" element={<WalletInfo />} />
+
             <Route path="/vehicles/:id" element={<VehicleDetail />} />{" "}
             {/* Add VehicleDetail route */}
             {/* Add VehicleDetail route */}
@@ -158,7 +153,7 @@ function App() {
                 path="vehicle-approvals/:id"
                 element={<AdminVehicleDetailPage />}
               />
-              <Route path="withdrawals" element={<AdminWithdrawals />} />
+
               <Route path="promotions" element={<AdminPromotionPage />} />
               <Route
                 path="driver-license-requests"

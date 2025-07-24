@@ -6,19 +6,18 @@ const bcrypt = require("bcryptjs");
 const path = require("path");
 const cloudinary = require("../utils/cloudinary");
 const fs = require("fs");
-const twilio = require('twilio');
-const Wallet = require('../models/Wallet');
-const Transaction = require('../models/Transaction');
-const axios = require('axios');
-const { URL } = require('url');
-const otpGenerator = require('otp-generator');
-const FormData = require('form-data');
+const twilio = require("twilio");
+
+const axios = require("axios");
+const { URL } = require("url");
+const otpGenerator = require("otp-generator");
+const FormData = require("form-data");
 dotenv.config();
 
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password_hash');
-    
+    const user = await User.findById(req.user._id).select("-password_hash");
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -103,10 +102,10 @@ exports.updateAvatar = async (req, res) => {
     }
 
     const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'avatars',
+      folder: "avatars",
       width: 150,
       height: 150,
-      crop: 'fill'
+      crop: "fill",
     });
 
     const user = await User.findById(req.user._id);
@@ -115,9 +114,8 @@ exports.updateAvatar = async (req, res) => {
 
     res.status(200).json({
       message: "Avatar updated successfully",
-      avatar_url: user.avatar_url
+      avatar_url: user.avatar_url,
     });
-
   } catch (error) {
     console.error("Error updating avatar:", error);
     res.status(500).json({ message: "Error updating avatar" });
@@ -161,7 +159,11 @@ exports.updateProfile = async (req, res) => {
     const user = await User.findByIdAndUpdate(userId, updateData, {
       new: true,
     });
-    res.json({ message: "Cập nhật profile thành công!", user, requiresVerification: false });
+    res.json({
+      message: "Cập nhật profile thành công!",
+      user,
+      requiresVerification: false,
+    });
   } catch (err) {
     console.error("Update profile error:", err);
     res.status(500).json({ message: "Lỗi server khi cập nhật profile." });
@@ -178,7 +180,7 @@ const generateOTP = () => {
 // Function to send email verification OTP
 const sendVerificationEmail = async (email, otp) => {
   console.log(`Sending verification email to ${email} with OTP: ${otp}`);
-  
+
   try {
     // Create a transporter using Gmail service
     const transporter = nodemailer.createTransport({
@@ -196,12 +198,11 @@ const sendVerificationEmail = async (email, otp) => {
       html: `<p>Mã xác minh email của bạn là: <strong>${otp}</strong></p><p>Mã này sẽ hết hạn sau 10 phút.</p>`, // Email body with OTP
     });
 
-    console.log('Verification email sent successfully.');
-
+    console.log("Verification email sent successfully.");
   } catch (error) {
-    console.error('Error sending verification email:', error);
+    console.error("Error sending verification email:", error);
     // Depending on requirements, you might want to throw the error or handle it silently
-    throw new Error('Failed to send verification email.'); // Propagate the error
+    throw new Error("Failed to send verification email."); // Propagate the error
   }
 };
 
@@ -213,20 +214,22 @@ exports.updateEmail = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) {
-      return res.status(404).send('User not found');
+      return res.status(404).send("User not found");
     }
 
     user.new_email = email;
-    user.email_otp = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false });
+    user.email_otp = otpGenerator.generate(6, {
+      upperCaseAlphabets: false,
+      specialChars: false,
+    });
     user.email_otp_expires = Date.now() + 10 * 60 * 1000; // 10 phút
     await user.save({ validateBeforeSave: false });
 
     // Gửi email OTP ở đây (logic gửi email)
 
-    res.status(200).send('OTP sent to new email address for verification.');
-
+    res.status(200).send("OTP sent to new email address for verification.");
   } catch (error) {
-    res.status(500).send('Server error');
+    res.status(500).send("Server error");
   }
 };
 
@@ -237,8 +240,13 @@ exports.verifyEmailOtp = async (req, res) => {
   const { otp } = req.body;
   try {
     const user = await User.findById(req.user._id);
-    if (!user || !user.new_email || user.email_otp !== otp || user.email_otp_expires < Date.now()) {
-      return res.status(400).send('Invalid or expired OTP.');
+    if (
+      !user ||
+      !user.new_email ||
+      user.email_otp !== otp ||
+      user.email_otp_expires < Date.now()
+    ) {
+      return res.status(400).send("Invalid or expired OTP.");
     }
 
     user.email = user.new_email;
@@ -247,9 +255,9 @@ exports.verifyEmailOtp = async (req, res) => {
     user.email_otp_expires = undefined;
     await user.save({ validateBeforeSave: false });
 
-    res.send('Email updated successfully.');
+    res.send("Email updated successfully.");
   } catch (error) {
-    res.status(500).send('Server error');
+    res.status(500).send("Server error");
   }
 };
 
@@ -261,15 +269,18 @@ exports.resendEmailOtp = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user || !user.new_email) {
-      return res.status(400).send('No pending email update found.');
+      return res.status(400).send("No pending email update found.");
     }
-    user.email_otp = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false });
+    user.email_otp = otpGenerator.generate(6, {
+      upperCaseAlphabets: false,
+      specialChars: false,
+    });
     user.email_otp_expires = Date.now() + 10 * 60 * 1000; // 10 phút
     await user.save({ validateBeforeSave: false });
     // Gửi lại email
-    res.send('OTP resent.');
+    res.send("OTP resent.");
   } catch (error) {
-    res.status(500).send('Server error');
+    res.status(500).send("Server error");
   }
 };
 
@@ -280,8 +291,10 @@ const sendVerificationSMS = async (phone, otp) => {
   const smsGatewayBaseUrl = process.env.SMS_GATEWAY_URL;
 
   if (!smsGatewayBaseUrl) {
-    console.error('SMS Gateway URL is not configured. Please set SMS_GATEWAY_URL in your .env file.');
-    throw new Error('Dịch vụ SMS không được cấu hình. OTP (dev anly): ' + otp);
+    console.error(
+      "SMS Gateway URL is not configured. Please set SMS_GATEWAY_URL in your .env file."
+    );
+    throw new Error("Dịch vụ SMS không được cấu hình. OTP (dev anly): " + otp);
   }
 
   try {
@@ -289,8 +302,8 @@ const sendVerificationSMS = async (phone, otp) => {
 
     // Construct the full URL with query parameters based on the app's settings
     const url = new URL(smsGatewayBaseUrl);
-    url.searchParams.append('tel', phone);       // Phone number parameter key is 'tel'
-    url.searchParams.append('message', message); // Text parameter key is 'message'
+    url.searchParams.append("tel", phone); // Phone number parameter key is 'tel'
+    url.searchParams.append("message", message); // Text parameter key is 'message'
 
     console.log(`Sending GET request to Gateway: ${url.href}`);
 
@@ -302,12 +315,13 @@ const sendVerificationSMS = async (phone, otp) => {
     if (response.status === 200) {
       console.log(`Gateway accepted request to send SMS to: ${phone}`);
     } else {
-      throw new Error(`Gateway returned an error with status: ${response.status}`);
+      throw new Error(
+        `Gateway returned an error with status: ${response.status}`
+      );
     }
-
   } catch (error) {
-    console.error('Lỗi khi kết nối tới SMS Gateway:', error.message);
-    throw new Error('Không thể kết nối tới dịch vụ SMS.');
+    console.error("Lỗi khi kết nối tới SMS Gateway:", error.message);
+    throw new Error("Không thể kết nối tới dịch vụ SMS.");
   }
 };
 
@@ -318,20 +332,22 @@ exports.updatePhone = async (req, res) => {
   const { phone } = req.body;
 
   if (!phone) {
-    return res.status(400).json({ message: 'Số điện thoại mới là bắt buộc.' });
+    return res.status(400).json({ message: "Số điện thoại mới là bắt buộc." });
   }
 
   try {
     const user = await User.findById(req.user._id);
     if (!user) {
-      return res.status(404).json({ message: 'Người dùng không tồn tại.' });
+      return res.status(404).json({ message: "Người dùng không tồn tại." });
     }
 
     // Check if the new phone is the same as the current one
     if (user.phone === phone) {
       // If phone is the same and already verified, just return success
-      if(user.is_phone_verified) {
-        return res.status(200).json({ message: 'Số điện thoại đã được xác thực và không thay đổi.' });
+      if (user.is_phone_verified) {
+        return res.status(200).json({
+          message: "Số điện thoại đã được xác thực và không thay đổi.",
+        });
       }
       // If phone is the same but not verified, potentially resend OTP for current phone?
       // For now, let's assume if they explicitly update to the same phone, they want to verify that one.
@@ -354,16 +370,22 @@ exports.updatePhone = async (req, res) => {
     // Send verification SMS with OTP
     await sendVerificationSMS(user.phone, otp);
 
-    res.status(200).json({ message: 'Vui lòng kiểm tra điện thoại để xác minh số mới.', requiresVerification: true });
-
+    res.status(200).json({
+      message: "Vui lòng kiểm tra điện thoại để xác minh số mới.",
+      requiresVerification: true,
+    });
   } catch (error) {
-    console.error('Error updating phone and sending OTP:', error);
+    console.error("Error updating phone and sending OTP:", error);
     // Handle duplicate phone error specifically (assuming your DB enforces unique phones)
     if (error.code === 11000 && error.keyPattern && error.keyPattern.phone) {
-      return res.status(409).json({ message: 'Số điện thoại này đã được sử dụng bởi người dùng khác.' });
+      return res.status(409).json({
+        message: "Số điện thoại này đã được sử dụng bởi người dùng khác.",
+      });
     }
     // Handle other errors
-    res.status(500).json({ message: 'Đã xảy ra lỗi khi cập nhật số điện thoại.' });
+    res
+      .status(500)
+      .json({ message: "Đã xảy ra lỗi khi cập nhật số điện thoại." });
   }
 };
 
@@ -374,20 +396,22 @@ exports.verifyPhoneOtp = async (req, res) => {
   const { otp } = req.body;
 
   if (!otp) {
-    return res.status(400).json({ message: 'Mã OTP là bắt buộc.' });
+    return res.status(400).json({ message: "Mã OTP là bắt buộc." });
   }
 
   try {
     const user = await User.findById(req.user._id);
 
     if (!user) {
-      return res.status(404).json({ message: 'Người dùng không tồn tại.' });
+      return res.status(404).json({ message: "Người dùng không tồn tại." });
     }
 
     // Check if token matches and is not expired
     if (user.phone_otp !== otp || user.phone_otp_expires < new Date()) {
       // Optionally clear token after failed attempt if desired, but for now just return error
-      return res.status(400).json({ message: 'Mã OTP không hợp lệ hoặc đã hết hạn.' });
+      return res
+        .status(400)
+        .json({ message: "Mã OTP không hợp lệ hoặc đã hết hạn." });
     }
 
     // OTP is valid, verify phone and clear token fields
@@ -397,11 +421,14 @@ exports.verifyPhoneOtp = async (req, res) => {
 
     await user.save();
 
-    res.status(200).json({ message: 'Số điện thoại đã được xác minh thành công!' });
-
+    res
+      .status(200)
+      .json({ message: "Số điện thoại đã được xác minh thành công!" });
   } catch (error) {
-    console.error('Error verifying phone OTP:', error);
-    res.status(500).json({ message: 'Đã xảy ra lỗi khi xác minh số điện thoại.' });
+    console.error("Error verifying phone OTP:", error);
+    res
+      .status(500)
+      .json({ message: "Đã xảy ra lỗi khi xác minh số điện thoại." });
   }
 };
 
@@ -412,17 +439,21 @@ exports.resendPhoneOtp = async (req, res) => {
   const { phone } = req.body;
 
   if (!phone) {
-    return res.status(400).json({ message: 'Số điện thoại mới là bắt buộc.' });
+    return res.status(400).json({ message: "Số điện thoại mới là bắt buộc." });
   }
 
   try {
     const user = await User.findById(req.user._id);
     if (!user || !user.phone) {
-      return res.status(404).json({ message: "Không tìm thấy người dùng hoặc số điện thoại." });
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy người dùng hoặc số điện thoại." });
     }
 
     if (user.is_phone_verified) {
-      return res.status(400).json({ message: "Số điện thoại đã được xác thực." });
+      return res
+        .status(400)
+        .json({ message: "Số điện thoại đã được xác thực." });
     }
 
     // Generate a new OTP and expiry
@@ -440,7 +471,9 @@ exports.resendPhoneOtp = async (req, res) => {
     res.status(200).json({ message: "Đã gửi lại mã OTP thành công." });
   } catch (error) {
     console.error("Lỗi khi gửi lại OTP điện thoại:", error);
-    res.status(500).json({ message: error.message || "Lỗi server khi gửi lại OTP." });
+    res
+      .status(500)
+      .json({ message: error.message || "Lỗi server khi gửi lại OTP." });
   }
 };
 
@@ -476,7 +509,11 @@ exports.changePassword = async (req, res) => {
 // @access  Private
 exports.createDriverLicense = async (req, res) => {
   try {
-    const { driver_license_full_name, driver_license_birth_date, driver_license_number } = req.body;
+    const {
+      driver_license_full_name,
+      driver_license_birth_date,
+      driver_license_number,
+    } = req.body;
     const user = await User.findById(req.user._id);
 
     if (!user) {
@@ -488,7 +525,7 @@ exports.createDriverLicense = async (req, res) => {
     // Nếu có file mới được tải lên, upload nó và cập nhật URL
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'driver_licenses'
+        folder: "driver_licenses",
       });
       imageUrl = result.secure_url;
     }
@@ -498,15 +535,16 @@ exports.createDriverLicense = async (req, res) => {
     user.driver_license_birth_date = driver_license_birth_date;
     user.driver_license_number = driver_license_number;
     user.driver_license_image = imageUrl; // Luôn cập nhật URL ảnh
-    user.driver_license_verification_status = 'pending'; // Đặt trạng thái chờ duyệt
+    user.driver_license_verification_status = "pending"; // Đặt trạng thái chờ duyệt
 
     await user.save({ validateBeforeSave: false });
 
-    res.status(200).json({ message: 'Thông tin GPLX đã được gửi để chờ duyệt!', user });
-
+    res
+      .status(200)
+      .json({ message: "Thông tin GPLX đã được gửi để chờ duyệt!", user });
   } catch (error) {
     console.error("Error creating/updating driver license:", error);
-    res.status(500).json({ message: 'Lỗi khi xử lý thông tin GPLX.' });
+    res.status(500).json({ message: "Lỗi khi xử lý thông tin GPLX." });
   }
 };
 
@@ -517,14 +555,14 @@ exports.updateDriverLicenseVerificationStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  if (!['verified', 'rejected'].includes(status)) {
-    return res.status(400).json({ message: 'Invalid status' });
+  if (!["verified", "rejected"].includes(status)) {
+    return res.status(400).json({ message: "Invalid status" });
   }
 
   try {
     const user = await User.findById(id);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     user.driver_license_verification_status = status;
@@ -533,50 +571,22 @@ exports.updateDriverLicenseVerificationStatus = async (req, res) => {
     res.json({ message: `Driver license status updated to ${status}` });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error while updating license status' });
-  }
-};
-
-// Lấy thông tin ví và lịch sử giao dịch của user
-exports.getWalletAndTransactions = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    // Lấy ví của user
-    const wallet = await Wallet.findOne({ user: userId });
-    if (!wallet) {
-      return res.status(404).json({ message: 'Không tìm thấy ví.' });
-    }
-    // Lấy các transaction liên quan đến user (theo booking của user hoặc theo ví nếu có)
-    // Ở đây lấy tất cả transaction liên quan đến user (có thể mở rộng filter theo ví nếu cần)
-    const transactions = await Transaction.find({})
-      .populate({
-        path: 'booking',
-        select: 'vehicle startDate endDate totalAmount status',
-        populate: {
-          path: 'vehicle',
-          select: 'brand model primaryImage'
-        }
-      })
-      .sort({ createdAt: -1 });
-    // Lọc transaction liên quan đến user
-    const userTransactions = transactions.filter(tran => {
-      return tran.booking && tran.booking.renter && tran.booking.renter.toString() === userId.toString();
-    });
-    res.json({ wallet, transactions: userTransactions });
-  } catch (error) {
-    console.error('Error fetching wallet and transactions:', error);
-    res.status(500).json({ message: 'Lỗi server khi lấy thông tin ví.' });
+    res
+      .status(500)
+      .json({ message: "Server error while updating license status" });
   }
 };
 
 exports.getBankAccounts = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('bankAccounts');
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    const user = await User.findById(req.user._id).select("bankAccounts");
+    if (!user) return res.status(404).json({ message: "User not found" });
     res.status(200).json({ accounts: user.bankAccounts || [] });
   } catch (err) {
-    console.error('getBankAccounts error:', err);
-    res.status(500).json({ message: 'Lỗi server khi lấy danh sách tài khoản ngân hàng.' });
+    console.error("getBankAccounts error:", err);
+    res
+      .status(500)
+      .json({ message: "Lỗi server khi lấy danh sách tài khoản ngân hàng." });
   }
 };
 
@@ -584,12 +594,14 @@ exports.addBankAccount = async (req, res) => {
   try {
     const { accountNumber, bankName, accountHolder } = req.body;
     if (!accountNumber || !bankName || !accountHolder) {
-      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng.' });
+      return res.status(400).json({
+        message: "Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng.",
+      });
     }
-    
+
     const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    
+    if (!user) return res.status(404).json({ message: "User not found" });
+
     // Kiểm tra tên chủ tài khoản phải trùng với tên trong GPLX hoặc CCCD
     const validNames = [];
     if (user.driver_license_full_name) {
@@ -601,46 +613,56 @@ exports.addBankAccount = async (req, res) => {
     if (user.name) {
       validNames.push(user.name.trim().toLowerCase());
     }
-    
+
     const accountHolderLower = accountHolder.trim().toLowerCase();
-    const isValidName = validNames.some(name => name === accountHolderLower);
-    
+    const isValidName = validNames.some((name) => name === accountHolderLower);
+
     if (!isValidName) {
-      let errorMessage = 'Tên chủ tài khoản phải trùng với tên trong ';
+      let errorMessage = "Tên chủ tài khoản phải trùng với tên trong ";
       const availableNames = [];
-      if (user.driver_license_full_name) availableNames.push('GPLX');
-      if (user.cccd_full_name) availableNames.push('CCCD');
-      if (user.name && !user.driver_license_full_name && !user.cccd_full_name) availableNames.push('hồ sơ cá nhân');
-      
+      if (user.driver_license_full_name) availableNames.push("GPLX");
+      if (user.cccd_full_name) availableNames.push("CCCD");
+      if (user.name && !user.driver_license_full_name && !user.cccd_full_name)
+        availableNames.push("hồ sơ cá nhân");
+
       if (availableNames.length > 0) {
-        errorMessage += availableNames.join(' hoặc ');
-        errorMessage += '. Tên hợp lệ: ';
+        errorMessage += availableNames.join(" hoặc ");
+        errorMessage += ". Tên hợp lệ: ";
         const validNamesDisplay = [];
-        if (user.driver_license_full_name) validNamesDisplay.push(user.driver_license_full_name);
+        if (user.driver_license_full_name)
+          validNamesDisplay.push(user.driver_license_full_name);
         if (user.cccd_full_name) validNamesDisplay.push(user.cccd_full_name);
-        if (user.name && !user.driver_license_full_name && !user.cccd_full_name) validNamesDisplay.push(user.name);
-        errorMessage += validNamesDisplay.join(', ');
+        if (user.name && !user.driver_license_full_name && !user.cccd_full_name)
+          validNamesDisplay.push(user.name);
+        errorMessage += validNamesDisplay.join(", ");
       } else {
-        errorMessage = 'Vui lòng xác thực GPLX hoặc CCCD trước khi thêm tài khoản ngân hàng.';
+        errorMessage =
+          "Vui lòng xác thực GPLX hoặc CCCD trước khi thêm tài khoản ngân hàng.";
       }
-      
+
       return res.status(400).json({ message: errorMessage });
     }
-    
+
     // Kiểm tra trùng lặp tài khoản
-    const existingAccount = user.bankAccounts.find(acc => 
-      acc.accountNumber === accountNumber && acc.bankName === bankName
+    const existingAccount = user.bankAccounts.find(
+      (acc) => acc.accountNumber === accountNumber && acc.bankName === bankName
     );
     if (existingAccount) {
-      return res.status(400).json({ message: 'Tài khoản ngân hàng này đã được thêm trước đó.' });
+      return res
+        .status(400)
+        .json({ message: "Tài khoản ngân hàng này đã được thêm trước đó." });
     }
-    
+
     user.bankAccounts.push({ accountNumber, bankName, accountHolder });
     await user.save();
-    res.status(200).json({ message: 'Thêm tài khoản ngân hàng thành công!', user });
+    res
+      .status(200)
+      .json({ message: "Thêm tài khoản ngân hàng thành công!", user });
   } catch (err) {
-    console.error('addBankAccount error:', err);
-    res.status(500).json({ message: 'Lỗi server khi thêm tài khoản ngân hàng.' });
+    console.error("addBankAccount error:", err);
+    res
+      .status(500)
+      .json({ message: "Lỗi server khi thêm tài khoản ngân hàng." });
   }
 };
 
@@ -648,14 +670,21 @@ exports.deleteBankAccount = async (req, res) => {
   try {
     const { accountId } = req.params;
     const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    
-    user.bankAccounts = user.bankAccounts.filter(acc => acc._id.toString() !== accountId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.bankAccounts = user.bankAccounts.filter(
+      (acc) => acc._id.toString() !== accountId
+    );
     await user.save();
-    res.status(200).json({ message: 'Xóa tài khoản ngân hàng thành công!', accounts: user.bankAccounts });
+    res.status(200).json({
+      message: "Xóa tài khoản ngân hàng thành công!",
+      accounts: user.bankAccounts,
+    });
   } catch (err) {
-    console.error('deleteBankAccount error:', err);
-    res.status(500).json({ message: 'Lỗi server khi xóa tài khoản ngân hàng.' });
+    console.error("deleteBankAccount error:", err);
+    res
+      .status(500)
+      .json({ message: "Lỗi server khi xóa tài khoản ngân hàng." });
   }
 };
 
@@ -673,27 +702,35 @@ exports.createCCCD = async (req, res) => {
     let backUrl = user.cccd_back_url;
     // Upload ảnh nếu có file mới
     if (req.files && req.files.cccd_front && req.files.cccd_front[0]) {
-      const resultFront = await cloudinary.uploader.upload_stream_promise(req.files.cccd_front[0].buffer, {
-        folder: 'rentzy/cccd'
-      });
+      const resultFront = await cloudinary.uploader.upload_stream_promise(
+        req.files.cccd_front[0].buffer,
+        {
+          folder: "rentzy/cccd",
+        }
+      );
       frontUrl = resultFront.secure_url;
     }
     if (req.files && req.files.cccd_back && req.files.cccd_back[0]) {
-      const resultBack = await cloudinary.uploader.upload_stream_promise(req.files.cccd_back[0].buffer, {
-        folder: 'rentzy/cccd'
-      });
+      const resultBack = await cloudinary.uploader.upload_stream_promise(
+        req.files.cccd_back[0].buffer,
+        {
+          folder: "rentzy/cccd",
+        }
+      );
       backUrl = resultBack.secure_url;
     }
     user.cccd_number = cccd_number;
     user.name = cccd_full_name;
     user.cccd_front_url = frontUrl;
     user.cccd_back_url = backUrl;
-    user.owner_request_status = 'pending';
+    user.owner_request_status = "pending";
     await user.save({ validateBeforeSave: false });
-    res.status(200).json({ message: 'Thông tin CCCD đã được gửi để chờ duyệt!', user });
+    res
+      .status(200)
+      .json({ message: "Thông tin CCCD đã được gửi để chờ duyệt!", user });
   } catch (error) {
     console.error("Error creating/updating CCCD:", error);
-    res.status(500).json({ message: 'Lỗi khi xử lý thông tin CCCD.' });
+    res.status(500).json({ message: "Lỗi khi xử lý thông tin CCCD." });
   }
 };
 
@@ -705,60 +742,73 @@ exports.verifyCCCD = async (req, res) => {
     const { cccd_number, full_name, birth_date } = req.body;
     const user = await User.findById(req.user._id);
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
     // Upload ảnh lên Cloudinary nếu có file mới
     let imageUrl = user.cccd_image;
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'cccds'
+        folder: "cccds",
       });
       imageUrl = result.secure_url;
     }
     // Gọi FPT.AI OCR CCCD
-    const axios = require('axios');
-    const FormData = require('form-data');
+    const axios = require("axios");
+    const FormData = require("form-data");
     const form = new FormData();
-    form.append('image', fs.createReadStream(req.file.path));
-    const apiKey = '1Bqxz1oBUZ0AIERNIjXlJ72q0U8pj5j3';
-    const ocrRes = await axios.post(
-      'https://api.fpt.ai/vision/idr/vnm',
-      form,
-      {
-        headers: {
-          ...form.getHeaders(),
-          'api-key': apiKey,
-        },
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-      }
-    );
+    form.append("image", fs.createReadStream(req.file.path));
+    const apiKey = "1Bqxz1oBUZ0AIERNIjXlJ72q0U8pj5j3";
+    const ocrRes = await axios.post("https://api.fpt.ai/vision/idr/vnm", form, {
+      headers: {
+        ...form.getHeaders(),
+        "api-key": apiKey,
+      },
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    });
     const ocr = ocrRes.data.data[0] || {};
     // So sánh trực tiếp các trường
-    const ocrNumber = (ocr.id || '').trim();
-    const ocrName = (ocr.name || '').trim();
-    const ocrDob = ocr.dob ? ocr.dob.split('/').reverse().join('-') : '';
+    const ocrNumber = (ocr.id || "").trim();
+    const ocrName = (ocr.name || "").trim();
+    const ocrDob = ocr.dob ? ocr.dob.split("/").reverse().join("-") : "";
     if (!ocrNumber || !ocrName || !ocrDob) {
-      return res.status(400).json({ success: false, message: 'Không nhận diện được đủ thông tin từ ảnh CCCD.' });
+      return res.status(400).json({
+        success: false,
+        message: "Không nhận diện được đủ thông tin từ ảnh CCCD.",
+      });
     }
     if (
       ocrNumber !== cccd_number.trim() ||
       ocrName !== full_name.trim() ||
       ocrDob !== birth_date.trim()
     ) {
-      return res.status(400).json({ success: false, message: 'Thông tin trên ảnh CCCD không khớp với thông tin bạn nhập. Vui lòng kiểm tra lại!' });
+      return res.status(400).json({
+        success: false,
+        message:
+          "Thông tin trên ảnh CCCD không khớp với thông tin bạn nhập. Vui lòng kiểm tra lại!",
+      });
     }
     // Nếu khớp hoàn toàn, lưu và trả về thành công
     user.cccd_number = cccd_number;
     user.cccd_full_name = full_name;
     user.cccd_birth_date = birth_date;
     user.cccd_image = imageUrl;
-    user.cccd_verification_status = 'pending';
+    user.cccd_verification_status = "pending";
     await user.save({ validateBeforeSave: false });
-    res.status(200).json({ success: true, message: 'Thông tin CCCD đã được gửi để chờ admin duyệt!', user, ocr, input: { cccd_number, full_name, birth_date } });
+    res.status(200).json({
+      success: true,
+      message: "Thông tin CCCD đã được gửi để chờ admin duyệt!",
+      user,
+      ocr,
+      input: { cccd_number, full_name, birth_date },
+    });
   } catch (error) {
     console.error("Error verifying CCCD:", error);
-    res.status(500).json({ success: false, message: 'Lỗi khi xử lý thông tin CCCD.' });
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi khi xử lý thông tin CCCD." });
   }
 };
 
@@ -769,15 +819,16 @@ exports.blockUser = async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findById(id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    if (user.role.includes('admin')) return res.status(403).json({ message: 'Không thể block admin.' });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.role.includes("admin"))
+      return res.status(403).json({ message: "Không thể block admin." });
     user.isActive = false;
     await user.save({ validateBeforeSave: false });
 
     // Gửi email thông báo
-    const nodemailer = require('nodemailer');
+    const nodemailer = require("nodemailer");
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -785,13 +836,16 @@ exports.blockUser = async (req, res) => {
     });
     await transporter.sendMail({
       to: user.email,
-      subject: 'Tài khoản của bạn đã bị khóa',
-      html: `<p>Tài khoản của bạn trên Rentzy đã bị khóa bởi quản trị viên. Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ hỗ trợ.</p>`
+      subject: "Tài khoản của bạn đã bị khóa",
+      html: `<p>Tài khoản của bạn trên Rentzy đã bị khóa bởi quản trị viên. Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ hỗ trợ.</p>`,
     });
 
-    res.json({ success: true, message: 'User has been blocked and notified by email.' });
+    res.json({
+      success: true,
+      message: "User has been blocked and notified by email.",
+    });
   } catch (error) {
-    console.error('Block user error:', error);
-    res.status(500).json({ message: 'Lỗi server khi block user.' });
+    console.error("Block user error:", error);
+    res.status(500).json({ message: "Lỗi server khi block user." });
   }
 };

@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const validator = require("validator");
 const User = require("../models/User");
-const Wallet = require("../models/Wallet");
+
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -68,17 +68,6 @@ exports.register = async (req, res) => {
 
     await user.save();
 
-    // Kiểm tra nếu user chưa có ví thì tạo ví mới
-    let wallet = await Wallet.findOne({ user: user._id });
-    if (!wallet) {
-      wallet = new Wallet({
-        user: user._id,
-        balance: 0,
-        currency: 'VND',
-        status: 'active'
-      });
-      await wallet.save();
-    }
 
     // Generate email verification token
     const emailToken = jwt.sign({ user_id: user._id }, process.env.JWT_SECRET, {
@@ -246,18 +235,7 @@ exports.googleCallback = async (req, res) => {
       user.isActive = true;
       await user.save();
 
-      // Kiểm tra nếu user chưa có ví thì tạo ví mới
-      let wallet = await Wallet.findOne({ user: user._id });
-      if (!wallet) {
-        wallet = new Wallet({
-          user: user._id,
-          balance: 0,
-          currency: 'VND',
-          status: 'active'
-        });
-        await wallet.save();
-      }
-    } else {
+
       // 2. Tìm theo email nếu chưa có googleId
       user = await User.findOne({ email: googleProfile.email });
 
@@ -280,18 +258,7 @@ exports.googleCallback = async (req, res) => {
         user.isActive = true;
         await user.save();
 
-        // Kiểm tra nếu user chưa có ví thì tạo ví mới
-        let wallet = await Wallet.findOne({ user: user._id });
-        if (!wallet) {
-          wallet = new Wallet({
-            user: user._id,
-            balance: 0,
-            currency: 'VND',
-            status: 'active'
-          });
-          await wallet.save();
-        }
-      } else {
+   
         // 3. Tạo tài khoản mới nếu chưa có
         console.log("New user via Google, creating account:", googleProfile.email);
 
@@ -309,17 +276,7 @@ exports.googleCallback = async (req, res) => {
 
         await user.save();
 
-        // Kiểm tra nếu user chưa có ví thì tạo ví mới
-        let wallet = await Wallet.findOne({ user: user._id });
-        if (!wallet) {
-          wallet = new Wallet({
-            user: user._id,
-            balance: 0,
-            currency: 'VND',
-            status: 'active'
-          });
-          await wallet.save();
-        }
+     
       }
     }
 
