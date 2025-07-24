@@ -48,6 +48,12 @@ const Booking = require('../models/Booking');
 const Transaction = require('../models/Transaction');
 const { cancelExpiredBooking } = require('./bookingController'); // Import the new function
 const Wallet = require('../models/Wallet');
+const PayOS = require('@payos/node');
+const payOS = new PayOS(
+  process.env.PAYOS_CLIENT_ID,
+  process.env.PAYOS_API_KEY,
+  process.env.PAYOS_CHECKSUM_KEY
+);
 
 // MoMo configuration (Sử dụng thông tin test hoặc thông tin thật của bạn)
 const MOMO_CONFIG = {
@@ -985,6 +991,164 @@ const createWalletRentalPayment = async (req, res) => {
     }
 };
 
+// PAYOS: Tạo link thanh toán
+const createPayOSLink = async (req, res) => {
+  try {
+    const { bookingId, returnUrl, cancelUrl } = req.body;
+    if (!bookingId || !returnUrl || !cancelUrl) {
+      return res.status(400).json({ error: 'Thiếu thông tin.' });
+    }
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ error: 'Không tìm thấy đơn hàng.' });
+    }
+    if (booking.status !== 'pending') {
+      return res.status(400).json({ error: 'Đơn hàng không hợp lệ để thanh toán.' });
+    }
+    // Đặt cọc là 30% của tổng thanh toán thực tế (totalAmount)
+    const totalAmount = booking.totalAmount || 0;
+    const amount = Math.floor(totalAmount * 0.3);
+    console.log('DEBUG PayOS:', { bookingId, totalAmount, amount });
+    if (totalAmount < 1000) {
+      return res.status(400).json({ error: 'Tổng tiền đơn hàng không hợp lệ.' });
+    }
+    if (amount < 1000) {
+      return res.status(400).json({ error: 'Số tiền thanh toán phải từ 1.000đ trở lên.' });
+    }
+    // orderCode: số dương nhỏ hơn 9007199254740991, duy nhất
+    let orderCode;
+    if (booking.orderCode && typeof booking.orderCode === 'number' && booking.orderCode > 0 && booking.orderCode < 9007199254740991) {
+      orderCode = booking.orderCode;
+    } else {
+      orderCode = Number(String(Date.now()).slice(-10));
+      booking.orderCode = orderCode;
+      await booking.save();
+    }
+    // description tối đa 25 ký tự
+    const description = `Coc don ${orderCode}`;
+    const body = {
+      orderCode,
+      amount,
+      description,
+      returnUrl,
+      cancelUrl,
+    };
+    const paymentLinkResponse = await payOS.createPaymentLink(body);
+    if (paymentLinkResponse && paymentLinkResponse.checkoutUrl) {
+      return res.json({ payUrl: paymentLinkResponse.checkoutUrl });
+    } else {
+      console.error('PayOS unexpected response:', paymentLinkResponse);
+      return res.status(500).json({ error: 'Không lấy được link thanh toán từ PayOS.', payos: paymentLinkResponse });
+    }
+  } catch (error) {
+    console.error('PayOS error:', error.response?.data || error.message, error.response?.status);
+    return res.status(500).json({
+      error: 'Tạo link thanh toán thất bại',
+      detail: error.message,
+      payos: error.response?.data,
+    });
+  }
+};
+
+// PAYOS: Webhook nhận thông báo thanh toán
+const handlePayOSWebhook = async (req, res) => {
+  try {
+    console.log('Webhook raw body:', req.body); // Log chi tiết body webhook
+    const { code, desc, data, signature } = req.body;
+    if ((code === '00' || code === 0) && desc === 'success' && data && data.orderCode) {
+      // Tìm booking theo orderCode hoặc orderCodeRemaining
+      const booking = await Booking.findOne({ $or: [ { orderCode: data.orderCode }, { orderCodeRemaining: data.orderCode } ] });
+      console.log('Booking found:', booking ? booking._id : null, 'Status:', booking ? booking.status : null);
+      if (!booking) {
+        return res.json({ success: true, message: 'No booking found, but webhook received.' });
+      }
+      // Nếu là thanh toán đặt cọc
+      if (booking.orderCode === data.orderCode && booking.status === 'pending') {
+        booking.status = 'deposit_paid';
+        await booking.save();
+        console.log('Booking status updated to deposit_paid:', booking._id);
+      }
+      // Nếu là thanh toán phần còn lại
+      if (booking.orderCodeRemaining === data.orderCode && booking.status === 'deposit_paid') {
+        booking.status = 'fully_paid';
+        await booking.save();
+        console.log('Booking status updated to fully_paid:', booking._id);
+      }
+      // Tạo transaction nếu chưa có
+      const existingTx = await Transaction.findOne({
+        booking: booking._id,
+        paymentMethod: 'PAYOS',
+        status: 'COMPLETED',
+        amount: data.amount
+      });
+      if (!existingTx) {
+        const newTx = await Transaction.create({
+          booking: booking._id,
+          amount: data.amount,
+          type: booking.orderCode === data.orderCode ? 'DEPOSIT' : 'RENTAL',
+          status: 'COMPLETED',
+          paymentMethod: 'PAYOS',
+          paymentMetadata: { payosOrderId: data.orderCode, payosTransId: data.id },
+          description: booking.orderCode === data.orderCode ? 'Thanh toán đặt cọc qua PayOS' : 'Thanh toán phần còn lại qua PayOS'
+        });
+        booking.transactions.push(newTx._id);
+        await booking.save();
+      }
+      return res.json({ success: true });
+    } else {
+      console.log('Webhook body invalid:', req.body);
+      return res.json({ success: true, message: 'Invalid webhook body, but accepted for test.' });
+    }
+  } catch (error) {
+    console.error('PayOS Webhook error:', error);
+    return res.json({ success: false, message: 'Error, but accepted for test.' });
+  }
+};
+
+// API tạo link PayOS cho phần còn lại
+const createPayOSLinkForRemaining = async (req, res) => {
+  try {
+    const { bookingId, returnUrl, cancelUrl } = req.body;
+    if (!bookingId || !returnUrl || !cancelUrl) {
+      return res.status(400).json({ error: 'Thiếu thông tin.' });
+    }
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ error: 'Không tìm thấy đơn hàng.' });
+    }
+    if (booking.status !== 'deposit_paid') {
+      return res.status(400).json({ error: 'Chỉ thanh toán phần còn lại khi đã đặt cọc.' });
+    }
+    const deposit = Math.floor(booking.totalAmount * 0.3);
+    const remaining = booking.totalAmount - deposit;
+    if (remaining < 1000) {
+      return res.status(400).json({ error: 'Số tiền thanh toán phải từ 1.000đ trở lên.' });
+    }
+    let orderCodeRemaining = booking.orderCodeRemaining;
+    if (!orderCodeRemaining) {
+      orderCodeRemaining = Number(String(Date.now()).slice(-10));
+      booking.orderCodeRemaining = orderCodeRemaining;
+      await booking.save();
+    }
+    const description = `Con lai ${orderCodeRemaining}`;
+    const body = {
+      orderCode: orderCodeRemaining,
+      amount: remaining,
+      description,
+      returnUrl,
+      cancelUrl,
+    };
+    const paymentLinkResponse = await payOS.createPaymentLink(body);
+    if (paymentLinkResponse && paymentLinkResponse.checkoutUrl) {
+      return res.json({ payUrl: paymentLinkResponse.checkoutUrl });
+    } else {
+      return res.status(500).json({ error: 'Không lấy được link thanh toán từ PayOS.' });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: 'Tạo link thanh toán phần còn lại thất bại', detail: error.message });
+  }
+};
+
 
 module.exports = {
     createPayment,
@@ -995,5 +1159,8 @@ module.exports = {
     checkRentalPayment,
     createWalletDepositPayment,
     createWalletRentalPayment,
+    createPayOSLink,
+    handlePayOSWebhook,
+    createPayOSLinkForRemaining,
 
 };

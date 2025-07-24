@@ -1,5 +1,5 @@
 import React from 'react';
-import VehicleCard from '../../components/VehicleCard/VehicleCard.jsx';
+import VehicleCard from '../../components/vehicleCard/VehicleCard.jsx';
 import { useAuth } from '../../context/AuthContext';
 import ProfileLayout from './profileLayout/ProfileLayout';
 

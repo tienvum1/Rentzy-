@@ -80,6 +80,10 @@ const OrderConfirmation = () => {
   if (error) return <div className="error">{error}</div>;
   if (!booking || !fees) return <div className="error">Không tìm thấy thông tin đơn hàng</div>;
 
+  // DEBUG: Log giá trị pickupLocation và vehicle.location
+  console.log('DEBUG pickupLocation:', booking.pickupLocation);
+  console.log('DEBUG vehicle.location:', booking.vehicle?.location);
+
   return (
     <><Header/>
     <div className="order-confirmation-container">
@@ -160,7 +164,7 @@ const OrderConfirmation = () => {
               <span className="summary-label">Phí thuê xe </span>
               <span className="summary-value">{formatCurrency(fees.totalCost)}</span>
             </div>
-            {fees.deliveryFee > 0 && (
+            {booking.vehicle && booking.vehicle.location && booking.pickupLocation.trim().toLowerCase() !== booking.vehicle.location.trim().toLowerCase() && fees.deliveryFee > 0 && (
               <div className="summary-item">
                 <span className="summary-label">Phí giao xe (2 chiều)</span>
                 <span className="summary-value">{formatCurrency(fees.deliveryFee)}</span>

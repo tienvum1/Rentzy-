@@ -37,6 +37,16 @@ const User = require("./models/User");
 
 const app = express();
 
+// Log toàn cục để debug mọi request
+app.use((req, res, next) => {
+  console.log('Incoming request:', req.method, req.url);
+  next();
+});
+
+// Thay body-parser bằng express.json() và express.urlencoded()
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 const http = require("http");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
@@ -58,9 +68,6 @@ app.use(
 );
 
 app.use(morgan("dev"));
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(passport.initialize());
 

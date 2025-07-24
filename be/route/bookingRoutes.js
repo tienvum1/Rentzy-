@@ -57,5 +57,8 @@ router.get("/a/get-all-models", protect, getAllModelOfVehicle)
 router.get('/a/get-all-status-of-booking-for-user', protect, getAllStatusOfBooking);
 router.get('/get-all-bookings', protect, getAllBookingOfSpecificUser)
 
+// Xoá booking (chỉ cho phép renter hoặc admin)
+router.delete('/:id', protect, require('../controller/bookingController').deleteBookingByUser);
+
 
 module.exports = router;

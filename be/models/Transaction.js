@@ -19,15 +19,7 @@ const transactionSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: [
-            'RENTAL',          // Thanh toán phần còn lại khi nhận xe
-            'REFUND',          // Hoàn tiền (thuê xe...)
-            'WALLET_DEPOSIT',  // Nạp tiền vào ví
-            'WALLET_WITHDRAW', // Rút tiền từ ví
-            'PROMOTION',       // Nhận khuyến mãi
-            'FEE',             // Phí dịch vụ
-            'PAYOUT'           // Giải ngân cho chủ xe
-        ],
+        enum: ['DEPOSIT', 'RENTAL', 'REFUND', 'WITHDRAW', 'TOPUP'], // thêm DEPOSIT, RENTAL
         required: true
     },
     status: {

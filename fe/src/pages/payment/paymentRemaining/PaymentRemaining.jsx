@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FaCreditCard, FaMoneyBillWave, FaWallet } from 'react-icons/fa';
+import { FaCreditCard, FaMoneyBillWave } from 'react-icons/fa';
 import './PaymentRemaining.css';
 
 const PaymentRemaining = () => {
@@ -11,24 +11,7 @@ const PaymentRemaining = () => {
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [wallet, setWallet] = useState(null);
-  const [walletLoading, setWalletLoading] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
-
-  // Fetch wallet information
-  useEffect(() => {
-    const fetchWallet = async () => {
-      try {
-        const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/wallet/info`, { withCredentials: true });
-        setWallet(res.data.wallet);
-      } catch (err) {
-        console.error('Error fetching wallet:', err);
-      } finally {
-        setWalletLoading(false);
-      }
-    };
-    fetchWallet();
-  }, []);
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
@@ -51,64 +34,29 @@ const PaymentRemaining = () => {
         }
       }
     };
-
     fetchBookingDetails();
   }, [id, navigate]);
 
-  const handlePayment = async () => {
+  const handlePayRemainingPayOS = async () => {
     if (!booking) return;
-    // Xác nhận trước khi thanh toán
-    const confirmed = window.confirm('Bạn có chắc chắn muốn thanh toán số tiền này?');
-    if (!confirmed) return;
-    
     setIsPaying(true);
     try {
-      const config = {
-        withCredentials: true,
-      };
-      
-      // Tính tổng số tiền đã thanh toán từ tất cả giao dịch COMPLETED
-      const totalPaidAmount = booking.transactions.reduce((sum, transaction) => {
-        if (transaction.status === 'COMPLETED') {
-          return sum + transaction.amount;
-        }
-        return sum;
-      }, 0);
-      
-      const remainingAmount = booking.totalAmount - totalPaidAmount;
-      
-      const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/payment/wallet/rental`,
-        { 
-          bookingId: id,
-          amount: remainingAmount,
+      const res = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/payment/payos/remaining-link`,
+        {
+          bookingId: booking._id,
+          returnUrl: window.location.origin + `/contracts/${booking._id}`,
+          cancelUrl: window.location.origin + '/payment-failed?bookingId=' + booking._id
         },
-        config
+        { withCredentials: true }
       );
-
-      if (response.data.success) {
-        toast.success('Thanh toán thành công!');
-        // Refresh booking data
-        const updatedRes = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${id}`,
-          { withCredentials: true }
-        );
-        setBooking(updatedRes.data.booking);
-        
-        // Refresh wallet balance
-        const walletRes = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/wallet/info`,
-          { withCredentials: true }
-        );
-        setWallet(walletRes.data.wallet);
-        
-        navigate(`/bookings/${id}`);
+      if (res.data.payUrl) {
+        window.location.href = res.data.payUrl;
       } else {
-        toast.error(response.data.message || 'Thanh toán thất bại. Vui lòng thử lại.');
+        toast.error('Không lấy được link thanh toán!');
       }
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi thanh toán');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Có lỗi khi tạo link thanh toán!');
     } finally {
       setIsPaying(false);
     }
@@ -135,32 +83,11 @@ const PaymentRemaining = () => {
   }, 0);
 
   const remainingAmount = booking.totalAmount - totalPaidAmount;
-  const hasInsufficientBalance = wallet && wallet.balance < remainingAmount;
 
   return (
     <div className="payment-container">
       <div className="payment-card">
         <h2><FaMoneyBillWave /> Thanh toán phần còn lại</h2>
-        {/* Wallet Information */}
-        {!walletLoading && wallet && (
-          <div className="wallet-info-section">
-            <div className="wallet-balance-display">
-              <FaWallet className="wallet-icon" />
-              <div className="wallet-details">
-                <span className="wallet-label">Số dư ví:</span>
-                <span className="wallet-amount">{wallet.balance.toLocaleString('vi-VN')} VND</span>
-              </div>
-            </div>
-            {hasInsufficientBalance && (
-              <div className="insufficient-balance-warning">
-                <span className="warning-icon">⚠️</span>
-                <span className="warning-text">
-                  Số dư không đủ. Vui lòng <a href="/profile/wallet" className="navigate-wallet">nạp thêm tiền</a> vào ví.
-                </span>
-              </div>
-            )}
-          </div>
-        )}
         <div className="payment-details">
           <div className="detail-row">
             <span className="label">Mã đơn hàng:</span>
@@ -192,11 +119,11 @@ const PaymentRemaining = () => {
         <div className="payment-actions">
           <button 
             className="pay-button" 
-            onClick={handlePayment}
-            disabled={isPaying || hasInsufficientBalance}
+            onClick={handlePayRemainingPayOS}
+            disabled={isPaying || remainingAmount <= 0}
           >
             <FaCreditCard /> 
-            {isPaying ? 'Đang xử lý...' : 'Thanh toán bằng ví điện tử'}
+            {isPaying ? 'Đang xử lý...' : 'Thanh toán bằng PayOS'}
           </button>
           <button className="cancel-button" onClick={() => navigate(-1)}>
             Hủy
