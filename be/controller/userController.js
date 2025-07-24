@@ -774,14 +774,20 @@ exports.blockUser = async (req, res) => {
     user.isActive = false;
     await user.save({ validateBeforeSave: false });
 
-    // Gửi email thông báo khóa tài khoản
-    try {
-      const { sendAccountBlockedEmail } = require('../utils/emailService');
-      await sendAccountBlockedEmail(user.email, user.name, 'Vi phạm chính sách sử dụng dịch vụ');
-    } catch (emailError) {
-      console.error('Error sending block notification email:', emailError);
-      // Không throw error để không ảnh hưởng đến việc khóa tài khoản
-    }
+    // Gửi email thông báo
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+    await transporter.sendMail({
+      to: user.email,
+      subject: 'Tài khoản của bạn đã bị khóa',
+      html: `<p>Tài khoản của bạn trên Rentzy đã bị khóa bởi quản trị viên. Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ hỗ trợ.</p>`
+    });
 
     res.json({ success: true, message: 'User has been blocked and notified by email.' });
   } catch (error) {

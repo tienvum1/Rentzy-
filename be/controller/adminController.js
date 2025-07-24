@@ -744,7 +744,7 @@ const getAllUsers = async (req, res) => {
       ];
     }
     if (role) {
-      filter.role = role;
+      filter.role = { $in: [role] };
     }
     if (status) {
       if (status === 'active') {
@@ -795,7 +795,7 @@ const getUserDetail = async (req, res) => {
     // Lấy thống kê liên quan đến user
     const userStats = {};
     
-    if (user.role === 'owner') {
+    if (user.role && user.role.includes('owner')) {
       const vehicleCount = await Vehicle.countDocuments({ owner: userId });
       const totalBookings = await Booking.countDocuments({ 'vehicle.owner': userId });
       const completedBookings = await Booking.countDocuments({ 
@@ -808,7 +808,7 @@ const getUserDetail = async (req, res) => {
       userStats.completedBookings = completedBookings;
     }
     
-    if (user.role === 'renter') {
+    if (user.role && user.role.includes('renter')) {
       const totalBookings = await Booking.countDocuments({ renter: userId });
       const completedBookings = await Booking.countDocuments({ 
         renter: userId, 
@@ -894,6 +894,610 @@ const blockUser = async (req, res) => {
   }
 };
 
+// Lấy danh sách các đơn hủy đang chờ admin duyệt
+const getPendingCancelRequests = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const bookings = await Booking.find({ 
+      status: 'owner_approved_cancel' 
+    })
+    .populate('renter', 'name email phone')
+    .populate('vehicle', 'brand model licensePlate primaryImage')
+    .populate('ownerApprovedCancelBy', 'name email')
+    .sort({ ownerApprovedCancelAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+    const total = await Booking.countDocuments({ status: 'owner_approved_cancel' });
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        bookings,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalBookings: total,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching pending cancel requests:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server khi lấy danh sách yêu cầu hủy đơn' 
+    });
+  }
+};
+
+// Lấy danh sách các yêu cầu bồi thường owner chờ admin duyệt
+const getPendingOwnerCompensationRequests = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const bookings = await Booking.find({ 
+      status: 'owner_canceled',
+      refundStatusOwner: 'pending'
+    })
+    .populate('renter', 'name email phone')
+    .populate('vehicle', 'brand model licensePlate primaryImage owner')
+    .populate('vehicle.owner', 'name email phone')
+    .sort({ ownerCompensationCreatedAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+    const total = await Booking.countDocuments({ 
+      status: 'owner_canceled',
+      refundStatusOwner: 'pending'
+    });
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        bookings,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalBookings: total,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching pending owner compensation requests:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server khi lấy danh sách yêu cầu bồi thường owner' 
+    });
+  }
+};
+
+// Admin duyệt bồi thường cho owner khi họ hủy chuyến
+const approveOwnerCompensation = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { note } = req.body;
+    
+    const booking = await Booking.findById(bookingId)
+      .populate('renter', 'name email')
+      .populate('vehicle', 'owner brand model licensePlate')
+      .populate('vehicle.owner', 'name email');
+      
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+    }
+    
+    if (booking.status !== 'owner_canceled' || booking.refundStatusOwner !== 'pending') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Đơn này không thể duyệt bồi thường.' 
+      });
+    }
+    
+    // Cập nhật trạng thái bồi thường
+    booking.refundStatusOwner = 'approved';
+    booking.ownerCompensationApprovedAt = new Date();
+    booking.ownerCompensationApprovedBy = req.user._id;
+    booking.ownerCompensationNote = note;
+    
+    // Tạo transaction bồi thường cho renter
+    const compensationTransaction = new Transaction({
+      user: booking.renter._id,
+      booking: booking._id,
+      type: 'compensation_received',
+      amount: booking.totalRefundForOwnerCancel,
+      status: 'completed',
+      description: `Bồi thường từ chủ xe hủy chuyến #${booking._id.toString().slice(-6)}`,
+      paymentMethod: 'wallet',
+      createdAt: new Date()
+    });
+    await compensationTransaction.save();
+    
+    // Cập nhật ví của renter
+    let renterWallet = await Wallet.findOne({ user: booking.renter._id });
+    if (!renterWallet) {
+      renterWallet = new Wallet({
+        user: booking.renter._id,
+        balance: 0,
+        currency: 'VND'
+      });
+    }
+    renterWallet.balance += booking.totalRefundForOwnerCancel;
+    await renterWallet.save();
+    
+    // Tạo transaction hoàn tiền cho renter (nếu đã thanh toán)
+    if (['deposit_paid', 'fully_paid'].includes(booking.status)) {
+      const refundAmount = booking.status === 'fully_paid' ? booking.totalAmount : booking.totalAmount * 0.3;
+      
+      const refundTransaction = new Transaction({
+        user: booking.renter._id,
+        booking: booking._id,
+        type: 'refund',
+        amount: refundAmount,
+        status: 'completed',
+        description: `Hoàn tiền do chủ xe hủy chuyến #${booking._id.toString().slice(-6)}`,
+        paymentMethod: 'wallet',
+        createdAt: new Date()
+      });
+      await refundTransaction.save();
+      
+      renterWallet.balance += refundAmount;
+      await renterWallet.save();
+    }
+    
+    await booking.save();
+    
+    // Thông báo cho renter
+    await Notification.create({
+      user: booking.renter._id,
+      type: 'booking',
+      title: 'Đã nhận bồi thường',
+      message: `Bạn đã nhận được bồi thường ${booking.totalRefundForOwnerCancel.toLocaleString('vi-VN')} VND từ chủ xe hủy chuyến #${booking._id.toString().slice(-6)}.`,
+      booking: booking._id,
+      vehicle: booking.vehicle._id,
+    });
+    
+    // Thông báo cho owner
+    await Notification.create({
+      user: booking.vehicle.owner._id,
+      type: 'booking',
+      title: 'Yêu cầu bồi thường đã được duyệt',
+      message: `Admin đã duyệt yêu cầu bồi thường ${booking.totalRefundForOwnerCancel.toLocaleString('vi-VN')} VND cho đơn #${booking._id.toString().slice(-6)}.`,
+      booking: booking._id,
+      vehicle: booking.vehicle._id,
+    });
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Đã duyệt bồi thường thành công.',
+      data: {
+        compensationAmount: booking.totalRefundForOwnerCancel,
+        renterBalance: renterWallet.balance
+      }
+    });
+  } catch (err) {
+    console.error('Error in approveOwnerCompensation:', err);
+    return res.status(500).json({ success: false, message: 'Lỗi server khi duyệt bồi thường.' });
+  }
+};
+
+// Lấy danh sách các yêu cầu hoàn tiền cho renter chờ admin duyệt
+const getPendingRefundRequests = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const bookings = await Booking.find({ 
+      refundStatusRenter: 'pending'
+    })
+    .populate('renter', 'name email phone')
+    .populate('vehicle', 'brand model licensePlate primaryImage owner')
+    .populate('vehicle.owner', 'name email phone')
+    .sort({ refundRequestCreatedAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+    const total = await Booking.countDocuments({ 
+      refundStatusRenter: 'pending'
+    });
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        bookings,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalBookings: total,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching pending refund requests:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server khi lấy danh sách yêu cầu hoàn tiền' 
+    });
+  }
+};
+
+// Admin duyệt hoàn tiền cho renter khi họ hủy chuyến
+const approveRefundRequest = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { note } = req.body;
+    
+    const booking = await Booking.findById(bookingId)
+      .populate('renter', 'name email')
+      .populate('vehicle', 'owner brand model licensePlate')
+      .populate('vehicle.owner', 'name email');
+      
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+    }
+    
+    if (booking.refundStatusRenter !== 'pending') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Đơn này không thể duyệt hoàn tiền.' 
+      });
+    }
+    
+    // Cập nhật trạng thái hoàn tiền
+    booking.refundStatusRenter = 'approved';
+    booking.refundRequestApprovedAt = new Date();
+    booking.refundRequestApprovedBy = req.user._id;
+    booking.refundRequestNote = note;
+    
+    // Tìm và cập nhật transaction từ PENDING thành COMPLETED
+    const refundTransaction = await Transaction.findOne({
+      booking: booking._id,
+      type: { $in: ['REFUND', 'bank_transfer_refund'] },
+      status: 'PENDING'
+    });
+    
+    if (refundTransaction) {
+      refundTransaction.status = 'completed';
+      if (refundTransaction.paymentMethod === 'bank_transfer') {
+        // Cập nhật thông tin bank transfer
+        refundTransaction.bankTransferInfo = {
+          ...refundTransaction.bankTransferInfo,
+          transferDate: new Date(),
+          reference: `REF_${booking._id.toString().slice(-6)}_${Date.now()}`,
+          note: note || 'Admin đã xác nhận chuyển tiền hoàn trả'
+        };
+      } else {
+        refundTransaction.paymentMetadata = {
+          ...refundTransaction.paymentMetadata,
+          approvedBy: req.user._id,
+          approvedAt: new Date(),
+          note: note
+        };
+      }
+      await refundTransaction.save();
+    }
+
+    // Tìm và cập nhật transaction bồi thường cho owner (nếu có)
+    const compensationTransaction = await Transaction.findOne({
+      booking: booking._id,
+      type: 'bank_transfer_compensation',
+      status: 'PENDING'
+    });
+    
+    if (compensationTransaction) {
+      compensationTransaction.status = 'completed';
+      compensationTransaction.bankTransferInfo = {
+        ...compensationTransaction.bankTransferInfo,
+        transferDate: new Date(),
+        reference: `COMP_${booking._id.toString().slice(-6)}_${Date.now()}`,
+        note: note || 'Admin đã xác nhận chuyển tiền bồi thường'
+      };
+      await compensationTransaction.save();
+      
+      // Cập nhật owner compensation status
+      booking.refundStatusOwner = 'approved';
+      booking.ownerCompensationApprovedAt = new Date();
+      booking.ownerCompensationApprovedBy = req.user._id;
+      booking.ownerCompensationNote = note;
+    }
+    
+    await booking.save();
+    
+    // Thông báo cho renter về hoàn tiền
+    let renterMessage = `Admin đã xác nhận và chuyển tiền hoàn trả ${booking.totalRefundForRenterCancel.toLocaleString('vi-VN')} VND cho đơn #${booking._id.toString().slice(-6)} về tài khoản ngân hàng của bạn.`;
+    if (refundTransaction && refundTransaction.paymentMethod === 'wallet') {
+      // Nếu là wallet, cập nhật ví
+      let renterWallet = await Wallet.findOne({ user: booking.renter._id });
+      if (!renterWallet) {
+        renterWallet = new Wallet({
+          user: booking.renter._id,
+          balance: 0,
+          currency: 'VND'
+        });
+      }
+      renterWallet.balance += booking.totalRefundForRenterCancel;
+      await renterWallet.save();
+      renterMessage = `Bạn đã được hoàn lại ${booking.totalRefundForRenterCancel.toLocaleString('vi-VN')} VND từ đơn thuê xe #${booking._id.toString().slice(-6)}. Số tiền đã được cộng vào ví của bạn.`;
+    }
+    
+    await Notification.create({
+      user: booking.renter._id,
+      type: 'payment',
+      title: 'Đã nhận hoàn tiền',
+      message: renterMessage,
+      booking: booking._id,
+      data: { refundAmount: booking.totalRefundForRenterCancel },
+    });
+
+    // Thông báo cho owner về bồi thường (nếu có)
+    if (compensationTransaction) {
+      await Notification.create({
+        user: booking.vehicle.owner,
+        type: 'payment',
+        title: 'Bồi thường đã được chuyển',
+        message: `Admin đã chuyển tiền bồi thường ${compensationTransaction.amount.toLocaleString('vi-VN')} VND cho đơn #${booking._id.toString().slice(-6)} về tài khoản ngân hàng của bạn.`,
+        booking: booking._id,
+        vehicle: booking.vehicle._id,
+      });
+    }
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Đã duyệt hoàn tiền và bồi thường thành công.',
+      data: {
+        refundAmount: booking.totalRefundForRenterCancel,
+        compensationAmount: compensationTransaction ? compensationTransaction.amount : 0,
+        refundMethod: refundTransaction ? refundTransaction.paymentMethod : 'unknown',
+        compensationMethod: compensationTransaction ? compensationTransaction.paymentMethod : null
+      }
+    });
+  } catch (err) {
+    console.error('Error in approveRefundRequest:', err);
+    return res.status(500).json({ success: false, message: 'Lỗi server khi duyệt hoàn tiền.' });
+  }
+};
+
+// Lấy danh sách yêu cầu chuyển tiền qua ngân hàng
+const getPendingBankTransferRequests = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Lấy các transaction PENDING với paymentMethod là BANK_TRANSFER
+    const transactions = await Transaction.find({
+      status: 'PENDING',
+      paymentMethod: 'BANK_TRANSFER',
+      type: { $in: ['REFUND', 'COMPENSATION'] }
+    })
+    .populate('user', 'name email phone bankAccounts')
+    .populate('booking', 'startDate endDate totalAmount cancellationReason')
+    .populate({
+      path: 'booking',
+      populate: {
+        path: 'vehicle',
+        select: 'brand model licensePlate'
+      }
+    })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+    const total = await Transaction.countDocuments({
+      status: 'PENDING',
+      paymentMethod: 'BANK_TRANSFER',
+      type: { $in: ['REFUND', 'COMPENSATION'] }
+    });
+    
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        transactions,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalTransactions: total,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching pending bank transfer requests:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server khi lấy danh sách yêu cầu chuyển tiền' 
+    });
+  }
+};
+
+// Admin xác nhận đã chuyển tiền qua ngân hàng
+const confirmBankTransfer = async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+    const { note, bankTransferDetails } = req.body;
+    
+    const transaction = await Transaction.findById(transactionId)
+      .populate('user', 'name email')
+      .populate('booking', 'startDate endDate');
+      
+    if (!transaction) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy giao dịch.' });
+    }
+    
+    if (transaction.status !== 'PENDING') {
+      return res.status(400).json({ success: false, message: 'Giao dịch này đã được xử lý.' });
+    }
+    
+    if (transaction.paymentMethod !== 'BANK_TRANSFER') {
+      return res.status(400).json({ success: false, message: 'Giao dịch này không phải chuyển khoản ngân hàng.' });
+    }
+    
+    // Cập nhật trạng thái transaction
+    transaction.status = 'COMPLETED';
+    transaction.paymentMetadata = {
+      ...transaction.paymentMetadata,
+      confirmedBy: req.user._id,
+      confirmedAt: new Date(),
+      adminNote: note || '',
+      bankTransferDetails: bankTransferDetails || {}
+    };
+    await transaction.save();
+    
+    // Cập nhật booking tương ứng
+    const booking = await Booking.findById(transaction.booking);
+    if (booking) {
+      if (transaction.type === 'REFUND') {
+        booking.refundStatusRenter = 'completed';
+        booking.refundRequestApprovedAt = new Date();
+        booking.refundRequestApprovedBy = req.user._id;
+        booking.refundRequestNote = note || '';
+      } else if (transaction.type === 'COMPENSATION') {
+        booking.refundStatusOwner = 'approved';
+        booking.ownerCompensationApprovedAt = new Date();
+        booking.ownerCompensationApprovedBy = req.user._id;
+        booking.ownerCompensationNote = note || '';
+      }
+      await booking.save();
+    }
+    
+    // Thông báo cho user
+    const transferType = transaction.type === 'REFUND' ? 'hoàn tiền' : 'bồi thường';
+    await Notification.create({
+      user: transaction.user._id,
+      type: 'payment',
+      title: `Đã chuyển ${transferType}`,
+      message: `Admin đã chuyển ${transferType} ${transaction.amount.toLocaleString('vi-VN')} VND vào tài khoản ngân hàng của bạn. ${note ? 'Ghi chú: ' + note : ''}`,
+      data: {
+        transactionId: transaction._id,
+        amount: transaction.amount,
+        type: transaction.type,
+        transferDetails: bankTransferDetails
+      }
+    });
+    
+    res.status(200).json({
+      success: true,
+      message: `Đã xác nhận chuyển ${transferType} thành công.`,
+      data: {
+        transactionId: transaction._id,
+        amount: transaction.amount,
+        type: transaction.type
+      }
+    });
+  } catch (error) {
+    console.error('Error confirming bank transfer:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi xác nhận chuyển tiền.' });
+  }
+};
+
+// Lấy tất cả các yêu cầu pending (cả refundStatusRenter và refundStatusOwner)
+const getAllPendingRefundRequests = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const type = req.query.type; // 'renter', 'owner', hoặc không có (lấy tất cả)
+
+    let query = {};
+    
+    if (type === 'renter') {
+      query.refundStatusRenter = 'pending';
+    } else if (type === 'owner') {
+      query.refundStatusOwner = 'pending';
+    } else {
+      // Lấy tất cả các booking có ít nhất một trong hai status là pending
+      query.$or = [
+        { refundStatusRenter: 'pending' },
+        { refundStatusOwner: 'pending' }
+      ];
+    }
+
+    const bookings = await Booking.find(query)
+      .populate('renter', 'name email phone bankAccounts')
+      .populate('vehicle', 'brand model licensePlate primaryImage owner')
+      .populate('vehicle.owner', 'name email phone bankAccounts')
+      .sort({ 
+        refundRequestCreatedAt: -1, 
+        ownerCompensationCreatedAt: -1 
+      })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Booking.countDocuments(query);
+    const totalPages = Math.ceil(total / limit);
+
+    // Phân loại các booking theo loại yêu cầu
+    const categorizedBookings = bookings.map(booking => {
+      const bookingObj = booking.toObject();
+      const pendingTypes = [];
+      
+      if (booking.refundStatusRenter === 'pending') {
+        pendingTypes.push({
+          type: 'renter_refund',
+          amount: booking.totalRefundForRenterCancel,
+          createdAt: booking.refundRequestCreatedAt,
+          description: 'Hoàn tiền cho người thuê'
+        });
+      }
+      
+      if (booking.refundStatusOwner === 'pending') {
+        pendingTypes.push({
+          type: 'owner_compensation',
+          amount: booking.totalRefundForOwnerCancel,
+          createdAt: booking.ownerCompensationCreatedAt,
+          description: 'Bồi thường cho chủ xe'
+        });
+      }
+      
+      return {
+        ...bookingObj,
+        pendingRequests: pendingTypes
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        bookings: categorizedBookings,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalBookings: total,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        },
+        summary: {
+          totalPendingRenterRefunds: await Booking.countDocuments({ refundStatusRenter: 'pending' }),
+          totalPendingOwnerCompensations: await Booking.countDocuments({ refundStatusOwner: 'pending' })
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching all pending refund requests:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server khi lấy danh sách yêu cầu chuyển tiền' 
+    });
+  }
+};
+
 // ✅ Export tất cả ở một chỗ duy nhất
 module.exports = {
     getOwnerRequests,
@@ -913,5 +1517,13 @@ module.exports = {
     updateCCCDStatus,
     getAllUsers,
     getUserDetail,
-    blockUser
+    blockUser,
+    getPendingCancelRequests,
+    getPendingOwnerCompensationRequests,
+    approveOwnerCompensation,
+    getPendingRefundRequests,
+    approveRefundRequest,
+    getPendingBankTransferRequests,
+    confirmBankTransfer,
+    getAllPendingRefundRequests
 };

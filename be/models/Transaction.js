@@ -19,7 +19,7 @@ const transactionSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['DEPOSIT', 'RENTAL', 'REFUND', 'WITHDRAW', 'TOPUP'], // thêm DEPOSIT, RENTAL
+        enum: ['DEPOSIT', 'RENTAL', 'REFUND', 'WITHDRAW', 'TOPUP', 'bank_transfer_refund', 'bank_transfer_compensation'], // thêm DEPOSIT, RENTAL
         required: true
     },
     status: {
@@ -29,12 +29,23 @@ const transactionSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['PAYOS', 'CASH', 'BANK_TRANSFER', 'MOMO', 'WALLET', 'VNPAY', 'ZALOPAY'],
+        enum: ['PAYOS', 'CASH', 'BANK_TRANSFER', 'MOMO', 'WALLET', 'VNPAY', 'ZALOPAY', 'bank_transfer'],
         required: true
     },
     paymentMetadata: {
         type: Map,
         of: String
+    },
+    // Thông tin ngân hàng cho chuyển khoản
+    bankTransferInfo: {
+        recipientName: String,
+        accountNumber: String,
+        bankName: String,
+        accountHolder: String,
+        transferDate: Date,
+        transferReference: String,
+        transferAmount: Number,
+        transferNote: String
     },
     description: {
         type: String,
@@ -51,4 +62,4 @@ const transactionSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Transaction', transactionSchema); 
+module.exports = mongoose.model('Transaction', transactionSchema);

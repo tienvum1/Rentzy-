@@ -214,18 +214,20 @@ function calculateRefund(booking, now = new Date()) {
 
   if (diffHours > 1) {
     if (diffDays > 7) {
-      // Huỷ trước 7 ngày: hoàn 70%
+      // Huỷ trước 7 ngày: hoàn 50% tiền cọc
+      const depositAmount = Math.round(totalAmount * 0.3);
       return {
-        refund: Math.round(totalAmount * 0.7),
-        lost: Math.round(totalAmount * 0.3),
-        policy: 'refund_70'
+        refund: Math.round(depositAmount * 0.5),
+        lost: Math.round(depositAmount * 0.5),
+        policy: 'refund_50'
       };
     } else {
-      // Trong 7 ngày: hoàn 30%
+      // Trong 7 ngày: mất 100% tiền cọc
+      const depositAmount = Math.round(totalAmount * 0.3);
       return {
-        refund: Math.round(totalAmount * 0.3),
-        lost: Math.round(totalAmount * 0.7),
-        policy: 'refund_30'
+        refund: 0,
+        lost: depositAmount,
+        policy: 'lost_100'
       };
     }
   } else if (diffHours > 0) {
@@ -370,6 +372,8 @@ const BookingDetailsPage = () => {
         return 'Hoàn thành';
       case 'CANCELLED':
         return 'Đã hủy';
+      case 'owner_approved_cancel':
+        return 'Chờ admin duyệt hủy';
       default:
         return status;
     }
@@ -389,6 +393,8 @@ const BookingDetailsPage = () => {
         return '#4CAF50';
       case 'CANCELLED':
         return '#FF0000';
+      case 'owner_approved_cancel':
+        return '#f39c12';
       default:
         return '#666';
     }
@@ -464,7 +470,7 @@ const BookingDetailsPage = () => {
         `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${booking._id}/request-cancel`,
         {
           reason: cancelReason,
-          totalRefund: refundAmount // Truyền đúng số tiền hoàn lại
+          ownerCompensationAmount: expectedRefund?.lost || 0
         },
         config
       );

@@ -3,6 +3,7 @@ const cloudinary = require("../utils/cloudinary");
 const Booking = require("../models/Booking");
 const Vehicle = require("../models/Vehicle");
 const Notification = require('../models/Notification');
+const { calculateDepositRefund } = require('./bookingController');
 
 // --- 1. Gửi yêu cầu trở thành chủ xe ---
 const becomeOwner = async (req, res) => {
@@ -229,10 +230,21 @@ const getOwnerCancelRequests = async (req, res) => {
       vehicle: { $in: vehicleIds },
       status: "cancel_requested",
     })
-      .populate("vehicle", "brand model")
+      .populate("vehicle", "brand model ownerInfo")
       .populate("renter", "name fullName email");
 
-    res.json({ success: true, data: bookings });
+    // Tính toán số tiền hoàn và bồi thường cho mỗi booking
+    const bookingsWithRefundInfo = bookings.map(booking => {
+      const refundInfo = calculateDepositRefund(booking);
+      return {
+        ...booking.toObject(),
+        totalRefund: refundInfo.totalRefund,
+        ownerCompensation: refundInfo.ownerCompensation,
+        refundPolicy: refundInfo.policy
+      };
+    });
+
+    res.json({ success: true, data: bookingsWithRefundInfo });
   } catch (err) {
     console.error("getOwnerCancelRequests error:", err);
     res

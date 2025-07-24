@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import SidebarOwner from '../../../components/SidebarOwner/SidebarOwner';
 import moment from 'moment';
+import { toast } from 'react-toastify';
 import './OwnerBookingManagement.css';
 import './OwnerActionButtons.css';
 
@@ -16,6 +17,11 @@ const OwnerBookingManagement = () => {
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [statusFilter, setStatusFilter] = useState('');
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [compensationAmount, setCompensationAmount] = useState('');
+  const [cancelLoading, setCancelLoading] = useState(false);
   const bookingsPerPage = 10;
   const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999';
 
@@ -85,6 +91,53 @@ const OwnerBookingManagement = () => {
   
   const handlePageChange = (page) => {
     setCurrentPage(page);
+  };
+
+  const handleCancelBooking = (booking) => {
+    setSelectedBooking(booking);
+    setShowCancelModal(true);
+    setCancelReason('');
+    setCompensationAmount('');
+  };
+
+  const handleCancelModalClose = () => {
+    setShowCancelModal(false);
+    setSelectedBooking(null);
+    setCancelReason('');
+    setCompensationAmount('');
+  };
+
+  const handleCancelSubmit = async () => {
+    if (!cancelReason.trim()) {
+      toast.error('Vui lòng nhập lý do hủy chuyến');
+      return;
+    }
+    if (!compensationAmount || compensationAmount <= 0) {
+      toast.error('Vui lòng nhập số tiền bồi thường hợp lệ');
+      return;
+    }
+
+    setCancelLoading(true);
+    try {
+      const response = await axios.post(
+        `${backendUrl}/api/owner/cancel-booking/${selectedBooking._id}`,
+        {
+          compensationReason: cancelReason,
+          compensationAmount: parseInt(compensationAmount)
+        },
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        toast.success('Đã hủy chuyến và tạo yêu cầu bồi thường thành công!');
+        handleCancelModalClose();
+        fetchOwnerBookings(currentPage, searchTerm, sortBy, sortOrder, statusFilter);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hủy chuyến');
+    } finally {
+      setCancelLoading(false);
+    }
   };
   
   const renderPagination = () => {
@@ -164,6 +217,7 @@ const OwnerBookingManagement = () => {
               <option value="completed">Hoàn thành</option>
               <option value="cancelled">Đã hủy</option>
               <option value="cancel_requested">Yêu cầu hủy</option>
+              <option value="owner_canceled">Owner đã hủy</option>
             </select>
           </div>
           <div className="sort-container">
@@ -226,7 +280,8 @@ const OwnerBookingManagement = () => {
                          {b.status === 'completed' && 'Hoàn thành'}
                          {b.status === 'cancelled' && 'Đã hủy'}
                          {b.status === 'cancel_requested' && 'Yêu cầu hủy'}
-                         {!['pending', 'confirmed', 'ongoing', 'completed', 'cancelled', 'cancel_requested'].includes(b.status) && b.status}
+                         {b.status === 'owner_canceled' && 'Owner đã hủy'}
+                         {!['pending', 'confirmed', 'ongoing', 'completed', 'cancelled', 'cancel_requested', 'owner_canceled'].includes(b.status) && b.status}
                        </span>
                      </td>
                      <td className="total-amount">
@@ -256,6 +311,14 @@ const OwnerBookingManagement = () => {
                          >
                            Hợp đồng
                          </a>
+                         {(['deposit_paid', 'fully_paid'].includes(b.status)) && (
+                           <button
+                             className="owner-booking-action-btn cancel"
+                             onClick={() => handleCancelBooking(b)}
+                           >
+                             Hủy chuyến
+                           </button>
+                         )}
                        </div>
                      </td>
                    </tr>
@@ -263,6 +326,62 @@ const OwnerBookingManagement = () => {
                </tbody>
              </table>
              {renderPagination()}
+           </div>
+         )}
+
+         {/* Cancel Booking Modal */}
+         {showCancelModal && (
+           <div className="modal-overlay">
+             <div className="modal-content">
+               <div className="modal-header">
+                 <h3>Hủy chuyến và yêu cầu bồi thường</h3>
+                 <button className="modal-close" onClick={handleCancelModalClose}>
+                   ×
+                 </button>
+               </div>
+               <div className="modal-body">
+                 <p><strong>Đơn:</strong> #{selectedBooking?._id.slice(-6)}</p>
+                 <p><strong>Xe:</strong> {selectedBooking?.vehicle?.brand} {selectedBooking?.vehicle?.model}</p>
+                 <p><strong>Khách thuê:</strong> {selectedBooking?.renter?.name || selectedBooking?.renter?.email}</p>
+                 
+                 <div className="form-group">
+                   <label>Lý do hủy chuyến *</label>
+                   <textarea
+                     value={cancelReason}
+                     onChange={(e) => setCancelReason(e.target.value)}
+                     placeholder="Nhập lý do hủy chuyến..."
+                     rows={3}
+                   />
+                 </div>
+                 
+                 <div className="form-group">
+                   <label>Số tiền bồi thường cho khách (VNĐ) *</label>
+                   <input
+                     type="number"
+                     value={compensationAmount}
+                     onChange={(e) => setCompensationAmount(e.target.value)}
+                     placeholder="Nhập số tiền bồi thường..."
+                     min="0"
+                   />
+                 </div>
+               </div>
+               <div className="modal-footer">
+                 <button 
+                   className="btn-secondary" 
+                   onClick={handleCancelModalClose}
+                   disabled={cancelLoading}
+                 >
+                   Hủy
+                 </button>
+                 <button 
+                   className="btn-primary" 
+                   onClick={handleCancelSubmit}
+                   disabled={cancelLoading}
+                 >
+                   {cancelLoading ? 'Đang xử lý...' : 'Xác nhận hủy chuyến'}
+                 </button>
+               </div>
+             </div>
            </div>
          )}
        </div>

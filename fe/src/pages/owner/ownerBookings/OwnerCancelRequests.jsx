@@ -57,13 +57,13 @@ const OwnerCancelRequests = () => {
       <SidebarOwner />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="owner-cancel-requests-container">
-          <h2>Duyệt đơn huỷ đặt xe</h2>
+          <h2>Đơn hủy của khách thuê</h2>
           {loading ? (
             <div className="ocr-loading">Đang tải...</div>
           ) : error ? (
             <div className="ocr-error">{error}</div>
           ) : requests.length === 0 ? (
-            <div className="ocr-empty">Không có yêu cầu huỷ nào cần duyệt.</div>
+            <div className="ocr-empty">Không có đơn hủy nào từ khách thuê.</div>
           ) : (
             <div className="ocr-table-wrapper">
               <table className="ocr-table">
@@ -74,7 +74,8 @@ const OwnerCancelRequests = () => {
                     <th>Khách thuê</th>
                     <th>Ngày thuê</th>
                     <th>Lý do huỷ</th>
-                    <th>Tiền hoàn</th>
+                    <th>Tiền hoàn khách</th>
+                    <th>Tiền bồi thường</th>
                     <th>Hành động</th>
                   </tr>
                 </thead>
@@ -87,8 +88,13 @@ const OwnerCancelRequests = () => {
                       <td>{new Date(r.startDate).toLocaleDateString('vi-VN')} - {new Date(r.endDate).toLocaleDateString('vi-VN')}</td>
                       <td>{r.cancellationReason || '-'}</td>
                       <td style={{ color: '#1976d2', fontWeight: 600 }}>
-                        {typeof r.totalRefund === 'number'
-                          ? r.totalRefund.toLocaleString('vi-VN') + ' ₫'
+                        {typeof r.totalRefundForRenterCancel === 'number'
+                          ? r.totalRefundForRenterCancel.toLocaleString('vi-VN') + ' ₫'
+                          : '-'}
+                      </td>
+                      <td style={{ color: '#e53e3e', fontWeight: 600 }}>
+                        {typeof r.totalRefundForOwnerCancel === 'number'
+                          ? r.totalRefundForOwnerCancel.toLocaleString('vi-VN') + ' ₫'
                           : '-'}
                       </td>
                       <td>
@@ -119,4 +125,4 @@ const OwnerCancelRequests = () => {
   );
 };
 
-export default OwnerCancelRequests; 
+export default OwnerCancelRequests;

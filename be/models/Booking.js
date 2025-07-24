@@ -48,10 +48,17 @@ const bookingSchema = new mongoose.Schema(
     },
 
     // Tổng tiền thuê (VND)
-    // tổng tất cả tiền 
+    // tổng tất cả tiền
     totalAmount: {
       type: Number,
       required: true,
+      min: 0,
+    },
+
+    // Tổng tiền đã thanh toán
+    totalPaid: {
+      type: Number,
+      default: 0,
       min: 0,
     },
     // Mã đơn hàng PayOS (orderCode)
@@ -83,42 +90,32 @@ const bookingSchema = new mongoose.Schema(
     deliveryFee: {
       type: Number,
       min: 0,
-      default: 0
+      default: 0,
     },
-
 
     // Trạng thái đơn thuê
     status: {
       type: String,
       enum: [
-        'pending',        // Đơn mới tạo, chưa thanh toán
-        'deposit_paid',   // Đã thanh toán cọc (30%)
-        'fully_paid',     // Đã hoàn tất thanh toán (100%)
-        'in_progress',    // Đang thuê xe
-        'fully_paid',     // Đã hoàn tất thanh toán (100%)
-        'completed',      // Đã trả xe, hoàn tất
-        'canceled',       // Đã hủy
-        'refunded',       // Đã hoàn tiền
-        'rejected',       // Bị từ chối (hiếm dùng)
-        'cancel_requested' // Đang chờ chủ xe duyệt huỷ
+        "pending", // Đơn mới tạo, chưa thanh toán
+        "deposit_paid", // Đã thanh toán cọc (30%)
+        "fully_paid", // Đã hoàn tất thanh toán (100%)
+        "in_progress", // Đang thuê xe
+        "completed", // Đã trả xe, hoàn tất
+        "canceled", // Đã hủy
+        "owner_canceled", // Chủ xe hủy
+        "refunded", // Đã hoàn tiền
+        "rejected", // Bị từ chối (hiếm dùng)
+        "cancel_requested", // Đang chờ chủ xe duyệt huỷ
       ],
-      default: 'pending'
+      default: "pending",
     },
 
-    // Trạng thái giải ngân cho chủ xe.
+    // Trạng thái giải ngân cho chủ xe sau khi hoàn thành đơn thuê
     payoutStatus: {
       type: String,
-      enum: ['none', 'pending', 'approved', 'rejected'],
-      default: 'none'
-    },
-    // Số tiền thực nhận (đã trừ phí dịch vụ, bồi thường...).
-    payoutAmount: {
-      type: Number,
-      default: 0
-    },
-    payoutNote: {
-      type: String,
-      default: ''
+      enum: ["none", "pending", "approved", "rejected"],
+      default: "none",
     },
 
     // Địa chỉ nhận xe
@@ -155,9 +152,11 @@ const bookingSchema = new mongoose.Schema(
     preRentalImages: [{ type: String }], // Ảnh xe trước khi nhận/giao
 
     // Hình ảnh xe sau khi thuê
-    postRentalImages: [{
-      type: String,
-    }],
+    postRentalImages: [
+      {
+        type: String,
+      },
+    ],
 
     // Lý do hủy (nếu có)
     cancellationReason: {
@@ -166,6 +165,11 @@ const bookingSchema = new mongoose.Schema(
 
     // Thời gian hủy
     cancelledAt: {
+      type: Date,
+    },
+
+    // Thời gian chủ xe hủy
+    ownerCancelledAt: {
       type: Date,
     },
 
@@ -181,43 +185,88 @@ const bookingSchema = new mongoose.Schema(
     },
 
     // Giao dịch
-    transactions: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Transaction'
-    }],
+    transactions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Transaction",
+      },
+    ],
 
-    // --- Thông tin hoàn tiền khi huỷ (FE gửi lên, lưu lại để owner xem và backend dùng khi duyệt) ---
-    totalRefund: {
+    // --- Thông tin hoàn tiền khi huỷ cho người thuê
+    totalRefundForRenterCancel: {
       type: Number,
       default: 0,
     },
+    // Trạng thái giải ngân cho renter khi huỷ chuyến
+    refundStatusRenter: {
+      type: String,
+      enum: ["none", "pending", "approved", "rejected"],
+      default: "none",
+    },
+
+    // --- Thông tin hoàn tiền khi huỷ
+    totalRefundForOwnerCancel: {
+      type: Number,
+      default: 0,
+    },
+    // Trạng thái giải ngân cho chủ xe sau khi huỷ chuyến
+    refundStatusOwner: {
+      type: String,
+      enum: ["none", "pending", "approved", "rejected"],
+      default: "none",
+    },
+
+    // giao nhận xe
     ownerHandoverConfirmed: {
       type: Boolean,
-      default: false
+      default: false,
     },
     renterHandoverConfirmed: {
       type: Boolean,
-      default: false
+      default: false,
     },
     ownerReturnConfirmed: {
       type: Boolean,
-      default: false
+      default: false,
     },
     renterReturnConfirmed: {
       type: Boolean,
-      default: false
+      default: false,
     },
+
     // Chữ ký điện tử
     renterSignature: {
       type: String,
-      default: ''
+      default: "",
     },
     ownerSignature: {
       type: String,
-      default: ''
+      default: "",
+    },
+
+    refundRequestCreatedAt: {
+      type: Date,
+    },
+
+    ownerCompensationCreatedAt: {
+      type: Date,
+    },
+
+    // Admin approval fields
+    adminApprovedCancelAt: {
+      type: Date,
+    },
+    adminApprovedCancelBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    // Cancel request timestamp
+    cancelRequestedAt: {
+      type: Date,
     },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Booking", bookingSchema); 
+module.exports = mongoose.model("Booking", bookingSchema);

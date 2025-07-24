@@ -124,7 +124,7 @@ const UserDetailModal = ({ visible, user, onClose }) => {
               
               <Descriptions.Item label="Ngày tạo">
                 <CalendarOutlined style={{ marginRight: '8px', color: '#fa8c16' }} />
-                {new Date(userDetail.user.createdAt).toLocaleDateString('vi-VN')}
+                {new Date(userDetail.user.created_at).toLocaleDateString('vi-VN')}
               </Descriptions.Item>
               
               <Descriptions.Item label="Phương thức đăng nhập">
@@ -132,7 +132,7 @@ const UserDetailModal = ({ visible, user, onClose }) => {
               </Descriptions.Item>
               
               <Descriptions.Item label="Ngày cập nhật cuối">
-                {new Date(userDetail.user.updatedAt).toLocaleDateString('vi-VN')}
+                {userDetail.user.updated_at ? new Date(userDetail.user.updated_at).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
               </Descriptions.Item>
             </Descriptions>
           </Card>

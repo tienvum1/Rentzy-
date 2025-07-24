@@ -76,6 +76,8 @@ import AdminChatPage from "./pages/admin/adminChatPage/AdminChatPage";
 import CCCDRequestsPage from './pages/admin/adminCCCDRequestsPage/CCCDRequestsPage';
 import UserManagement from './pages/admin/adminManagementUser/UserManagement';
 
+import AllPendingRefunds from './pages/admin/allPendingRefunds/AllPendingRefunds';
+
 
 import PaymentSuccess from "./pages/payment/PaymentSuccess";
 import PaymentFailed from "./pages/payment/PaymentFailed";
@@ -168,6 +170,8 @@ function App() {
               <Route path="cccd-requests" element={<CCCDRequestsPage />} />
               <Route path="user-management" element={<UserManagement />} />
               <Route path="vehicle-reports" element={<AdminVehicleReports />} />
+
+              <Route path="all-pending-refunds" element={<AllPendingRefunds />} />
         
 
             </Route>

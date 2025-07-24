@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaCheck, FaCar, FaRegCircle, FaFileSignature } from 'react-icons/fa';
+import { FaCheck, FaCar, FaRegCircle, FaFileSignature, FaClipboardCheck } from 'react-icons/fa';
 import './PaymentDeposit.css';
 import Header from '../../../components/Header/Header';
 import axios from 'axios';
@@ -250,23 +250,34 @@ const PaymentDeposit = () => {
       <div className="reservation-payment-container">
         <div className="progress-bar-wrapper">
           <div className="progress-steps">
-            <div className={`progress-step completed`}>
-              <div className="step-icon"><FaCheck /></div>
-              <span className="step-text">Tìm & chọn xe</span>
+            <div className="progress-step completed">
+              <div className="step-icon active">
+                <FaCheck />
+              </div>
+              <span className="step-text">Tìm và chọn xe</span>
             </div>
-            <div className={`progress-divider ${step > 1 ? 'completed' : ''}`}></div>
-            <div className={`progress-step ${step > 1 ? 'completed' : step === 1 ? 'current' : ''}`}> 
-              <div className="step-icon"><FaCar /></div> 
-              <span className="step-text">Thanh toán cọc</span>
+            <div className="progress-step completed">
+              <div className="step-icon active">
+                <FaCheck />
+              </div>
+              <span className="step-text">Xác nhận đơn hàng</span>
             </div>
-            <div className={`progress-divider ${step > 2 ? 'completed' : ''}`}></div>
-            <div className={`progress-step ${step > 2 ? 'completed' : step === 2 ? 'current' : ''}`}> 
-              <div className="step-icon"><FaFileSignature /></div> 
+            <div className={`progress-step ${step > 1 ? 'completed' : ''}`}> 
+              <div className={`step-icon ${step > 1 ? 'active' : 'current'}`}>
+                {step > 1 ? <FaCheck /> : <FaCar />}
+              </div>
+              <span className="step-text">Thanh toán cọc 30%</span>
+            </div>
+            <div className="progress-step"> 
+              <div className={`step-icon ${step > 1 ? 'current' : 'inactive'}`}>
+                <FaFileSignature />
+              </div>
               <span className="step-text">Ký hợp đồng</span>
             </div>
-            <div className={`progress-divider ${step > 3 ? 'completed' : ''}`}></div>
-            <div className={`progress-step ${step === 4 ? 'completed' : ''}`}> 
-              <div className="step-icon inactive"><FaRegCircle /></div> 
+            <div className="progress-step"> 
+              <div className="step-icon inactive">
+                <FaCar />
+              </div>
               <span className="step-text">Nhận xe</span>
             </div>
           </div>
@@ -348,8 +359,8 @@ const PaymentDeposit = () => {
               <div className="detail-row"><span>Mã đặt xe</span><span className="detail-value">{booking._id}</span></div>
               <div className="detail-row"><span>Tên khách thuê</span><span className="detail-value">{booking.renter?.name || 'N/A'}</span></div>
               <div className="detail-row"><span>Số điện thoại</span><span className="detail-value">{booking.renter?.phone || 'N/A'}</span></div>
-              <div className="detail-row"><span>Ngày nhận:</span><span className="detail-value">{formatDate(booking.startDate)} {booking.pickupTime}</span></div>
-              <div className="detail-row"><span>Ngày trả:</span><span className="detail-value">{formatDate(booking.endDate)} {booking.returnTime}</span></div>
+              <div className="detail-row"><span>Ngày nhận:</span><span className="detail-value">{formatDate(booking.startDate)} </span></div>
+              <div className="detail-row"><span>Ngày trả:</span><span className="detail-value">{formatDate(booking.endDate)}</span></div>
               <div className="detail-row"><span>Loại xe:</span><span className="detail-value">{booking.vehicle?.brand} {booking.vehicle?.model}</span></div>
               <div className="total-rental-fee-box"><span>Tổng tiền thuê xe</span><span className="total-fee">{formatCurrency(total)}</span></div>
             </div>
@@ -380,4 +391,4 @@ const PaymentDeposit = () => {
   );
 };
 
-export default PaymentDeposit; 
+export default PaymentDeposit;

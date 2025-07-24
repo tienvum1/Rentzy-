@@ -40,6 +40,11 @@ const SidebarAdmin = () => {
                 {/* Payout Requests */}
                 <li onClick={() => handleMenuItemClick('/admin/payout-requests')}>Duyệt giải ngân</li>
 
+                {/* All Pending Refunds */}
+                <li onClick={() => handleMenuItemClick('/admin/all-pending-refunds')}>Quản lý yêu cầu chuyển tiền</li>
+
+
+
                 {/* Withdrawals Management */}
                 <li onClick={() => handleMenuItemClick('/admin/promotions')}>Quản lý mã khuyến mãi</li>
         

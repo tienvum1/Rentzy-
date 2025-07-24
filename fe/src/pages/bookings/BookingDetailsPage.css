@@ -95,6 +95,16 @@
   font-weight: bold;
 }
 
+.status-cancel_requested {
+  color: #e67e22;
+  font-weight: bold;
+}
+
+.status-owner_approved_cancel {
+  color: #f39c12;
+  font-weight: bold;
+}
+
 .vehicle-details-grid {
   display: grid;
   grid-template-columns: 300px 1fr;
@@ -781,4 +791,4 @@
     font-size: 15px;
     padding: 7px 8px;
   }
-} 
+}

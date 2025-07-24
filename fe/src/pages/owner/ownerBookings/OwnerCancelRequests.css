@@ -27,9 +27,9 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 .ocr-table th, .ocr-table td {
-  padding: 12px 10px;
+  padding: 12px 8px;
   text-align: left;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 .ocr-table th {
   background: #f1f5f9;
@@ -90,15 +90,20 @@
 .ocr-empty {
   color: #64748b;
 }
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .owner-cancel-requests-container {
     padding: 12px 2vw 16px 2vw;
   }
   .ocr-table th, .ocr-table td {
-    font-size: 0.95rem;
-    padding: 8px 4px;
+    font-size: 0.85rem;
+    padding: 6px 4px;
   }
   .owner-cancel-requests-container h2 {
     font-size: 1.2rem;
   }
-} 
+  .ocr-approve-btn, .ocr-reject-btn {
+    padding: 5px 10px;
+    font-size: 0.85rem;
+    margin-right: 4px;
+  }
+}

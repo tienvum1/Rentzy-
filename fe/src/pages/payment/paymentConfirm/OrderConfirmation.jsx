@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaArrowLeft, FaUser, FaPhone, FaCalendarAlt, FaMapMarkerAlt, FaCheck, FaCar } from 'react-icons/fa';
+import { FaArrowLeft, FaUser, FaPhone, FaCalendarAlt, FaMapMarkerAlt, FaCheck, FaCar, FaFileSignature } from 'react-icons/fa';
 import axios from 'axios';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -20,7 +20,11 @@ const OrderConfirmation = () => {
   const calculateFees = () => {
     if (!booking) return null;
     const totalCost = booking.totalCost || 0; // Tiền thuê xe cơ bản
-    const deliveryFee = booking.pickupLocation !== booking.vehicle?.location ? DELIVERY_FEE : 0;
+    // Kiểm tra xem có cần phí giao xe không (so sánh địa điểm nhận xe với địa điểm xe)
+    const needsDelivery = booking.vehicle && booking.vehicle.location && 
+      booking.pickupLocation && 
+      booking.pickupLocation.trim().toLowerCase() !== booking.vehicle.location.trim().toLowerCase();
+    const deliveryFee = needsDelivery ? DELIVERY_FEE : 0;
     const discountAmount = booking.discountAmount || 0;
     const totalAmount = totalCost + deliveryFee - discountAmount;
     // Tính 30% và 70%
@@ -57,7 +61,23 @@ const OrderConfirmation = () => {
   }, [bookingId, navigate]);
 
   const handleBack = () => navigate(-1);
-  const handleBackToHome = () => navigate('/');
+
+  const handleCancelBooking = async () => {
+    if (window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) {
+      try {
+        const config = { withCredentials: true };
+        await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${bookingId}/cancel-expired`, {}, config);
+        toast.success('Đã hủy đơn hàng thành công!');
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
+      } catch (err) {
+        toast.error('Không thể hủy đơn hàng. Vui lòng thử lại!');
+        console.error('Cancel booking error:', err);
+      }
+    }
+  };
+
   const handleConfirm = () => {
     if (booking && booking._id) {
       // Điều hướng đến trang thanh toán 30%
@@ -93,38 +113,43 @@ const OrderConfirmation = () => {
           <span className="font-semibold">Quay lại</span>
         </div>
 
-        <div className="progress-steps">
+        <div className="progress-bar-wrapper">
+          <div className="progress-steps">
             <div className="progress-step completed">
-              <div className="step-icon">
+              <div className="step-icon active">
                 <FaCheck />
               </div>
               <span className="step-text">Tìm và chọn xe</span>
             </div>
-            <div className="progress-divider completed"></div>
-            <div className={`progress-step completed ${isPaymentCompleted ? 'completed' : 'current'}`}>
-              <div className="step-icon">
+            <div className="progress-step completed">
+              <div className="step-icon active">
                 <FaCheck />
               </div>
               <span className="step-text">Xác nhận đơn hàng</span>
             </div>
-            <div className={`progress-divider ${isPaymentCompleted ? 'completed' : ''}`}></div>
-            <div className={`progress-step ${isPaymentCompleted ? 'completed' : 'current'}`}> 
-              <div className="step-icon">
-                <FaCar />
-              </div>
-              <span className="step-text">Thanh toán trước 30%</span>
-            </div>
-            <div className={`progress-divider ${isPaymentCompleted ? 'completed' : ''}`}></div>
             <div className={`progress-step ${isPaymentCompleted ? 'completed' : ''}`}> 
-              <div className="step-icon">
+              <div className={`step-icon ${isPaymentCompleted ? 'active' : 'current'}`}>
+                {isPaymentCompleted ? <FaCheck /> : <FaCar />}
+              </div>
+              <span className="step-text">Thanh toán cọc 30%</span>
+            </div>
+            <div className="progress-step"> 
+              <div className={`step-icon ${isPaymentCompleted ? 'current' : 'inactive'}`}>
+                <FaFileSignature />
+              </div>
+              <span className="step-text">Ký hợp đồng</span>
+            </div>
+            <div className="progress-step"> 
+              <div className="step-icon inactive">
                 <FaCar />
               </div>
-              <span className="step-text">Nhận xe & thanh toán 70% còn lại</span>
+              <span className="step-text">Nhận xe</span>
             </div>
           </div>
+        </div>
 
         <h2 className="section-title text-center">
-            {isPaymentCompleted ? 'Thanh toán đặt cọc thành công!' : isPaymentFailedOrCanceled ? 'Thanh toán thất bại hoặc đã hủy.' : 'Đang chờ xác nhận thanh toán...'}
+            {isPaymentCompleted ? 'Thanh toán cọc thành công!' : isPaymentFailedOrCanceled ? 'Thanh toán thất bại hoặc đã hủy.' : 'Đang chờ xác nhận thanh toán...'}
         </h2>
         {isPaymentCompleted && (
             <div className="payment-success-message text-center">
@@ -183,18 +208,26 @@ const OrderConfirmation = () => {
           </div>
         </div>
 
-        <h2 className="section-title">Các bước thanh toán</h2>
+        <h2 className="section-title">Các bước tiếp theo</h2>
         <div className="payment-steps-section">
           <div className="payment-step">
             <div className="payment-step-number">1</div>
             <div className="payment-step-content">
-              <p className="payment-step-title">Thanh toán trước 30% qua Rentzy</p>
-              <p className="payment-step-description">Thanh toán trước 30% để xác nhận đơn thuê và giữ xe.</p>
+              <p className="payment-step-title">Thanh toán cọc 30% qua Rentzy</p>
+              <p className="payment-step-description">Thanh toán cọc 30% để xác nhận đơn thuê và giữ xe.</p>
             </div>
             <span className="payment-amount">{formatCurrency(fees.upfrontAmount)}</span>
           </div>
           <div className="payment-step">
             <div className={`payment-step-number ${isPaymentCompleted ? 'completed' : ''}`}>2</div>
+            <div className="payment-step-content">
+              <p className="payment-step-title">Ký hợp đồng thuê xe</p>
+              <p className="payment-step-description">Ký hợp đồng với chủ xe để hoàn tất thủ tục pháp lý.</p>
+            </div>
+            <span className="payment-amount">Miễn phí</span>
+          </div>
+          <div className="payment-step">
+            <div className="payment-step-number">3</div>
             <div className="payment-step-content">
               <p className="payment-step-title">Nhận xe và thanh toán 70% còn lại</p>
               <p className="payment-step-description">Thanh toán số tiền còn lại khi nhận xe.</p>
@@ -206,22 +239,25 @@ const OrderConfirmation = () => {
         <div className="action-buttons">
             {!isPaymentCompleted && (
                 <button className="confirm-button" onClick={handleConfirm}>
-                    Đi đến thanh toán trước 30%
+                    Đi đến thanh toán cọc 30%
                 </button>
             )}
         </div>
 
         <p className="terms-text">
-          Bằng việc thanh toán trước 30% và thuê xe, bạn đồng ý với <a href="#">Điều khoản sử dụng</a> và <a href="#">Chính sách bảo mật</a>
+          Bằng việc thanh toán cọc 30% và thuê xe, bạn đồng ý với <a href="#">Điều khoản sử dụng</a> và <a href="#">Chính sách bảo mật</a>
         </p>
 
-        <button className="back-to-home-button" onClick={handleBackToHome}>
-          Quay về trang chủ
-        </button>
+        {!isPaymentCompleted && (
+          <button className="cancel-booking-button" onClick={handleCancelBooking}>
+            <span className="cancel-icon">✕</span>
+            Hủy đơn hàng
+          </button>
+        )}
       </div>
     </div>
     </>
   );
 };
 
-export default OrderConfirmation; 
+export default OrderConfirmation;

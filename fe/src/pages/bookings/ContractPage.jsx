@@ -5,7 +5,7 @@ import './ContractPage.css';
 import SignatureCanvas from 'react-signature-canvas';
 import { useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { FaCheck, FaCar, FaFileSignature, FaRegCircle } from "react-icons/fa";
+import { FaCheck, FaCar, FaFileSignature, FaRegCircle, FaClipboardCheck } from "react-icons/fa";
 import Header from '../../components/Header/Header';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -15,22 +15,33 @@ function ProgressBar({ currentStep }) {
     <div className="progress-bar-wrapper">
       <div className="progress-steps">
         <div className={`progress-step completed`}>
-          <div className="step-icon"><FaCheck /></div>
-          <span className="step-text">Tìm & chọn xe</span>
+          <div className={`step-icon active`}>
+            <FaCheck />
+          </div>
+          <span className="step-text">Tìm và chọn xe</span>
         </div>
-        <div className={`progress-divider ${currentStep > 1 ? 'completed' : ''}`}></div>
-        <div className={`progress-step ${currentStep > 1 ? 'completed' : currentStep === 1 ? 'current' : ''}`}>
-          <div className="step-icon"><FaCar /></div>
-          <span className="step-text">Thanh toán cọc</span>
+        <div className={`progress-step completed`}>
+          <div className={`step-icon active`}>
+            <FaClipboardCheck />
+          </div>
+          <span className="step-text">Xác nhận đơn hàng</span>
         </div>
-        <div className={`progress-divider ${currentStep > 2 ? 'completed' : ''}`}></div>
-        <div className={`progress-step ${currentStep > 2 ? 'completed' : currentStep === 2 ? 'current' : ''}`}>
-          <div className="step-icon"><FaFileSignature /></div>
+        <div className={`progress-step completed`}>
+          <div className={`step-icon active`}>
+            <FaCar />
+          </div>
+          <span className="step-text">Thanh toán cọc 30%</span>
+        </div>
+        <div className={`progress-step ${currentStep >= 3 ? 'completed' : ''}`}>
+          <div className={`step-icon ${currentStep >= 3 ? 'active' : 'current'}`}>
+            <FaFileSignature />
+          </div>
           <span className="step-text">Ký hợp đồng</span>
         </div>
-        <div className={`progress-divider ${currentStep > 3 ? 'completed' : ''}`}></div>
-        <div className={`progress-step ${currentStep === 4 ? 'completed' : ''}`}>
-          <div className="step-icon inactive"><FaRegCircle /></div>
+        <div className={`progress-step ${currentStep >= 4 ? 'completed' : ''}`}>
+          <div className={`step-icon ${currentStep >= 4 ? 'active' : 'inactive'}`}>
+            <FaCar />
+          </div>
           <span className="step-text">Nhận xe</span>
         </div>
       </div>
@@ -358,4 +369,4 @@ const ContractPage = () => {
 };
 
 
-export default ContractPage; 
+export default ContractPage;

@@ -4,7 +4,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
-import { FaInfoCircle, FaCreditCard, FaStar } from 'react-icons/fa';
+import { FaInfoCircle, FaCreditCard, FaStar, FaTimesCircle } from 'react-icons/fa';
 import './UserBookings.css';
 import ProfileLayout from '../profileLayout/ProfileLayout';
 import { reviewBooking } from '../../../services/vehicleService';
@@ -19,6 +19,11 @@ const UserBookings = () => {
   const [reviewStars, setReviewStars] = useState(5);
   const [reviewContent, setReviewContent] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelBookingId, setCancelBookingId] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelError, setCancelError] = useState('');
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
 
   const navigate = useNavigate();
 
@@ -147,6 +152,51 @@ const UserBookings = () => {
     }
   };
 
+  const handleOpenCancel = (bookingId) => {
+    setCancelBookingId(bookingId);
+    setShowCancelModal(true);
+    setCancelReason('');
+    setCancelError('');
+  };
+
+  const handleCloseCancel = () => {
+    setShowCancelModal(false);
+    setCancelBookingId(null);
+    setCancelReason('');
+    setCancelError('');
+  };
+
+  const handleSubmitCancel = async () => {
+    if (!cancelReason.trim()) {
+      setCancelError('Vui lòng nhập lý do huỷ đơn.');
+      return;
+    }
+    setCancelSubmitting(true);
+    try {
+      const config = { withCredentials: true };
+      const res = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/bookings/${cancelBookingId}/request-cancel`,
+        {
+          reason: cancelReason
+        },
+        config
+      );
+      if (res.data.success) {
+        toast.success('Yêu cầu huỷ đơn đã được gửi thành công! Vui lòng chờ chủ xe duyệt.');
+        handleCloseCancel();
+        fetchBookings(); // Reload lại danh sách
+      } else {
+        toast.error(res.data.message || 'Không thể gửi yêu cầu huỷ.');
+        setCancelError(res.data.message || 'Không thể gửi yêu cầu huỷ.');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Không thể gửi yêu cầu huỷ.');
+      setCancelError(err.response?.data?.message || 'Không thể gửi yêu cầu huỷ.');
+    } finally {
+      setCancelSubmitting(false);
+    }
+  };
+
   return (
     <ProfileLayout>
       <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="light" />
@@ -259,14 +309,42 @@ const UserBookings = () => {
                                     Đánh giá
                                   </button>
                                 )}
+                                {/* Nút huỷ booking */}
+                                {(booking.status === 'pending' || booking.status === 'deposit_paid' || booking.status === 'fully_paid') && 
+                                 booking.status !== 'cancel_requested' && 
+                                 new Date(booking.startDate) > new Date() && (
+                                  <button
+                                     className="cancel-button"
+                                     style={{ marginLeft: 8, background: '#dc3545', color: '#fff', borderRadius: 6, padding: '6px 14px', fontWeight: 500, border: 'none', cursor: 'pointer' }}
+                                     onClick={() => handleOpenCancel(booking._id)}
+                                   >
+                                     <FaTimesCircle style={{ marginRight: 4 }} /> Huỷ đơn
+                                   </button>
+                                )}
                               </div>
                             </td>
                           </tr>
                           {totalRefund > 0 && (
                             <tr>
-                              <td colSpan={8}>
+                              <td colSpan={9}>
                                 <div className="refund-note" style={{ color: '#2563eb', background: '#f1f5f9', borderRadius: 6, padding: '6px 12px', margin: '4px 0', fontSize: 15 }}>
                                   Đã hoàn tiền: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalRefund)} về ví của bạn.
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                          {(booking.totalRefundForRenterCancel > 0 || booking.totalRefundForOwnerCancel > 0) && booking.status === 'canceled' && (
+                            <tr>
+                              <td colSpan={9}>
+                                <div className="cancel-refund-info" style={{ color: '#059669', background: '#f0fdf4', borderRadius: 6, padding: '8px 12px', margin: '4px 0', fontSize: 15, border: '1px solid #bbf7d0' }}>
+                                  <div><strong>Thông tin hoàn tiền sau huỷ:</strong></div>
+                                  {booking.totalRefundForRenterCancel > 0 && (
+                                    <div>• Hoàn cho bạn: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalRefundForRenterCancel)}</div>
+                                  )}
+                                  {booking.totalRefundForOwnerCancel > 0 && (
+                                    <div>• Bồi thường chủ xe: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.totalRefundForOwnerCancel)}</div>
+                                  )}
+                                  <div style={{ fontSize: 13, color: '#065f46', marginTop: 4 }}>Trạng thái: {booking.refundStatusRenter === 'approved' ? 'Đã chuyển tiền' : 'Đang chờ admin duyệt chuyển tiền'}</div>
                                 </div>
                               </td>
                             </tr>
@@ -317,8 +395,121 @@ const UserBookings = () => {
           </div>
         </div>
       )}
+      
+      {/* Cancel Modal */}
+      {showCancelModal && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="modal-content" style={{
+            background: '#fff',
+            borderRadius: 12,
+            padding: 24,
+            maxWidth: 500,
+            width: '90%',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <div className="modal-header" style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 20
+            }}>
+              <h3 style={{ margin: 0, color: '#dc3545' }}>Huỷ đặt xe</h3>
+              <button
+                onClick={handleCloseCancel}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: 24,
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
+                  Lý do huỷ đơn <span style={{ color: 'red' }}>*</span>
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="Nhập lý do huỷ đơn..."
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    border: '1px solid #ddd',
+                    borderRadius: 6,
+                    padding: 10,
+                    fontSize: 14,
+                    resize: 'vertical',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              {cancelError && (
+                <div style={{ color: 'red', fontSize: 14, marginBottom: 16 }}>
+                  {cancelError}
+                </div>
+              )}
+              <div style={{ color: '#666', fontSize: 14, marginBottom: 20 }}>
+                <strong>Lưu ý:</strong> Yêu cầu huỷ sẽ được gửi đến chủ xe để duyệt. Số tiền hoàn lại sẽ phụ thuộc vào chính sách hoàn tiền và thời gian huỷ.
+              </div>
+            </div>
+            <div className="modal-footer" style={{
+              display: 'flex',
+              gap: 12,
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={handleCloseCancel}
+                disabled={cancelSubmitting}
+                style={{
+                  background: '#6c757d',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '10px 20px',
+                  cursor: 'pointer',
+                  fontWeight: 500
+                }}
+              >
+                Đóng
+              </button>
+              <button
+                onClick={handleSubmitCancel}
+                disabled={cancelSubmitting || !cancelReason.trim()}
+                style={{
+                  background: cancelSubmitting ? '#ccc' : '#dc3545',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '10px 20px',
+                  cursor: cancelSubmitting ? 'not-allowed' : 'pointer',
+                  fontWeight: 500
+                }}
+              >
+                {cancelSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu huỷ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </ProfileLayout>
   );
 };
 
-export default UserBookings; 
+export default UserBookings;

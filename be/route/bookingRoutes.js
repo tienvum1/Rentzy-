@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, verifyRenterRequirements, adminOnly } = require('../middleware/authMiddleware');
-const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingByUser, requestCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages, reviewBooking ,getOwnerReviews, getBookingContract, getExpectedDepositRefund, getMyBookingReviews, saveBookingSignature} = require('../controller/bookingController');
+const { getVehicleBookedDates,getBookingByIdForOwner, createBooking, getBookingDetails, cancelExpiredBooking, cancelBookingByFrontend, getUserBookings, getAllBookingOfSpecificUser, getFilteredBookingsOfUser, getAllModelOfVehicle, getAllStatusOfBooking, cancelBookingByUser, requestCancelBooking, renterCancelBooking, ownerApproveCancel, ownerRejectCancel, confirmHandover, confirmReturn, uploadPreDeliveryImages, uploadPostDeliveryImages, reviewBooking ,getOwnerReviews, getBookingContract, getExpectedDepositRefund, recalculateBookingRefund, getMyBookingReviews, saveBookingSignature} = require('../controller/bookingController');
 const upload = require('../middleware/upload');
 
 // Public routes
@@ -22,7 +22,9 @@ router.post('/:id/cancel-expired', protect, cancelBookingByFrontend);
 
 // huỷ đơn thue
 router.get('/:id/expected-refund',protect , getExpectedDepositRefund); // Route: Tính toán hoàn tiền cọc dự kiến
-router.post('/:id/request-cancel', protect, requestCancelBooking); // gửi yêu cầu 
+router.post('/:id/recalculate-refund', protect, recalculateBookingRefund); // Route: Tính lại tiền hoàn cho booking đã tồn tại
+router.post('/:id/request-cancel', protect, requestCancelBooking); // gửi yêu cầu
+router.post('/:id/renter-cancel', protect, renterCancelBooking); // renter hủy chuyến trực tiếp 
 
 // approve đơn thuê
 router.post('/:id/owner-approve-cancel', protect, ownerApproveCancel);

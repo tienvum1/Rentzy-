@@ -76,6 +76,26 @@ router.post('/approve-deposit-refund/:bookingId', protect, adminOnly, adminContr
 router.get('/payout-requests', protect, adminOnly, adminController.getPendingPayoutRequests);
 router.post('/approve-payout/:bookingId', protect, adminOnly, adminController.approvePayoutBooking);
 
+// Route để lấy danh sách đơn hủy chờ admin duyệt
+router.get('/cancel-requests', protect, adminOnly, adminController.getPendingCancelRequests);
+// Route để admin duyệt hủy đơn và tạo refund request
+router.post('/approve-cancel/:id', protect, adminOnly, require('../controller/bookingController').adminApproveCancel);
+
+// Route để lấy danh sách yêu cầu bồi thường owner chờ admin duyệt
+router.get('/owner-compensation-requests', protect, adminOnly, adminController.getPendingOwnerCompensationRequests);
+router.post('/approve-owner-compensation/:bookingId', protect, adminOnly, adminController.approveOwnerCompensation);
+
+// Route để lấy danh sách yêu cầu hoàn tiền cho renter chờ admin duyệt
+router.get('/refund-requests', protect, adminOnly, adminController.getPendingRefundRequests);
+router.post('/approve-refund/:bookingId', protect, adminOnly, adminController.approveRefundRequest);
+
+// Route để lấy tất cả các yêu cầu pending (cả renter và owner)
+router.get('/all-pending-refunds', protect, adminOnly, adminController.getAllPendingRefundRequests);
+
+// Route để xử lý chuyển tiền qua ngân hàng
+router.get('/bank-transfer-requests', protect, adminOnly, adminController.getPendingBankTransferRequests);
+router.post('/confirm-bank-transfer/:transactionId', protect, adminOnly, adminController.confirmBankTransfer);
+
 router.get('/cccd-requests', protect, adminOnly, adminController.getPendingCCCDRequests);
 router.put('/cccd-status/:userId', protect, adminOnly, adminController.updateCCCDStatus);
 

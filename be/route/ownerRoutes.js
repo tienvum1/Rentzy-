@@ -42,4 +42,7 @@ router.get('/booking-stats-by-month', protect, ownerController.getOwnerBookingSt
 // Lấy đánh giá về xe của owner
 router.get('/vehicle-reviews', protect, reviewController.getOwnerVehicleReviews);
 
+// Owner cancel booking and request compensation
+router.post('/cancel-booking/:id', protect, require('../controller/bookingController').ownerCancelBooking);
+
 module.exports = router;

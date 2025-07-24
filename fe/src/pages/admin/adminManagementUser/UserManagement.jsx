@@ -60,9 +60,9 @@ const UserManagement = () => {
           total: response.data.data.pagination.totalUsers,
           active: response.data.data.users.filter(u => u.isActive === true).length,
           blocked: response.data.data.users.filter(u => u.isActive === false).length,
-          admins: response.data.data.users.filter(u => u.role === 'admin').length,
-          owners: response.data.data.users.filter(u => u.role === 'owner').length,
-          renters: response.data.data.users.filter(u => u.role === 'renter').length
+          admins: response.data.data.users.filter(u => u.role && u.role.includes('admin')).length,
+          owners: response.data.data.users.filter(u => u.role && u.role.includes('owner')).length,
+          renters: response.data.data.users.filter(u => u.role && u.role.includes('renter')).length
         };
         setUserStats(stats);
       }
@@ -134,6 +134,18 @@ const UserManagement = () => {
       renter: { color: 'cyan', text: 'Người thuê' }
     };
     
+    // Handle role as array
+    if (Array.isArray(role)) {
+      // Show the highest priority role
+      if (role.includes('admin')) {
+        return <Tag color={roleConfig.admin.color}>{roleConfig.admin.text}</Tag>;
+      } else if (role.includes('owner')) {
+        return <Tag color={roleConfig.owner.color}>{roleConfig.owner.text}</Tag>;
+      } else if (role.includes('renter')) {
+        return <Tag color={roleConfig.renter.color}>{roleConfig.renter.text}</Tag>;
+      }
+    }
+    
     const config = roleConfig[role] || { color: 'default', text: role };
     return <Tag color={config.color}>{config.text}</Tag>;
   };
@@ -187,8 +199,8 @@ const UserManagement = () => {
     },
     {
       title: 'Ngày tạo',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
+      dataIndex: 'created_at',
+      key: 'created_at',
       render: (date) => new Date(date).toLocaleDateString('vi-VN')
     },
     {
@@ -209,7 +221,7 @@ const UserManagement = () => {
             icon={record.isActive === false ? <UnlockOutlined /> : <LockOutlined />}
             size="small"
             onClick={() => handleBlockUser(record)}
-            disabled={record.role === 'admin'}
+            disabled={Array.isArray(record.role) ? record.role.includes('admin') : record.role === 'admin'}
           >
             {record.isActive === false ? 'Mở khóa' : 'Khóa'}
           </Button>

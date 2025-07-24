@@ -258,6 +258,40 @@
 .contract-progress-divider.current {
   background-color: #1976d2;
 }
+@media (max-width: 768px) {
+  .progress-steps {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem;
+  }
+  
+  .progress-step {
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+    min-width: auto;
+  }
+  
+  .step-icon {
+    margin-right: 1rem;
+    margin-bottom: 0;
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.2rem;
+  }
+  
+  .step-text {
+    max-width: none;
+    text-align: left;
+    font-size: 0.9rem;
+  }
+  
+  .progress-step:not(:last-child)::after {
+    display: none;
+  }
+}
+
 @media (max-width: 700px) {
   .contract-root {
     padding: 18px 4vw 24px 4vw;
@@ -273,20 +307,6 @@
   }
   .contract-signature-col {
     width: 100%;
-  }
-
-  .contract-progress-steps {
-    flex-wrap: wrap;
-    padding: 0 2px;
-  }
-  .contract-progress-step {
-    font-size: 0.85em;
-  }
-  .contract-progress-step .step-icon {
-    width: 24px;
-    height: 24px;
-    font-size: 0.95em;
-    margin-bottom: 4px;
   }
 } 
 
@@ -381,83 +401,87 @@
 
 .progress-steps {
   display: flex;
-  align-items: flex-start;
-  width: 100%;
   justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding: 0 2rem;
+  position: relative;
 }
 
 .progress-step {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 120px;
+  flex: 1;
   position: relative;
+  max-width: 150px;
 }
 
 .step-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #e0e4ea;
-  color: #b0b8c9;
+  width: 3.3rem;
+  height: 3.3rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.6rem;
-  font-weight: bold;
-  margin-bottom: 10px;
+  border-radius: 50%;
+  font-size: 1.35rem;
+  margin-bottom: 0.75rem;
+  position: relative;
   z-index: 2;
-  border: 3px solid #e0e4ea;
-  transition: all 0.2s;
 }
 
-.progress-step.completed .step-icon {
-  background: #43b04a;
-  color: #fff;
-  border: 3px solid #43b04a;
-  box-shadow: 0 2px 8px #e3eaff44;
+.step-icon.active {
+  background-color: #10b981;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
-.progress-step.current .step-icon {
-  box-shadow: 0 0 0 4px #b6e2c6;
-  border: 3px solid #43b04a;
+.step-icon.current {
+  border: 3px solid #10b981;
+  color: #10b981;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
 
 .step-icon.inactive {
-  background: #e0e4ea;
-  color: #b0b8c9;
-  border: 3px solid #e0e4ea;
+  border: 3px solid #d1d5db;
+  color: #9ca3af;
+  background-color: #f9fafb;
 }
 
 .step-text {
-  font-size: 1.15rem;
-  color: #b0b8c9;
+  font-size: 0.75rem;
   text-align: center;
+  line-height: 1.2;
+  max-width: 100%;
+  word-wrap: break-word;
   font-weight: 500;
-  margin-top: 2px;
-  min-width: 90px;
+  color: #6b7280;
+  padding: 0 0.25rem;
 }
 
-.progress-step.completed .step-text,
-.progress-step.current .step-text {
-  color: #43b04a;
+.progress-step.completed .step-text {
+  color: #10b981;
+  font-weight: 600;
 }
 
-.progress-divider {
-  flex: 1;
-  height: 4px;
-  background: #e0e4ea;
-  align-self: center;
-  margin: 0 8px;
-  border-radius: 2px;
-  position: relative;
-  top: 20px;
-  transition: background 0.2s;
+.progress-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 1.65rem;
+  left: calc(50% + 1.65rem);
+  right: calc(-50% + 1.65rem);
+  height: 2px;
+  background-color: #e5e7eb;
+  z-index: 1;
 }
 
-.progress-divider.completed {
-  background: repeating-linear-gradient(90deg, #43b04a, #43b04a 8px, #e0e4ea 8px, #e0e4ea 16px);
+.progress-step.completed:not(:last-child)::after {
+  background-color: #10b981;
 }
+
+
 
 .contract-a4-container {
   width: 794px;
@@ -497,9 +521,7 @@
   box-shadow: 0 4px 24px 0 rgba(60,72,88,0.08);
   padding: 32px 32px 24px 32px;
   margin-bottom: 20px;
-  max-width: 1100px;
-  min-width: 700px;
-  width: 100%;
+  width: 794px;
   display: flex;
   justify-content: center;
 }
