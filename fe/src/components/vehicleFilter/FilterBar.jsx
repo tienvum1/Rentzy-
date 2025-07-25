@@ -192,17 +192,6 @@ const FilterBar = ({ onFilter, onClearAllFilters, onSort }) => {
         {openDropdown === 'fuel' && renderDropdown('fuel', fuelOptions)}
       </div>
 
-      {/* Khu vực xe */}
-      <div className="filter-dropdown-container">
-        <button
-          className={`filter-btn ${selected.area ? 'active' : ''}`}
-          onClick={() => setOpenDropdown(openDropdown === 'area' ? null : 'area')}
-        >
-          <FaMapMarkerAlt /> Khu vực xe
-          {selected.area && <span className="filter-badge">1</span>}
-        </button>
-        {openDropdown === 'area' && renderDropdown('area', areaOptions)}
-      </div>
 
       <button className="filter-btn sort-btn" onClick={onSort}>
         <FaSortAmountDown /> Sắp xếp

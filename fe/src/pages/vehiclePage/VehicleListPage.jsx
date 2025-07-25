@@ -6,7 +6,7 @@ import SearchBar from "../../components/vehicleFilter/SearchBar";
 import FilterBar from "../../components/vehicleFilter/FilterBar";
 import Header from "../../components/Header/Header";
 import Footer from "../../components/footer/Footer";
-import { searchVehiclesByTime } from '../../services/vehicleService';
+
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:4999";
 
