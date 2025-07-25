@@ -1,8 +1,8 @@
 /* Container */
 .my-reviews-container {
   width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(30,41,59,0.10);
@@ -330,4 +330,4 @@
     gap: 8px 8px;
     font-size: 0.98rem;
   }
-} 
+}

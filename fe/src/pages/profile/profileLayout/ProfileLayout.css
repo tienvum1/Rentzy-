@@ -23,7 +23,8 @@
   .profile-main-content {
     flex: 1;
     display: flex;
-    width: 900px;
+    width: 100%;
+    max-width: none;
     flex-direction: column;
     padding: 48px 32px 32px 32px;
     min-height: 100vh;

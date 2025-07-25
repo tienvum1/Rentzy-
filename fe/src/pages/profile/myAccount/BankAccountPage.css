@@ -1,10 +1,11 @@
 .bank-account-page {
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   padding: 24px;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  width: 100%;
 }
 
 .bank-account-page h2 {

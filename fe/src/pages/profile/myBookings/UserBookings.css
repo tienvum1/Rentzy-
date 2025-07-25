@@ -1,40 +1,12 @@
-.booking_content{
-  width:12000px,
-  
-}
-
 .user-bookings-container {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
   width: 100%;
-  max-width: 98%;
-  margin: 0 auto;
-  padding: 32px 0 40px 0;
+  padding: 20px;
   box-sizing: border-box;
-  background-color: #f8f9fa;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-}
-
-.profile-sidebar {
-  width: 260px;
-  min-width: 220px;
-  max-width: 300px;
-  background: #f7f9fa;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  padding: 32px 18px 24px 18px;
-  margin-right: 0;
-  margin-bottom: 0;
-  box-sizing: border-box;
-  transition: width 0.2s;
 }
 
 .bookings-content {
-  flex: 1;
+  width: 100%;
   min-width: 0;
-  padding-left: 32px;
 }
 
 .user-bookings-container h2 {
@@ -98,17 +70,17 @@
 
 /* Table Styles */
 .bookings-table-container {
-  overflow-x: auto; /* Enable horizontal scrolling on small screens */
   margin-top: 30px;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
 }
 
 .bookings-table-container table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 800px; /* Ensure table doesn't get too narrow */
+  min-width: 1000px;
 }
 
 .bookings-table-container th, .bookings-table-container td {
@@ -179,40 +151,53 @@
   color: #6c757d;
 }
 
-/* Booking Status Table */
-.booking-status-table {
+/* Booking Status Badge */
+.status-badge {
   padding: 5px 10px;
   border-radius: 20px;
   font-weight: 500;
   font-size: 0.8rem;
   color: #fff;
   white-space: nowrap;
+  display: inline-block;
 }
 
-.booking-status-table.pending {
+.status-badge.pending {
   background-color: #ffc107; /* Amber */
 }
 
-.booking-status-table.deposit_paid {
+.status-badge.deposit_paid {
   background-color: #6a0dad; /* Purple for deposit paid */
 }
 
-.booking-status-table.confirmed {
+.status-badge.fully_paid {
+  background-color: #17a2b8; /* Teal for fully paid */
+}
+
+.status-badge.confirmed {
   background-color: #28a745; /* Green */
 }
 
-.booking-status-table.in_progress {
+.status-badge.in_progress {
   background-color: #007bff; /* Blue for in progress */
 }
 
-.booking-status-table.completed {
+.status-badge.completed {
   background-color: #6c757d; /* Gray for completed */
 }
 
-.booking-status-table.canceled,
-.booking-status-table.rejected,
-.booking-status-table.expired {
+.status-badge.canceled,
+.status-badge.rejected,
+.status-badge.expired {
   background-color: #dc3545; /* Red */
+}
+
+.status-badge.refunded {
+  background-color: #20c997; /* Success green for refunded */
+}
+
+.status-badge.cancel_requested {
+  background-color: #fd7e14; /* Orange for cancel requested */
 }
 
 /* Actions Cell Buttons */
@@ -223,7 +208,9 @@
   min-width: 120px; /* Ensure enough space for buttons */
 }
 
+.pay-remaining-button,
 .pay-remaining-button-table,
+.view-details-button,
 .view-details-button-table,
 .view-booking-details-button-table {
   display: flex;
@@ -238,22 +225,27 @@
   cursor: pointer;
   transition: background-color 0.3s ease;
   white-space: nowrap;
+  text-decoration: none;
 }
 
+.pay-remaining-button,
 .pay-remaining-button-table {
   background-color: #ffc107;
   color: #333;
 }
 
+.pay-remaining-button:hover,
 .pay-remaining-button-table:hover {
   background-color: #e0a800;
 }
 
+.view-details-button,
 .view-details-button-table {
   background-color: #007bff;
   color: white;
 }
 
+.view-details-button:hover,
 .view-details-button-table:hover {
   background-color: #0056b3;
 }
@@ -345,21 +337,18 @@
   margin-top: 30px;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 768px) {
   .user-bookings-container {
-    flex-direction: column;
-    gap: 0;
-    padding: 10px 0;
+    padding: 10px;
   }
-  .profile-sidebar {
-    width: 100%;
-    min-width: unset;
-    max-width: unset;
-    margin-bottom: 18px;
-    border-radius: 12px 12px 0 0;
+  .bookings-table-container {
+    overflow-x: auto;
   }
-  .bookings-content {
-    padding-left: 0;
+  .bookings-table-container table {
+    min-width: 800px;
+  }
+  .actions-cell {
+    min-width: 100px;
   }
 } 
 
@@ -475,4 +464,4 @@
 }
 .review-cancel-btn:hover:enabled {
   background: #cbd5e1;
-} 
+}

@@ -1,11 +1,12 @@
 /* NotificationPage.css */
 
 .notification-page-container {
-  max-width: 900px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   background: #f8fafc;
   min-height: 100vh;
   padding: 0;
+  width: 100%;
 }
 
 .notification-header-row {
@@ -176,4 +177,4 @@
   .compact-date {
     margin-left: 0;
   }
-} 
+}
