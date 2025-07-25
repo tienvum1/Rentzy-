@@ -74,8 +74,8 @@ const Header = () => {
       <nav className="header__nav">
         <Link to="/" className="header__link">Trang chủ</Link>
         <Link to="/vehicles" className="header__link">Xe cho thuê</Link>
-        <Link to="/features" className="header__link">Tính năng</Link>
-        <Link to="/contact" className="header__link">Liên hệ</Link>
+        <Link to="/introduction" className="header__link">Giới thiệu</Link>
+   
       </nav>
       <div className="header__actions">
         {checkIsShowConsignButton(user, isAuthenticated) && (

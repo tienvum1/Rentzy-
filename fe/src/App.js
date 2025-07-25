@@ -82,6 +82,7 @@ import PayoutRequests from './pages/admin/payoutRequests/PayoutRequests';
 
 import PaymentSuccess from "./pages/payment/PaymentSuccess";
 import PaymentFailed from "./pages/payment/PaymentFailed";
+import IntroductionPage from "./pages/introduction/IntroductionPage";
 
 
 
@@ -98,6 +99,7 @@ function App() {
             <Route path="/" element={<RenterRouteGuard><Homepage /></RenterRouteGuard>} />
             <Route path="/homepage" element={<Homepage />} />
             <Route path="/vehicles" element={<VehiclePage />} />
+            <Route path="/introduction" element={<IntroductionPage />} />
             <Route path="/owner/:ownerId" element={<OwnerProfilePage />} />
             
             <Route path="/login" element={<Login />} />
