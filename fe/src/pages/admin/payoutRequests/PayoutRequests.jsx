@@ -13,7 +13,13 @@ const PayoutRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [note, setNote] = useState('');
-  const [summary, setSummary] = useState({ totalPendingPayouts: 0, totalPayoutAmount: 0 });
+  const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'pending', 'approved'
+  const [summary, setSummary] = useState({ 
+    totalPendingPayouts: 0, 
+    totalPayoutAmount: 0,
+    totalApprovedPayouts: 0,
+    totalApprovedAmount: 0
+  });
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -24,16 +30,24 @@ const PayoutRequests = () => {
 
   useEffect(() => {
     fetchRequests();
-  }, [pagination.currentPage]);
+  }, [filterStatus, pagination.currentPage]);
 
   const fetchRequests = async (page = 1) => {
     setLoading(true);
     setError('');
     try {
+      const params = {
+        page,
+        limit: 10
+      };
+      if (filterStatus !== 'all') {
+        params.status = filterStatus;
+      }
+      
       const res = await axios.get(
         `${process.env.REACT_APP_BACKEND_URL}/api/admin/payout-requests`,
         { 
-          params: { page, limit: 10 },
+          params,
           withCredentials: true 
         }
       );
@@ -101,179 +115,186 @@ const PayoutRequests = () => {
     setPagination(prev => ({ ...prev, currentPage: newPage }));
   };
 
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      'pending': { text: 'Chờ duyệt', class: 'status-pending' },
+      'approved': { text: 'Đã duyệt', class: 'status-approved' },
+      'rejected': { text: 'Từ chối', class: 'status-rejected' }
+    };
+    const statusInfo = statusMap[status] || { text: status, class: 'status-default' };
+    return <span className={`status-badge ${statusInfo.class}`}>{statusInfo.text}</span>;
+  };
+
   if (loading) {
     return (
-      <div className="admin-layout">
+      <div style={{ display: 'flex', minHeight: '100vh', background: '#f6f8fa' }}>
         <SidebarAdmin />
-        <div className="admin-content">
-          <div className="loading-spinner">Đang tải...</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="loading">Đang tải...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="admin-layout">
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f6f8fa' }}>
       <SidebarAdmin />
-      <div className="admin-content">
-        <div className="payout-requests-page">
-          <div className="page-header">
-            <h1>Quản lý giải ngân cho chủ xe</h1>
-            <p>Duyệt các yêu cầu giải ngân sau khi hoàn thành chuyến đi</p>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="all-pending-refunds">
+          <div className="header-section">
+            <h2>Quản lý yêu cầu giải ngân</h2>
+            
+            {/* Summary Cards */}
+            <div className="summary-cards">
+              <div className="summary-card">
+                <h3>Yêu cầu chờ duyệt</h3>
+                <div className="summary-number">{summary.totalPendingPayouts}</div>
+                <p>yêu cầu giải ngân</p>
+              </div>
+              <div className="summary-card">
+                <h3>Số tiền chờ giải ngân</h3>
+                <div className="summary-number">{formatCurrency(summary.totalPayoutAmount)}</div>
+                <p>tổng số tiền</p>
+              </div>
+              <div className="summary-card total">
+                <h3>Tổng cộng</h3>
+                <div className="summary-number">
+                  {summary.totalPendingPayouts + (summary.totalApprovedPayouts || 0)}
+                </div>
+                <p>tất cả yêu cầu</p>
+              </div>
+            </div>
+
+            {/* Filter Buttons */}
+            <div className="filter-buttons">
+              <button 
+                className={filterStatus === 'all' ? 'active' : ''}
+                onClick={() => setFilterStatus('all')}
+              >
+                Tất cả
+              </button>
+              <button 
+                className={filterStatus === 'pending' ? 'active' : ''}
+                onClick={() => setFilterStatus('pending')}
+              >
+                Chờ duyệt
+              </button>
+              <button 
+                className={filterStatus === 'approved' ? 'active' : ''}
+                onClick={() => setFilterStatus('approved')}
+              >
+                Đã duyệt
+              </button>
+            </div>
           </div>
 
           {error && (
-            <div className="error-message">
+            <div className="error">
               {error}
             </div>
           )}
 
-          {/* Summary Cards */}
-          <div className="summary-cards">
-            <div className="summary-card">
-              <h3>Tổng yêu cầu chờ duyệt</h3>
-              <p className="summary-number">{summary.totalPendingPayouts}</p>
+          {requests.length === 0 ? (
+            <div className="empty-state">
+              <h3>Không có yêu cầu giải ngân</h3>
+              <p>Hiện tại không có yêu cầu giải ngân nào cần xử lý.</p>
             </div>
-            <div className="summary-card">
-              <h3>Tổng số tiền cần giải ngân</h3>
-              <p className="summary-amount">{formatCurrency(summary.totalPayoutAmount)}</p>
-            </div>
-          </div>
-
-          {/* Requests Table */}
-          <div className="requests-table-container">
-            <table className="requests-table">
-              <thead>
-                <tr>
-                  <th style={{width: '80px'}}>Mã đơn</th>
-                  <th style={{width: '150px'}}>Chủ xe</th>
-                  <th style={{width: '180px'}}>Thông tin ngân hàng</th>
-                  <th style={{width: '150px'}}>Xe</th>
-                  <th style={{width: '120px'}}>Người thuê</th>
-                  <th style={{width: '120px'}}>Tổng tiền thuê</th>
-                  <th style={{width: '120px'}}>Phí hệ thống (10%)</th>
-                  <th style={{width: '120px'}}>Số tiền giải ngân</th>
-                  <th style={{width: '120px'}}>Ngày yêu cầu</th>
-                  <th style={{width: '100px'}}>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.length === 0 ? (
+          ) : (
+            <div className="requests-table">
+              <table>
+                <thead>
                   <tr>
-                    <td colSpan="10" className="no-data">
-                      Không có yêu cầu giải ngân nào
-                    </td>
+                    <th>Mã đơn</th>
+                    <th>Chủ xe</th>
+                    <th>Xe</th>
+                    <th>Thông tin ngân hàng</th>
+                    <th>Số tiền giải ngân</th>
+                    <th>Ngày yêu cầu</th>
+                    <th>Thao tác</th>
                   </tr>
-                ) : (
-                  requests.map((request) => (
+                </thead>
+                <tbody>
+                  {requests.map((request) => (
                     <tr key={request._id}>
-                      {/* Cột 1: Mã đơn */}
-                      <td className="booking-id">
-                        #{request._id.slice(-6)}
+                      <td>
+                        <div className="booking-id">#{request._id.slice(-6)}</div>
+                        <div className="booking-status">{getStatusBadge(request.payoutStatus || 'pending')}</div>
                       </td>
-                      
-                      {/* Cột 2: Chủ xe */}
-                      <td className="owner-info">
-                        <div>
-                          <strong>{request.vehicle?.owner?.name || 'N/A'}</strong>
-                          <br />
-                          <small>{request.vehicle?.owner?.email || 'N/A'}</small>
+                      <td>
+                        <div className="user-info">
+                          <div className="user-name">{request.vehicle?.owner?.name || 'N/A'}</div>
+                          <div className="user-email">{request.vehicle?.owner?.email || 'N/A'}</div>
+                          <div className="user-phone">{request.vehicle?.owner?.phone || 'N/A'}</div>
                         </div>
                       </td>
-                      
-                      {/* Cột 3: Thông tin ngân hàng */}
-                      <td className="bank-info">
-                        {request.vehicle?.owner?.bankAccounts?.[0] ? (
-                          <div>
-                            <strong>{request.vehicle.owner.bankAccounts[0].bankName}</strong>
-                            <br />
-                            <small>STK: {request.vehicle.owner.bankAccounts[0].accountNumber}</small>
-                            <br />
-                            <small>Chủ TK: {request.vehicle.owner.bankAccounts[0].accountHolder}</small>
-                          </div>
-                        ) : (
-                          <span className="no-bank-info">Chưa có thông tin ngân hàng</span>
-                        )}
-                      </td>
-                      
-                      {/* Cột 4: Xe */}
-                      <td className="vehicle-info">
-                        <div>
-                          <strong>{request.vehicle?.brand} {request.vehicle?.model}</strong>
-                          <br />
-                          <small>Biển số: {request.vehicle?.licensePlate}</small>
+                      <td>
+                        <div className="vehicle-info">
+                          <div className="vehicle-name">{request.vehicle?.brand} {request.vehicle?.model}</div>
+                          <div className="vehicle-plate">{request.vehicle?.licensePlate}</div>
                         </div>
                       </td>
-                      
-                      {/* Cột 5: Người thuê */}
-                      <td className="renter-info">
-                        <div>
-                          <strong>{request.renter?.name || 'N/A'}</strong>
-                          <br />
-                          <small>{request.renter?.email || 'N/A'}</small>
+                      <td>
+                        <div className="bank-info">
+                          {request.vehicle?.owner?.bankAccounts?.[0] ? (
+                            <>
+                              <div className="bank-name">{request.vehicle.owner.bankAccounts[0].bankName}</div>
+                              <div className="bank-account">{request.vehicle.owner.bankAccounts[0].accountNumber}</div>
+                              <div className="bank-holder">{request.vehicle.owner.bankAccounts[0].accountHolder}</div>
+                            </>
+                          ) : (
+                            <div className="no-bank-info">Chưa có thông tin ngân hàng</div>
+                          )}
                         </div>
                       </td>
-                      
-                      {/* Cột 6: Tổng tiền thuê */}
-                      <td className="total-cost">
-                        <strong>{formatCurrency(request.totalCost || 0)}</strong>
+                      <td>
+                        <div className="amount-info">
+                          <div className="amount">{formatCurrency(request.payoutAmount || 0)}</div>
+                        </div>
                       </td>
-                      
-                      {/* Cột 7: Phí hệ thống (10%) */}
-                      <td className="system-fee">
-                        <span style={{color: '#e74c3c'}}>
-                          {formatCurrency(request.systemFee || 0)}
-                        </span>
+                      <td>
+                        <div className="date-info">
+                          {formatDate(request.payoutRequestedAt)}
+                        </div>
                       </td>
-                      
-                      {/* Cột 8: Số tiền giải ngân */}
-                      <td className="payout-amount">
-                        <strong style={{color: '#27ae60'}}>
-                          {formatCurrency(request.payoutAmount || 0)}
-                        </strong>
-                      </td>
-                      
-                      {/* Cột 9: Ngày yêu cầu */}
-                      <td className="request-date">
-                        {formatDate(request.payoutRequestedAt)}
-                      </td>
-                      
-                      {/* Cột 10: Thao tác */}
-                      <td className="actions">
-                        <button
-                          className="approve-btn"
-                          onClick={() => openApprovalModal(request)}
-                          disabled={actionLoading[request._id]}
-                        >
-                          {actionLoading[request._id] ? 'Đang xử lý...' : 'Duyệt'}
-                        </button>
+                      <td>
+                        <div className="action-buttons">
+                          {(request.payoutStatus || 'pending') === 'pending' ? (
+                            <button
+                              className="approve-btn"
+                              onClick={() => openApprovalModal(request)}
+                              disabled={actionLoading[request._id]}
+                            >
+                              {actionLoading[request._id] ? 'Đang xử lý...' : 'Duyệt giải ngân'}
+                            </button>
+                          ) : (
+                            <span className="status-text">Đã xử lý</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Pagination */}
           {pagination.totalPages > 1 && (
             <div className="pagination">
-              <button
+              <button 
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={!pagination.hasPrev}
-                className="pagination-btn"
               >
                 Trước
               </button>
               
-              <span className="pagination-info">
+              <span className="page-info">
                 Trang {pagination.currentPage} / {pagination.totalPages}
               </span>
               
-              <button
+              <button 
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={!pagination.hasNext}
-                className="pagination-btn"
               >
                 Sau
               </button>
@@ -285,73 +306,34 @@ const PayoutRequests = () => {
         {showModal && selectedRequest && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3>Duyệt yêu cầu giải ngân</h3>
-                <button className="close-btn" onClick={() => setShowModal(false)}>×</button>
+              <h3>Duyệt yêu cầu giải ngân</h3>
+              
+              <div className="modal-info">
+                <p><strong>Mã đơn:</strong> #{selectedRequest._id.slice(-6)}</p>
+                <p><strong>Chủ xe:</strong> {selectedRequest.vehicle?.owner?.name}</p>
+                <p><strong>Xe:</strong> {selectedRequest.vehicle?.brand} {selectedRequest.vehicle?.model}</p>
+                <p><strong>Số tiền giải ngân:</strong> {formatCurrency(selectedRequest.payoutAmount)}</p>
+                {selectedRequest.vehicle?.owner?.bankAccounts?.[0] && (
+                  <>
+                    <p><strong>Ngân hàng:</strong> {selectedRequest.vehicle.owner.bankAccounts[0].bankName}</p>
+                    <p><strong>Số tài khoản:</strong> {selectedRequest.vehicle.owner.bankAccounts[0].accountNumber}</p>
+                    <p><strong>Chủ tài khoản:</strong> {selectedRequest.vehicle.owner.bankAccounts[0].accountHolder}</p>
+                  </>
+                )}
               </div>
               
-              <div className="modal-body">
-                <div className="request-details">
-                  <div className="detail-row">
-                    <label>Mã đơn:</label>
-                    <span>#{selectedRequest._id.slice(-6)}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Chủ xe:</label>
-                    <span>{selectedRequest.vehicle?.owner?.name}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Xe:</label>
-                    <span>{selectedRequest.vehicle?.brand} {selectedRequest.vehicle?.model}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Người thuê:</label>
-                    <span>{selectedRequest.renter?.name}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Tổng tiền thuê:</label>
-                    <span>{formatCurrency(selectedRequest.totalCost)}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Phí hệ thống (10%):</label>
-                    <span>{formatCurrency(selectedRequest.systemFee)}</span>
-                  </div>
-                  <div className="detail-row highlight">
-                    <label>Số tiền giải ngân:</label>
-                    <span><strong>{formatCurrency(selectedRequest.payoutAmount)}</strong></span>
-                  </div>
-                  {selectedRequest.vehicle?.owner?.bankAccounts?.[0] && (
-                    <div className="bank-details">
-                      <h4>Thông tin ngân hàng:</h4>
-                      <div className="detail-row">
-                        <label>Ngân hàng:</label>
-                        <span>{selectedRequest.vehicle.owner.bankAccounts[0].bankName}</span>
-                      </div>
-                      <div className="detail-row">
-                        <label>Số tài khoản:</label>
-                        <span>{selectedRequest.vehicle.owner.bankAccounts[0].accountNumber}</span>
-                      </div>
-                      <div className="detail-row">
-                        <label>Chủ tài khoản:</label>
-                        <span>{selectedRequest.vehicle.owner.bankAccounts[0].accountHolder}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="note-section">
-                  <label htmlFor="note">Ghi chú (tùy chọn):</label>
-                  <textarea
-                    id="note"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="Nhập ghi chú cho yêu cầu giải ngân..."
-                    rows="3"
-                  />
-                </div>
+              <div className="form-group">
+                <label htmlFor="note">Ghi chú (tùy chọn):</label>
+                <textarea
+                  id="note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Nhập ghi chú cho yêu cầu giải ngân..."
+                  rows="3"
+                />
               </div>
               
-              <div className="modal-footer">
+              <div className="modal-actions">
                 <button className="cancel-btn" onClick={() => setShowModal(false)}>
                   Hủy
                 </button>

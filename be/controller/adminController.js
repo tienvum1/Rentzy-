@@ -865,8 +865,20 @@ const getPendingPayoutRequests = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const status = req.query.status; // 'pending', 'approved', or undefined for all
 
-    const bookings = await Booking.find({ payoutStatus: 'pending' })
+    // Build query based on status filter
+    let query = {};
+    if (status === 'pending') {
+      query.payoutStatus = 'pending';
+    } else if (status === 'approved') {
+      query.payoutStatus = 'approved';
+    } else {
+      // For 'all' or no status, get both pending and approved
+      query.payoutStatus = { $in: ['pending', 'approved'] };
+    }
+
+    const bookings = await Booking.find(query)
       .populate('renter', 'name email phone')
       .populate('vehicle', 'brand model licensePlate primaryImage owner')
       .populate('vehicle.owner', 'name email phone bankAccounts')
@@ -874,7 +886,7 @@ const getPendingPayoutRequests = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    const total = await Booking.countDocuments({ payoutStatus: 'pending' });
+    const total = await Booking.countDocuments(query);
     const totalPages = Math.ceil(total / limit);
 
     // Tính toán số tiền giải ngân cho mỗi booking
@@ -893,6 +905,23 @@ const getPendingPayoutRequests = async (req, res) => {
       };
     });
 
+    // Calculate summary data
+    const totalPendingPayouts = await Booking.countDocuments({ payoutStatus: 'pending' });
+    const totalApprovedPayouts = await Booking.countDocuments({ payoutStatus: 'approved' });
+    
+    // Calculate amounts
+    const pendingBookings = await Booking.find({ payoutStatus: 'pending' });
+    const approvedBookings = await Booking.find({ payoutStatus: 'approved' });
+    
+    const systemFeeRate = 0.1;
+    const totalPayoutAmount = pendingBookings.reduce((sum, booking) => {
+      return sum + Math.round(booking.totalCost * (1 - systemFeeRate));
+    }, 0);
+    
+    const totalApprovedAmount = approvedBookings.reduce((sum, booking) => {
+      return sum + Math.round(booking.totalCost * (1 - systemFeeRate));
+    }, 0);
+
     res.status(200).json({
       success: true,
       data: {
@@ -905,13 +934,15 @@ const getPendingPayoutRequests = async (req, res) => {
           hasPrev: page > 1
         },
         summary: {
-          totalPendingPayouts: total,
-          totalPayoutAmount: payoutRequests.reduce((sum, booking) => sum + booking.payoutAmount, 0)
+          totalPendingPayouts,
+          totalPayoutAmount,
+          totalApprovedPayouts,
+          totalApprovedAmount
         }
       }
     });
   } catch (error) {
-    console.error('Error fetching pending payout requests:', error);
+    console.error('Error fetching payout requests:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Lỗi server khi lấy danh sách yêu cầu giải ngân' 
