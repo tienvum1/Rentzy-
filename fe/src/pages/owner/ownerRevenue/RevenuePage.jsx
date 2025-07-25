@@ -8,20 +8,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999';
 
-const typeOptions = [
-  { value: 'day', label: 'Ngày' },
-  { value: 'week', label: 'Tuần' },
-  { value: 'month', label: 'Tháng' },
-  { value: 'year', label: 'Năm' },
-];
-
 const monthNames = [
   'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
   'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
 ];
 
 const RevenuePage = () => {
-  const [type, setType] = useState('month');
+  const [viewType, setViewType] = useState('monthly');
   const [revenueData, setRevenueData] = useState([]);
   const [total, setTotal] = useState(0);
   const [grossTotal, setGrossTotal] = useState(0);
@@ -30,36 +23,33 @@ const RevenuePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedDate, setSelectedDate] = useState(dayjs());
-  const [viewType, setViewType] = useState('monthly'); // 'daily' or 'monthly'
 
-
-
-  // Helper để lấy start/end theo type
+  // Helper để lấy start/end theo viewType
   const getRange = useMemo(() => {
-    if (type === 'day') {
-      const start = selectedDate.startOf('day').toISOString();
-      const end = selectedDate.endOf('day').toISOString();
-      return { start, end };
-    } else if (type === 'month') {
+    if (viewType === 'daily') {
       const start = selectedDate.startOf('month').toISOString();
       const end = selectedDate.endOf('month').toISOString();
       return { start, end };
-    } else if (type === 'year') {
+    } else if (viewType === 'monthly') {
       const start = selectedDate.startOf('year').toISOString();
       const end = selectedDate.endOf('year').toISOString();
       return { start, end };
     }
     return {};
-  }, [type, selectedDate]);
+  }, [viewType, selectedDate]);
 
   useEffect(() => {
     const fetchRevenue = async () => {
       setLoading(true);
       setError('');
       try {
-        let url = `${API_URL}/api/owner/revenue?type=${type}`;
+        // FIX: Sửa logic gọi API cho daily view
+        const apiType = viewType === 'daily' ? 'day' : 'year';
+        let url = `${API_URL}/api/owner/revenue?type=${apiType}`;
         const { start, end } = getRange;
         if (start && end) url += `&start=${start}&end=${end}`;
+        
+        console.log('Fetching revenue from URL:', url); // Debug log
         
         const res = await fetch(url, {
           credentials: 'include',
@@ -69,7 +59,12 @@ const RevenuePage = () => {
         });
         
         const data = await res.json();
+        console.log('API Response:', data); // Debug log
+        
         if (data.success) {
+          console.log('Revenue data from API:', data.revenue); // Debug log
+          console.log('Total data from API:', data.total); // Debug log
+          
           setRevenueData(data.revenue || []);
           setTotal(data.total?.totalRevenue || 0);
           setGrossTotal(data.total?.grossRevenue || 0);
@@ -89,13 +84,14 @@ const RevenuePage = () => {
     };
     
     fetchRevenue();
-  }, [type, getRange]);
-
-
+  }, [viewType, getRange]);
 
   // Prepare chart data based on view type
   const chartData = useMemo(() => {
+    console.log('Processing chart data with revenueData:', revenueData); // Debug log
+    
     if (!revenueData || revenueData.length === 0) {
+      console.log('No revenue data available'); // Debug log
       return [];
     }
 
@@ -104,6 +100,7 @@ const RevenuePage = () => {
     if (viewType === 'monthly') {
       // Create 12 months data for the selected year
       const year = selectedDate.year();
+      console.log('Processing monthly data for year:', year); // Debug log
       
       // Initialize all 12 months with zero values
       for (let month = 1; month <= 12; month++) {
@@ -117,50 +114,47 @@ const RevenuePage = () => {
         });
       }
       
-      // Fill in actual data if available
+      // Fill in actual data from backend
       revenueData.forEach(item => {
-        let monthIndex = -1;
+        console.log('Processing revenue item:', item); // Debug log
         
-        // Handle different data structures from backend
-        if (item._id && typeof item._id.month === 'number') {
-          monthIndex = item._id.month - 1;
-        } else if (item.date) {
-          const date = new Date(item.date);
-          if (!isNaN(date.getTime())) {
-            monthIndex = date.getMonth();
-          }
-        } else if (item.period) {
-          const periodDate = new Date(item.period);
-          if (!isNaN(periodDate.getTime())) {
-            monthIndex = periodDate.getMonth();
-          }
-        }
-        
-        if (monthIndex >= 0 && monthIndex < 12) {
-          const revenue = item.totalRevenue || item.revenue || 0;
-          const grossRevenue = item.grossRevenue || revenue || 0;
-          const platformFee = item.platformFee || (grossRevenue * platformFeeRate) || 0;
+        if (item.period && item.period.includes('-')) {
+          const [itemYear, itemMonth] = item.period.split('-');
+          console.log(`Comparing itemYear: ${itemYear} with year: ${year}`); // Debug log
           
-          processedData[monthIndex] = {
-            ...processedData[monthIndex],
-            bookingCount: item.count || item.bookingCount || 0,
-            revenue: Math.max(0, revenue),
-            grossRevenue: Math.max(0, grossRevenue),
-            platformFee: Math.max(0, platformFee)
-          };
+          if (parseInt(itemYear, 10) === year) {
+            const monthIndex = parseInt(itemMonth, 10) - 1;
+            if (monthIndex >= 0 && monthIndex < 12) {
+              console.log(`Updating month ${monthIndex + 1} with data:`, item); // Debug log
+              processedData[monthIndex] = {
+                period: item.period,
+                displayPeriod: item.displayPeriod || monthNames[monthIndex],
+                bookingCount: Math.max(0, item.bookingCount || 0),
+                revenue: Math.max(0, item.revenue || 0),
+                grossRevenue: Math.max(0, item.grossRevenue || 0),
+                platformFee: Math.max(0, item.platformFee || 0)
+              };
+            }
+          }
         }
       });
     } else {
       // Daily view - show all days in the selected period
       const { start, end } = getRange;
-      if (!start || !end) return [];
+      if (!start || !end) {
+        console.log('No start/end date for daily view'); // Debug log
+        return [];
+      }
       
       const startDate = new Date(start);
       const endDate = new Date(end);
       
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        console.log('Invalid start/end dates'); // Debug log
         return [];
       }
+      
+      console.log('Processing daily data from', startDate, 'to', endDate); // Debug log
       
       // Create array of all dates in the range
       const dateArray = [];
@@ -172,14 +166,11 @@ const RevenuePage = () => {
       }
       
       // Initialize all dates with zero values
-      processedData = dateArray.map(date => {
+      processedData = dateArray.map((date, index) => {
         const dateStr = date.toISOString().split('T')[0];
         return {
           period: dateStr,
-          displayPeriod: date.toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit'
-          }),
+          displayPeriod: String(date.getDate()).padStart(2, '0') + '/' + String(date.getMonth() + 1).padStart(2, '0'), // FIX: Sửa displayPeriod
           bookingCount: 0,
           revenue: 0,
           grossRevenue: 0,
@@ -187,44 +178,30 @@ const RevenuePage = () => {
         };
       });
       
-      // Fill in actual data if available
+      // Fill in actual data from backend
       revenueData.forEach(item => {
-        let targetDate = null;
+        console.log('Processing daily revenue item:', item); // Debug log
         
-        // Handle different data structures from backend
-        if (item._id && item._id.day && item._id.month && item._id.year) {
-          targetDate = new Date(item._id.year, item._id.month - 1, item._id.day);
-        } else if (item.date) {
-          targetDate = new Date(item.date);
-        } else if (item.period) {
-          targetDate = new Date(item.period);
-        }
-        
-        if (targetDate && !isNaN(targetDate.getTime())) {
-          const dateStr = targetDate.toISOString().split('T')[0];
-          const dataIndex = processedData.findIndex(d => d.period === dateStr);
-          
+        if (item.period) {
+          const dataIndex = processedData.findIndex(d => d.period === item.period);
           if (dataIndex >= 0) {
-            const revenue = item.totalRevenue || item.revenue || 0;
-            const grossRevenue = item.grossRevenue || revenue || 0;
-            const platformFee = item.platformFee || (grossRevenue * platformFeeRate) || 0;
-            
+            console.log(`Updating date ${item.period} with data:`, item); // Debug log
             processedData[dataIndex] = {
-              ...processedData[dataIndex],
-              bookingCount: item.count || item.bookingCount || 0,
-              revenue: Math.max(0, revenue),
-              grossRevenue: Math.max(0, grossRevenue),
-              platformFee: Math.max(0, platformFee)
+              period: item.period,
+              displayPeriod: item.displayPeriod || processedData[dataIndex].displayPeriod,
+              bookingCount: Math.max(0, item.bookingCount || 0),
+              revenue: Math.max(0, item.revenue || 0),
+              grossRevenue: Math.max(0, item.grossRevenue || 0),
+              platformFee: Math.max(0, item.platformFee || 0)
             };
           }
         }
       });
     }
     
+    console.log('Final processed chart data:', processedData); // Debug log
     return processedData;
-  }, [revenueData, viewType, selectedDate, getRange, platformFeeRate]);
-
-
+  }, [revenueData, viewType, selectedDate, getRange]);
 
   // Định dạng số tiền
   const formatCurrency = (value) => {
@@ -240,8 +217,6 @@ const RevenuePage = () => {
       compactDisplay: 'short'
     }).format(value);
   };
-
-
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -278,255 +253,262 @@ const RevenuePage = () => {
 
   // Định dạng ngày tháng
   const renderDatePicker = () => {
-    const commonProps = {
-      value: selectedDate,
-      onChange: setSelectedDate,
-      allowClear: false,
-      style: { width: '100%' }
-    };
-
-    switch (type) {
-      case 'day':
-        return <DatePicker {...commonProps} format="DD/MM/YYYY" />;
-      case 'month':
-        return <DatePicker {...commonProps} picker="month" format="MM/YYYY" />;
-      case 'year':
-        return <DatePicker {...commonProps} picker="year" format="YYYY" />;
-      default:
-        return null;
+    if (viewType === 'daily') {
+      return (
+        <DatePicker
+          value={selectedDate}
+          onChange={(date) => setSelectedDate(date || dayjs())}
+          picker="month"
+          format="MM/YYYY"
+          placeholder="Chọn tháng"
+          allowClear={false}
+          disabled={loading}
+          style={{ width: '100%' }}
+        />
+      );
+    } else if (viewType === 'monthly') {
+      return (
+        <DatePicker
+          value={selectedDate}
+          onChange={(date) => setSelectedDate(date || dayjs())}
+          picker="year"
+          format="YYYY"
+          placeholder="Chọn năm"
+          allowClear={false}
+          disabled={loading}
+          style={{ width: '100%' }}
+        />
+      );
     }
+    return null;
   };
 
-  // Kiểm tra xem có dữ liệu không
-  const hasData = chartData && chartData.length > 0 && chartData.some(item => 
-    item.revenue > 0 || item.grossRevenue > 0 || item.bookingCount > 0
-  );
+  // Cải thiện logic kiểm tra dữ liệu
+  const hasData = useMemo(() => {
+    console.log('Checking hasData with chartData:', chartData); // Debug log
+    console.log('Total revenue:', total, 'Gross total:', grossTotal); // Debug log
+    
+    // Kiểm tra nếu có tổng doanh thu hoặc có dữ liệu trong chartData
+    const hasTotalRevenue = total > 0 || grossTotal > 0;
+    const hasChartData = chartData && chartData.length > 0 && chartData.some(item => 
+      (item.revenue && item.revenue > 0) || 
+      (item.grossRevenue && item.grossRevenue > 0) || 
+      (item.bookingCount && item.bookingCount > 0)
+    );
+    
+    console.log('Has total revenue:', hasTotalRevenue); // Debug log
+    console.log('Has chart data:', hasChartData); // Debug log
+    
+    return hasTotalRevenue || hasChartData;
+  }, [chartData, total, grossTotal]);
+
+ 
 
   return (
     <div className="revenue-layout">
       <SidebarOwner />
-      <div className="revenue-container">
-        <div className="revenue-content improved">
+      <div className="revenue-container-fullwidth">
+        <div className="revenue-content-fullwidth">
           <h1>Doanh thu của bạn</h1>
-        <div className="revenue-filter-bar">
-          <div className="filter-row">
-            <div className="filter-group">
-              <label htmlFor="viewType">Hiển thị biểu đồ theo:</label>
-              <select
-                id="viewType"
-                value={viewType}
-                onChange={(e) => setViewType(e.target.value)}
-                className="view-type-select"
-                disabled={loading}
-              >
-                <option value="daily">Ngày</option>
-                <option value="monthly">Tháng</option>
-              </select>
-            </div>
-            
-            <div className="filter-group">
-              <label htmlFor="type-select">Loại thống kê:</label>
-              <select 
-                id="type-select"
-                value={type} 
-                onChange={(e) => {
-                  setType(e.target.value);
-                  // Auto-adjust view type based on selection
-                  if (e.target.value === 'year') {
-                    setViewType('monthly');
-                  } else if (e.target.value === 'day') {
-                    setViewType('daily');
-                  }
-                }}
-                className="revenue-select"
-                disabled={loading}
-              >
-                <option value="day">Theo ngày</option>
-                <option value="week">Theo tuần</option>
-                <option value="month">Theo tháng</option>
-                <option value="year">Theo năm</option>
-              </select>
-            </div>
-            
-            <div className="filter-group">
-              <label htmlFor="date-picker">Chọn thời gian:</label>
-              <div className="date-picker-wrapper">
-                {renderDatePicker()}
-              </div>
-            </div>
-          </div>
-        </div>
-        {loading ? (
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Đang tải dữ liệu...</p>
-          </div>
-        ) : error ? (
-          <div className="error-container">
-            <p className="error-message">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="retry-button"
-            >
-              Thử lại
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="revenue-summary">
-              <div className="revenue-card main">
-                <h3>Doanh thu thực nhận</h3>
-                <div className="amount">{formatCurrency(total)}</div>
-                <div className="subtitle">Sau khi trừ phí platform</div>
+          
+       
+          
+          <div className="revenue-filter-bar">
+            <div className="filter-row">
+              <div className="filter-group">
+                <label htmlFor="viewType">Hiển thị biểu đồ theo:</label>
+                <select
+                  id="viewType"
+                  value={viewType}
+                  onChange={(e) => setViewType(e.target.value)}
+                  className="view-type-select"
+                  disabled={loading}
+                >
+                  <option value="daily">Ngày</option>
+                  <option value="monthly">Tháng</option>
+                </select>
               </div>
               
-              <div className="revenue-breakdown">
-                <div className="revenue-card">
-                  <h4>Tổng doanh thu gốc</h4>
-                  <div className="amount-small">{formatCurrency(grossTotal)}</div>
-                </div>
-                <div className="revenue-card">
-                  <h4>Phí platform ({(platformFeeRate * 100).toFixed(0)}%)</h4>
-                  <div className="amount-small fee">{formatCurrency(platformFee)}</div>
+              <div className="filter-group">
+                <label htmlFor="date-picker">Chọn thời gian:</label>
+                <div className="date-picker-wrapper">
+                  {renderDatePicker()}
                 </div>
               </div>
             </div>
-            {/* Revenue Chart */}
-            <div className="chart-container">
-              <div className="chart-header">
-                <h3>Biểu đồ doanh thu {viewType === 'daily' ? 'theo ngày' : 'theo tháng'}</h3>
-                {hasData && (
-                  <div className="chart-info">
-                    <span className="data-points">Hiển thị {chartData.length} điểm dữ liệu</span>
+          </div>
+
+          {loading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Đang tải dữ liệu...</p>
+            </div>
+          ) : error ? (
+            <div className="error-container">
+              <p className="error-message">{error}</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="retry-button"
+              >
+                Thử lại
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="revenue-summary-fullwidth">
+                <div className="revenue-card main">
+                  <h3>Doanh thu thực nhận</h3>
+                  <div className="amount">{formatCurrency(total)}</div>
+                  <div className="subtitle">Sau khi trừ phí platform</div>
+                </div>
+                
+                <div className="revenue-breakdown">
+                  <div className="revenue-card">
+                    <h4>Tổng doanh thu gốc</h4>
+                    <div className="amount-small">{formatCurrency(grossTotal)}</div>
                   </div>
+                  <div className="revenue-card">
+                    <h4>Phí platform ({(platformFeeRate * 100).toFixed(0)}%)</h4>
+                    <div className="amount-small fee">{formatCurrency(platformFee)}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Revenue Chart */}
+              <div className="chart-container-fullwidth">
+                <div className="chart-header">
+                  <h3>Biểu đồ doanh thu {viewType === 'daily' ? 'theo ngày' : 'theo tháng'}</h3>
+                  {chartData.length > 0 && (
+                    <div className="chart-info">
+                      <span className="data-points">Hiển thị {chartData.length} điểm dữ liệu</span>
+                    </div>
+                  )}
+                </div>
+                
+                {!hasData ? (
+                  <div className="no-data">
+                    <div className="no-data-icon">📊</div>
+                    <p>Không có dữ liệu doanh thu trong khoảng thời gian này</p>
+                    <small>Hãy thử chọn khoảng thời gian khác hoặc kiểm tra lại dữ liệu</small>
+                    <small>Debug: Total={total}, GrossTotal={grossTotal}, ChartData={chartData.length}</small>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={500}>
+                    <BarChart 
+                      data={chartData} 
+                      margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                      barCategoryGap="8%"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="displayPeriod" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        fontSize={12}
+                        stroke="#666"
+                        interval={0}
+                      />
+                      <YAxis 
+                        tickFormatter={formatCurrencyShort}
+                        fontSize={12}
+                        stroke="#666"
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '20px' }}
+                        iconType="rect"
+                      />
+                      <Bar 
+                        dataKey="grossRevenue" 
+                        name="Doanh thu gốc" 
+                        fill="#3b82f6" 
+                        radius={[2, 2, 0, 0]}
+                        maxBarSize={50}
+                      />
+                      <Bar 
+                        dataKey="platformFee" 
+                        name="Phí platform" 
+                        fill="#ef4444" 
+                        radius={[2, 2, 0, 0]}
+                        maxBarSize={50}
+                      />
+                      <Bar 
+                        dataKey="revenue" 
+                        name="Doanh thu thực nhận" 
+                        fill="#10b981" 
+                        radius={[2, 2, 0, 0]}
+                        maxBarSize={50}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
                 )}
               </div>
-              
-              {!hasData ? (
-                <div className="no-data">
-                  <div className="no-data-icon">📊</div>
-                  <p>Không có dữ liệu doanh thu trong khoảng thời gian này</p>
-                  <small>Hãy thử chọn khoảng thời gian khác hoặc kiểm tra lại dữ liệu</small>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={450}>
-                  <BarChart 
-                    data={chartData} 
-                    margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-                    barCategoryGap="10%"
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis 
-                      dataKey="displayPeriod" 
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
-                      fontSize={11}
-                      stroke="#666"
-                      interval={0}
-                    />
-                    <YAxis 
-                      tickFormatter={formatCurrencyShort}
-                      fontSize={11}
-                      stroke="#666"
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend 
-                      wrapperStyle={{ paddingTop: '20px' }}
-                      iconType="rect"
-                    />
-                    <Bar 
-                      dataKey="grossRevenue" 
-                      name="Doanh thu gốc" 
-                      fill="#3b82f6" 
-                      radius={[2, 2, 0, 0]}
-                      maxBarSize={60}
-                    />
-                    <Bar 
-                      dataKey="platformFee" 
-                      name="Phí platform" 
-                      fill="#ef4444" 
-                      radius={[2, 2, 0, 0]}
-                      maxBarSize={60}
-                    />
-                    <Bar 
-                      dataKey="revenue" 
-                      name="Doanh thu thực nhận" 
-                      fill="#10b981" 
-                      radius={[2, 2, 0, 0]}
-                      maxBarSize={60}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
 
-            {/* Booking Count Chart */}
-            <div className="chart-container">
-              <div className="chart-header">
-                <h3>Số lượng booking {viewType === 'daily' ? 'theo ngày' : 'theo tháng'}</h3>
-                {hasData && (
-                  <div className="chart-info">
-                    <span className="total-bookings">
-                      Tổng: {chartData.reduce((sum, item) => sum + (item.bookingCount || 0), 0)} booking
-                    </span>
+              {/* Booking Count Chart */}
+              <div className="chart-container-fullwidth">
+                <div className="chart-header">
+                  <h3>Số lượng booking {viewType === 'daily' ? 'theo ngày' : 'theo tháng'}</h3>
+                  {chartData.length > 0 && (
+                    <div className="chart-info">
+                      <span className="total-bookings">
+                        Tổng: {chartData.reduce((sum, item) => sum + (item.bookingCount || 0), 0)} booking
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                {!hasData ? (
+                  <div className="no-data">
+                    <div className="no-data-icon">📅</div>
+                    <p>Không có dữ liệu booking trong khoảng thời gian này</p>
+                    <small>Hãy thử chọn khoảng thời gian khác hoặc kiểm tra lại dữ liệu</small>
                   </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <BarChart 
+                      data={chartData} 
+                      margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                      barCategoryGap="8%"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="displayPeriod" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        fontSize={12}
+                        stroke="#666"
+                        interval={0}
+                      />
+                      <YAxis 
+                        fontSize={12}
+                        stroke="#666"
+                        allowDecimals={false}
+                      />
+                      <Tooltip 
+                        formatter={(value, name) => [value, name]}
+                        labelFormatter={(label) => `Thời gian: ${label}`}
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #ccc',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                      <Bar 
+                        dataKey="bookingCount" 
+                        name="Số booking" 
+                        fill="#8b5cf6" 
+                        radius={[2, 2, 0, 0]}
+                        maxBarSize={50}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
                 )}
               </div>
-              
-              {!hasData ? (
-                <div className="no-data">
-                  <div className="no-data-icon">📅</div>
-                  <p>Không có dữ liệu booking trong khoảng thời gian này</p>
-                  <small>Hãy thử chọn khoảng thời gian khác hoặc kiểm tra lại dữ liệu</small>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart 
-                    data={chartData} 
-                    margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-                    barCategoryGap="10%"
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis 
-                      dataKey="displayPeriod" 
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
-                      fontSize={11}
-                      stroke="#666"
-                      interval={0}
-                    />
-                    <YAxis 
-                      fontSize={11}
-                      stroke="#666"
-                      allowDecimals={false}
-                    />
-                    <Tooltip 
-                      formatter={(value, name) => [value, name]}
-                      labelFormatter={(label) => `Thời gian: ${label}`}
-                      contentStyle={{
-                        backgroundColor: 'white',
-                        border: '1px solid #ccc',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-                      }}
-                    />
-                    <Bar 
-                      dataKey="bookingCount" 
-                      name="Số booking" 
-                      fill="#8b5cf6" 
-                      radius={[2, 2, 0, 0]}
-                      maxBarSize={60}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-
-
-          </>
-        )}
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -281,7 +281,7 @@ const getOwnerRevenue = async (req, res) => {
       if (end) match.createdAt.$lte = new Date(end);
     }
 
-    // Group theo type
+    // Group theo type - FIX: Sửa logic grouping cho daily
     let groupId = null;
     if (type === 'day') {
       groupId = { year: { $year: '$createdAt' }, month: { $month: '$createdAt' }, day: { $dayOfMonth: '$createdAt' } };
@@ -290,10 +290,10 @@ const getOwnerRevenue = async (req, res) => {
     } else if (type === 'month') {
       groupId = { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } };
     } else if (type === 'year') {
-      groupId = { year: { $year: '$createdAt' } };
+      groupId = { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } };
     }
 
-    // Tính doanh thu thực tế của chủ xe (trừ phí platform 5%)
+    // Tính doanh thu thực tế của chủ xe (trừ phí platform 10%)
     const PLATFORM_FEE_RATE = 0.1; // 10% phí platform
     
     const revenue = await Booking.aggregate([
@@ -318,9 +318,14 @@ const getOwnerRevenue = async (req, res) => {
       { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1, '_id.week': 1 } }
     ]);
 
-    // Tổng doanh thu toàn bộ
+    // Tổng doanh thu toàn bộ (không phụ thuộc vào filter thời gian)
+    const totalMatch = {
+      vehicle: { $in: vehicleIds },
+      status: 'completed',
+    };
+    
     const total = await Booking.aggregate([
-      { $match: match },
+      { $match: totalMatch },
       {
         $addFields: {
           ownerRevenue: {
@@ -340,11 +345,45 @@ const getOwnerRevenue = async (req, res) => {
       } }
     ]);
 
+    // Xử lý dữ liệu để frontend dễ sử dụng
+    const processedRevenue = revenue.map(item => {
+      let period = '';
+      let displayPeriod = '';
+      
+      if (type === 'day' && item._id && item._id.day) {
+        // FIX: Xử lý đúng dữ liệu daily
+        const date = new Date(item._id.year, item._id.month - 1, item._id.day);
+        period = date.toISOString().split('T')[0];
+        displayPeriod = String(item._id.day).padStart(2, '0') + '/' + String(item._id.month).padStart(2, '0');
+      } else if ((type === 'month' || type === 'year') && item._id) {
+        period = `${item._id.year}-${String(item._id.month).padStart(2, '0')}`;
+        const monthNames = [
+          'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+          'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
+        ];
+        displayPeriod = monthNames[item._id.month - 1];
+      }
+      
+      return {
+        ...item,
+        period,
+        displayPeriod,
+        revenue: item.totalRevenue || 0,
+        bookingCount: item.count || 0
+      };
+    });
+
     res.json({ 
       success: true, 
-      revenue, 
+      revenue: processedRevenue, 
       total: total[0] || { totalRevenue: 0, grossRevenue: 0, platformFee: 0, count: 0 },
-      platformFeeRate: PLATFORM_FEE_RATE
+      platformFeeRate: PLATFORM_FEE_RATE,
+      debug: {
+        matchCondition: match,
+        totalMatchCondition: totalMatch,
+        vehicleCount: vehicleIds.length,
+        rawRevenue: revenue
+      }
     });
   } catch (err) {
     console.error('Error in getOwnerRevenue:', err);
