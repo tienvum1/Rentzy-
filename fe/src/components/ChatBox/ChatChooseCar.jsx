@@ -1,48 +1,22 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { FaPaperPlane, FaComments } from "react-icons/fa";
+import { FaPaperPlane, FaRobot } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const ChatChooseCar = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      sender: "admin",
+      sender: "chatai",
       text: "Chào bạn! Bạn muốn tìm loại xe nào?",
-      timestamp: new Date("2025-07-24T09:00:00"),
-    },
-    {
-      id: 2,
-      sender: "user",
-      text: "Mình cần xe 7 chỗ cho gia đình đi Đà Lạt.",
-    },
-    {
-      id: 3,
-      sender: "admin",
-      text: "Bạn muốn thuê từ ngày nào đến ngày nào?",
-    },
-    {
-      id: 4,
-      sender: "user",
-      text: "Từ 1/8 đến 5/8.",
-    },
-    {
-      id: 5,
-      sender: "admin",
-      text: "Xe phù hợp: Toyota Fortuner, giá 1.200.000đ/ngày. Bạn muốn đặt không?",
-      timestamp: new Date("2025-07-24T09:03:00"),
-    },
-    {
-      id: 5,
-      sender: "admin",
-      text: "Xe phù hợp: Toyota Fortuner, giá 1.asd200.000đ/ngày. Bạn muốn đặt không?",
-      timestamp: new Date("2025-07-24T09:03:00"),
     },
   ]);
 
   const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const popupRef = useRef(null);
 
   // Scroll to bottom khi có tin nhắn mới
   useEffect(() => {
@@ -51,7 +25,69 @@ const ChatChooseCar = () => {
     }
   }, [messages, open]);
 
-  const handleSend = () => {};
+  // close popup when click outside :
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (popupRef.current && !popupRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
+
+  // call chat ai api when customer send new message :
+  const handleSend = async () => {
+    // push customer's message to array :
+    setMessages([
+      ...messages,
+      {
+        sender: "user",
+        text: newMessage,
+      },
+    ]);
+    messages.push({
+      sender: "user",
+      text: newMessage,
+    });
+    // clear input :
+    setNewMessage("");
+    // call chatbox api :
+    const response = await axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/api/chat/suggestCar`,
+      {
+        message: newMessage,
+      }
+    );
+    // response :
+    console.log("response : ", response.data);
+    if (Array.isArray(response.data)) {
+      // if it is a response for suggested car :
+      setMessages([
+        ...messages,
+        {
+          sender: "chatai",
+          text: "Here some cars base on your request :",
+          suggestedList: response.data,
+        },
+      ]);
+    } else {
+      // if it is a response for unrelative question :
+      setMessages([
+        ...messages,
+        {
+          sender: "chatai",
+          text: response.data.text,
+        },
+      ]);
+    }
+  };
 
   return (
     <>
@@ -77,12 +113,13 @@ const ChatChooseCar = () => {
           cursor: "pointer",
         }}
       >
-        <FaComments />
+        <FaRobot />
       </button>
 
       {/* Popup chat */}
       {open && (
         <div
+          ref={popupRef}
           style={{
             position: "fixed",
             right: 32,
@@ -175,7 +212,11 @@ const ChatChooseCar = () => {
                     wordWrap: "break-word",
                   }}
                 >
-                  {msg.text}
+                  {msg.suggestedList ? (
+                    <CarList cars={msg.suggestedList} />
+                  ) : (
+                    msg.text
+                  )}
                 </div>
               </div>
             ))}
@@ -209,7 +250,6 @@ const ChatChooseCar = () => {
               }}
               placeholder="Nhập tin nhắn..."
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              disabled={loading}
             />
             <button
               onClick={handleSend}
@@ -227,7 +267,7 @@ const ChatChooseCar = () => {
                 cursor: "pointer",
                 opacity: newMessage.trim() ? 1 : 0.7,
               }}
-              disabled={!newMessage.trim() || loading}
+              disabled={!newMessage.trim()}
             >
               <FaPaperPlane />
             </button>
@@ -239,3 +279,37 @@ const ChatChooseCar = () => {
 };
 
 export default ChatChooseCar;
+
+const CarList = ({ cars }) => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="flex flex-col gap-4">
+      {cars.map((car) => (
+        <div
+          key={car._id}
+          onClick={() => navigate(`/vehicles/${car._id}`)}
+          className="cursor-pointer bg-white border rounded-xl shadow-sm hover:shadow-md transition p-4"
+        >
+          <div className="text-blue-700 font-semibold text-lg mb-1">
+            {car.brand}
+          </div>
+          <div className="text-sm text-gray-600">
+            <p>
+              <strong>Location:</strong> {car.location}
+            </p>
+            <p>
+              <strong>Fuel:</strong> {car.fuelType}
+            </p>
+            <p>
+              <strong>Seats:</strong> {car.seatCount}
+            </p>
+            <p className="font-bold text-gray-800 mt-1">
+              {car.pricePerDay.toLocaleString()} VND/day
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
