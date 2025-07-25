@@ -2,7 +2,7 @@
 :root {
     --primary-color: #007bff; /* Blue */
     --secondary-color: #6c757d; /* Gray */
-    --success-color: #28a745; /* Green */
+    --success-color: #00ff3c; /* Green */
     --danger-color: #dc3545; /* Red */
     --warning-color: #ffc107; /* Yellow */
     --info-color: #17a2b8; /* Cyan */
@@ -282,44 +282,59 @@
 
 /* Status Badges */
 .status-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8em;
-    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75em;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    text-align: center;
+    min-width: 70px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.status-badge.active {
+.status-badge.available {
     background-color: #d4edda;
-    color: var(--success-color);
+    color: #155724;
+    border: 1px solid #c3e6cb;
 }
 
 .status-badge.blocked {
     background-color: #f8d7da;
-    color: var(--danger-color);
+    color: #721c24;
+    border: 1px solid #f5c6cb;
 }
 
 .approval-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8em;
-    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75em;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    text-align: center;
+    min-width: 80px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .approval-badge.approved {
     background-color: #d4edda;
-    color: var(--success-color);
+    color: #155724;
+    border: 1px solid #c3e6cb;
 }
 
 .approval-badge.pending {
     background-color: #fff3cd;
-    color: var(--warning-color);
+    color: #856404;
+    border: 1px solid #ffeaa7;
 }
 
 .approval-badge.rejected {
     background-color: #f8d7da;
-    color: var(--danger-color);
+    color: #721c24;
+    border: 1px solid #f5c6cb;
 }
 
 /* Rental Count */
@@ -385,44 +400,70 @@
 /* Action Buttons */
 .action-buttons {
     display: flex;
-    gap: 5px;
+    gap: 6px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .action-buttons button {
-    padding: 6px 10px;
+    padding: 8px 12px;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 0.8em;
-    font-weight: 500;
-    transition: all 0.2s ease;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-width: 70px;
 }
 
-.view-button {
-    background-color: var(--info-color);
+.detail-button {
+    background-color: #6c757d;
     color: white;
+    border: 1px solid #6c757d;
 }
 
-.view-button:hover {
+.detail-button:hover {
+    background-color: #5a6268;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.edit-button {
+    background-color: #17a2b8;
+    color: white;
+    border: 1px solid #17a2b8;
+}
+
+.edit-button:hover {
     background-color: #138496;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .lock-button {
-    background-color: var(--warning-color);
-    color: var(--dark-color);
+    background-color: #ffc107;
+    color: #212529;
+    border: 1px solid #ffc107;
 }
 
 .lock-button:hover {
     background-color: #e0a800;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .unlock-button {
-    background-color: var(--success-color);
+    background-color: #28a745;
     color: white;
+    border: 1px solid #28a745;
 }
 
 .unlock-button:hover {
     background-color: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 

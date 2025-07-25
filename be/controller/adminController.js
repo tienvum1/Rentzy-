@@ -303,40 +303,7 @@ const reviewVehicleApproval = async (req, res) => {
 };
 
 
-// Lấy danh sách booking chờ duyệt giải ngân cho chủ xe
-const getPendingPayoutRequests = async (req, res) => {
-  try {
-    const bookings = await Booking.find({ payoutStatus: 'pending' })
-      .populate('vehicle')
-      .populate({ path: 'vehicle', populate: { path: 'owner' } })
-      .populate('renter');
-    const data = bookings.map(b => {
-      const totalAmount = b.totalAmount || 0;
-      let adminFee = b.adminFee;
-      let payoutAmount = b.payoutAmount;
-      if (!adminFee || !payoutAmount) {
-        adminFee = Math.round(totalAmount * 0.1);
-        payoutAmount = totalAmount - adminFee;
-      }
-      return {
-        id: b._id,
-        vehicle: b.vehicle,
-        owner: b.vehicle?.owner,
-        renter: b.renter,
-        payoutAmount,
-        adminFee,
-        payoutStatus: b.payoutStatus,
-        payoutNote: b.payoutNote,
-        totalAmount,
-        status: b.status,
-        createdAt: b.createdAt
-      };
-    });
-    res.json({ success: true, data });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
-  }
-};
+// Removed getPendingPayoutRequests function - withdrawals functionality deleted
 
 // Lấy danh sách booking chờ hoàn tiền cọc cho người thuê
 const getPendingDepositRefundRequests = async (req, res) => {
@@ -400,7 +367,7 @@ const getDashboardStats = async (req, res) => {
             driver_license_verification_status: 'pending',
             driver_license_number: { $ne: null, $ne: '' } 
         });
-        const pendingPayouts = await Booking.countDocuments({ payoutStatus: 'pending' });
+        // const pendingPayouts = await Booking.countDocuments({ payoutStatus: 'pending' }); // Removed - withdrawals functionality deleted
 
         const monthlyStats = await Booking.aggregate([
             {
@@ -461,7 +428,8 @@ const getDashboardStats = async (req, res) => {
             {
                 $group: {
                     _id: '$vehicle.owner',
-                    totalRevenue: { $sum: '$payoutAmount' },
+                    // totalRevenue: { $sum: '$payoutAmount' }, // Removed - withdrawals functionality deleted
+                    totalRevenue: { $sum: '$totalCost' }, // Use totalCost instead
                     bookingCount: { $sum: 1 }
                 }
             },
@@ -517,8 +485,8 @@ const getDashboardStats = async (req, res) => {
                 },
                 pendingRequests: {
                     ownerRequests: pendingOwnerRequests,
-                    driverLicenses: pendingDriverLicenses,
-                    payouts: pendingPayouts
+                    driverLicenses: pendingDriverLicenses
+                    // payouts: pendingPayouts // Removed - withdrawals functionality deleted
                 },
                 monthlyStats,
                 topVehicles,
@@ -901,7 +869,7 @@ module.exports = {
     getPendingVehicleDetail,
     reviewVehicleApproval,
     getDashboardStats,
-    getPendingPayoutRequests,
+    // getPendingPayoutRequests, // Removed - withdrawals functionality deleted
     getPendingDepositRefundRequests,
     createOrUpdateDriverLicense,
     getPendingCCCDRequests,

@@ -118,6 +118,11 @@ const bookingSchema = new mongoose.Schema(
       default: "none",
     },
 
+    // Thời gian yêu cầu giải ngân được tạo
+    payoutRequestedAt: {
+      type: Date,
+    },
+
     // Địa chỉ nhận xe
     pickupLocation: {
       type: String,

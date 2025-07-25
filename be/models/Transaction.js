@@ -16,7 +16,7 @@ const transactionSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['DEPOSIT', 'RENTAL', 'REFUND', 'WITHDRAW', 'TOPUP', 'bank_transfer_refund', 'bank_transfer_compensation'], // thêm DEPOSIT, RENTAL
+        enum: ['DEPOSIT', 'RENTAL', 'REFUND', 'TOPUP', 'bank_transfer_refund', 'bank_transfer_compensation'], // Removed WITHDRAW - withdrawals functionality deleted
         required: true
     },
     status: {

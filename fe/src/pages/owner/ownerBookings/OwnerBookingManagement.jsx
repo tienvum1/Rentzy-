@@ -140,6 +140,24 @@ const OwnerBookingManagement = () => {
     }
   };
   
+  // Helper function để hiển thị text trạng thái
+  const getStatusText = (status) => {
+    const statusMap = {
+      'pending': 'Chờ xác nhận',
+      'confirmed': 'Đã xác nhận',
+      'ongoing': 'Đang thuê',
+      'completed': 'Hoàn thành',
+      'cancelled': 'Đã hủy',
+      'cancel_requested': 'Yêu cầu hủy',
+      'owner_canceled': 'Chủ xe đã hủy',
+      'deposit_paid': 'Đã đặt cọc',
+      'fully_paid': 'Đã thanh toán đầy đủ',
+      'refund_requested': 'Yêu cầu hoàn tiền',
+      'refunded': 'Đã hoàn tiền'
+    };
+    return statusMap[status] || status;
+  };
+
   const renderPagination = () => {
     if (totalPages <= 1) return null;
     
@@ -217,7 +235,7 @@ const OwnerBookingManagement = () => {
               <option value="completed">Hoàn thành</option>
               <option value="cancelled">Đã hủy</option>
               <option value="cancel_requested">Yêu cầu hủy</option>
-              <option value="owner_canceled">Owner đã hủy</option>
+              <option value="completed_pending_payout">Hoàn thành - Chờ giải ngân</option>
             </select>
           </div>
           <div className="sort-container">
@@ -273,16 +291,7 @@ const OwnerBookingManagement = () => {
                      <td>{b.vehicle?.brand} {b.vehicle?.model}</td>
                      <td>{b.renter?.name || b.renter?.email}</td>
                      <td>
-                       <span className={`status-badge status-${b.status}`}>
-                         {b.status === 'pending' && 'Chờ xác nhận'}
-                         {b.status === 'confirmed' && 'Đã xác nhận'}
-                         {b.status === 'ongoing' && 'Đang thuê'}
-                         {b.status === 'completed' && 'Hoàn thành'}
-                         {b.status === 'cancelled' && 'Đã hủy'}
-                         {b.status === 'cancel_requested' && 'Yêu cầu hủy'}
-                         {b.status === 'owner_canceled' && 'Owner đã hủy'}
-                         {!['pending', 'confirmed', 'ongoing', 'completed', 'cancelled', 'cancel_requested', 'owner_canceled'].includes(b.status) && b.status}
-                       </span>
+                       {getStatusText(b.status)}
                      </td>
                      <td className="total-amount">
                        {b.totalAmount ? `${b.totalAmount.toLocaleString('vi-VN')} VNĐ` : 'N/A'}

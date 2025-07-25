@@ -164,16 +164,16 @@ async function seedAll() {
       const basePrice = 500000 + Math.floor(Math.random() * 300000);
       const totalAmount = basePrice * totalDays;
       const totalCost = totalAmount * 0.9; // 10% commission
-      const payoutAmount = totalCost * 0.8; // 80% cho chủ xe
+      // const payoutAmount = totalCost * 0.8; // 80% cho chủ xe // Removed - withdrawals functionality deleted
 
       const status =
         bookingStatuses[Math.floor(Math.random() * bookingStatuses.length)];
-      const payoutStatus =
-        status === "completed"
-          ? Math.random() > 0.3
-            ? "pending"
-            : "approved"
-          : "none";
+      // const payoutStatus = // Removed - withdrawals functionality deleted
+      //   status === "completed"
+      //     ? Math.random() > 0.3
+      //       ? "pending"
+      //       : "approved"
+      //     : "none";
 
       bookingData.push({
         renter: users[8 + (i % 22)]._id, // 22 renter users từ index 8-29
@@ -189,9 +189,9 @@ async function seedAll() {
         discountAmount: 0,
         deliveryFee: 0,
         status: status,
-        payoutStatus: payoutStatus,
-        payoutAmount: payoutAmount,
-        payoutNote: "",
+        // payoutStatus: payoutStatus, // Removed - withdrawals functionality deleted
+        // payoutAmount: payoutAmount, // Removed - withdrawals functionality deleted
+        // payoutNote: "", // Removed - withdrawals functionality deleted
         pickupLocation: "Hà Nội",
         returnLocation: "Hà Nội",
         note: "",
@@ -257,22 +257,22 @@ async function seedAll() {
         createdAt: booking.endDate,
       });
 
-      // Payout transaction cho chủ xe (nếu đã approved)
-      if (booking.payoutStatus === "approved") {
-        transactionData.push({
-          booking: booking._id,
-          user: booking.vehicle.owner, // Sẽ được populate sau
-          amount: booking.payoutAmount,
-          type: "PAYOUT",
-          status: "COMPLETED",
-          paymentMethod: "BANK_TRANSFER",
-          paymentMetadata: {},
-          description: `Giải ngân cho chủ xe sau khi hoàn thành đơn thuê`,
-          isRefunded: false,
-          refundedTransaction: null,
-          createdAt: new Date(booking.endDate.getTime() + 24 * 60 * 60 * 1000), // 1 ngày sau
-        });
-      }
+      // Removed PAYOUT transaction - withdrawals functionality deleted
+      // if (booking.payoutStatus === "approved") {
+      //   transactionData.push({
+      //     booking: booking._id,
+      //     user: booking.vehicle.owner, // Sẽ được populate sau
+      //     amount: booking.payoutAmount,
+      //     type: "PAYOUT",
+      //     status: "COMPLETED",
+      //     paymentMethod: "BANK_TRANSFER",
+      //     paymentMetadata: {},
+      //     description: `Giải ngân cho chủ xe sau khi hoàn thành đơn thuê`,
+      //     isRefunded: false,
+      //     refundedTransaction: null,
+      //     createdAt: new Date(booking.endDate.getTime() + 24 * 60 * 60 * 1000), // 1 ngày sau
+      //   });
+      // }
     }
 
     // Một số transaction khác

@@ -67,7 +67,7 @@ import VehiclesRequestPage from "./pages/admin/adminVehiclesRequestPage/Vehicles
 import DriverLicenseRequestsPage from "./pages/admin/adminDriverLicenseRequestsPage/DriverLicenseRequestsPage";
 
 import AdminVehicleDetailPage from './pages/admin/adminAdminVehicleDetailPage/AdminVehicleDetailPage';
-import AdminPayoutRequests from './pages/admin/payoutRequests/AdminPayoutRequests';
+// import AdminPayoutRequests from './pages/admin/payoutRequests/AdminPayoutRequests'; // Removed - withdrawals page deleted
 import AdminNotificationPage from './pages/admin/adminNotificationPage/AdminNotificationPage';
 import AdminPromotionPage from './pages/admin/adminPromotionPage/AdminPromotionPage';
 import AdminVehicleReports from './pages/admin/adminVehicleReports/AdminVehicleReports';
@@ -159,7 +159,7 @@ function App() {
                 path="driver-license-requests"
                 element={<DriverLicenseRequestsPage />}
               />
-              <Route path="payout-requests" element={<AdminPayoutRequests />} />
+              {/* <Route path="payout-requests" element={<AdminPayoutRequests />} /> */} {/* Removed - withdrawals page deleted */}
               <Route path="notifications" element={<AdminNotificationPage />} />
               <Route path="chat" element={<AdminChatPage />} />
               <Route path="cccd-requests" element={<CCCDRequestsPage />} />

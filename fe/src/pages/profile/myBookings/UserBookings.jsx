@@ -24,6 +24,10 @@ const UserBookings = () => {
   const [cancelReason, setCancelReason] = useState('');
   const [cancelError, setCancelError] = useState('');
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   const navigate = useNavigate();
 
@@ -197,6 +201,94 @@ const UserBookings = () => {
     }
   };
 
+  // Filter bookings based on status
+  const filteredBookings = statusFilter
+    ? bookings.filter(booking => booking.status === statusFilter)
+    : bookings;
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBookings = filteredBookings.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className="pagination-container">
+        <div className="pagination-info">
+           Hiển thị {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredBookings.length)} trong tổng số {filteredBookings.length} đơn
+         </div>
+        <div className="pagination">
+          <button 
+            className="pagination-btn" 
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            ‹ Trước
+          </button>
+          
+          {startPage > 1 && (
+            <>
+              <button className="pagination-btn" onClick={() => handlePageChange(1)}>1</button>
+              {startPage > 2 && <span className="pagination-dots">...</span>}
+            </>
+          )}
+          
+          {pageNumbers.map(number => (
+            <button
+              key={number}
+              className={`pagination-btn ${currentPage === number ? 'active' : ''}`}
+              onClick={() => handlePageChange(number)}
+            >
+              {number}
+            </button>
+          ))}
+          
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && <span className="pagination-dots">...</span>}
+              <button className="pagination-btn" onClick={() => handlePageChange(totalPages)}>{totalPages}</button>
+            </>
+          )}
+          
+          <button 
+            className="pagination-btn" 
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Sau ›
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <ProfileLayout>
       <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="light" />
@@ -245,13 +337,17 @@ const UserBookings = () => {
                   </select>
                 </div>
                 <div className="filter-stats">
-                  <span className="total-bookings">Tổng: {bookings.length} đơn</span>
+                  <span className="total-bookings">
+                    {statusFilter ? `Đã lọc: ${filteredBookings.length}/${bookings.length} đơn` : `Tổng: ${bookings.length} đơn`}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {bookings.length === 0 ? (
-              <p className="no-bookings-message">Bạn chưa có đơn đặt xe nào.</p>
+            {filteredBookings.length === 0 ? (
+              <p className="no-bookings-message">
+                {statusFilter ? 'Không có đơn nào phù hợp với bộ lọc.' : 'Bạn chưa có đơn đặt xe nào.'}
+              </p>
             ) : (
               <div className="bookings-table-section">
                 <div className="table-header">
@@ -272,8 +368,8 @@ const UserBookings = () => {
                         <th>Hành động</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {bookings.map((booking) => {
+                  <tbody>
+                    {currentBookings.map((booking) => {
                         const { totalPaid, remainingAmount, totalRefund } = calculatePaymentDetails(booking);
                         
                         return (
@@ -370,7 +466,13 @@ const UserBookings = () => {
                   </table>
                 </div>
               </div>
-            )}          </div>        )}      </div>
+            )}
+            
+            {/* Pagination */}
+            {renderPagination()}
+          </div>
+        )}
+      </div>
       {/* Review Modal Popup */}
       {showReviewModal && (
         <div className="review-modal-overlay">

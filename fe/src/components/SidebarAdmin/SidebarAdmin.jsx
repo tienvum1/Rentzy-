@@ -34,9 +34,6 @@ const SidebarAdmin = () => {
                 {/* Vehicle Approvals */}
                 <li onClick={() => handleMenuItemClick('/admin/vehicle-approvals')}>Duyệt xe</li>
 
-                {/* Withdrawals Management */}
-                <li onClick={() => handleMenuItemClick('/admin/withdrawals')}>Quản lý rút tiền</li>
-                
                 {/* Payout Requests */}
                 <li onClick={() => handleMenuItemClick('/admin/payout-requests')}>Duyệt giải ngân</li>
 
@@ -48,7 +45,6 @@ const SidebarAdmin = () => {
                 {/* Withdrawals Management */}
                 <li onClick={() => handleMenuItemClick('/admin/promotions')}>Quản lý mã khuyến mãi</li>
         
-        {/* Withdrawals Management */}
         <li onClick={() => handleMenuItemClick('/admin/vehicle-reports')}>Quản lý báo cáo</li>
     
 

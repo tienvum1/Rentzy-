@@ -121,9 +121,9 @@
 .owner-booking-table-wrapper {
   width: 100%;
   overflow-x: auto;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.08);
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
   padding: 0;
 }
 
@@ -131,13 +131,13 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 1rem;
-  background: #fff;
+  background: transparent;
 }
 
 .owner-booking-table th, .owner-booking-table td {
   padding: 12px 16px;
   text-align: left;
-  border-bottom: 1px solid #e0e0e0;
+  border: none;
 }
 
 .owner-booking-table th {
@@ -147,51 +147,50 @@
 }
 
 .owner-booking-table tr:nth-child(even) {
-  background: #f6fbff;
+  background: transparent;
 }
 
 .owner-booking-table tr:hover {
-  background: #e3f2fd;
+  background: transparent;
 }
 
 /* Status Badges */
 .status-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  padding: 0;
+  border-radius: 0;
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  border: none;
 }
 
-.status-badge.pending {
-  background: #fff3cd;
+.status-badge.status-pending {
   color: #856404;
-  border: 1px solid #ffeaa7;
 }
 
-.status-badge.confirmed {
-  background: #d4edda;
+.status-badge.status-confirmed {
   color: #155724;
-  border: 1px solid #c3e6cb;
 }
 
-.status-badge.cancelled {
-  background: #f8d7da;
+.status-badge.status-cancelled {
   color: #721c24;
-  border: 1px solid #f5c6cb;
 }
 
-.status-badge.completed {
-  background: #d1ecf1;
+.status-badge.status-completed {
   color: #0c5460;
-  border: 1px solid #bee5eb;
 }
 
-.status-badge.in-progress {
-  background: #e2e3e5;
+.status-badge.status-ongoing {
   color: #383d41;
-  border: 1px solid #d6d8db;
+}
+
+.status-badge.status-cancel_requested {
+  color: #d63384;
+}
+
+.status-badge.status-owner_canceled {
+  color: #dc3545;
 }
 
 .owner-booking-view-link {
@@ -307,6 +306,35 @@
 .currency {
   font-weight: 600;
   color: #2e7d32;
+}
+
+/* Payout Status Styles */
+.payout-status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.payout-status-none {
+  background-color: #f5f5f5;
+  color: #757575;
+}
+
+.payout-status-pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.payout-status-approved {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.payout-status-rejected {
+  background-color: #f8d7da;
+  color: #721c24;
 }
 
 @media (max-width: 900px) {
@@ -485,14 +513,7 @@
   cursor: not-allowed;
 }
 
-/* Cancel Button Styles */
+/* Cancel Button Styles - Hidden */
 .owner-booking-action-btn.cancel {
-  background-color: #f44336;
-  color: white;
-  border: 1px solid #f44336;
-}
-
-.owner-booking-action-btn.cancel:hover {
-  background-color: #d32f2f;
-  border-color: #d32f2f;
+  display: none;
 }

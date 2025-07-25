@@ -5,8 +5,8 @@ const Vehicle = require("../models/Vehicle");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
-const cloudinary = require('../utils/cloudinary');
-const mongoose = require('mongoose'); // Đảm bảo đã import mongoose
+const cloudinary = require("../utils/cloudinary");
+const mongoose = require("mongoose"); // Đảm bảo đã import mongoose
 
 // Tạo booking mới
 const createBooking = async (req, res) => {
@@ -24,7 +24,7 @@ const createBooking = async (req, res) => {
       discountAmount,
       deliveryFee,
     } = req.body;
-    
+
     // Validate required fields
     if (
       !vehicleId ||
@@ -110,16 +110,22 @@ const createBooking = async (req, res) => {
     }
 
     // Tính lại các trường tiền trên backend
-    console.log('DEBUG BACKEND pickupLocation:', pickupLocation);
-    console.log('DEBUG BACKEND vehicle.location:', vehicle.location);
+    console.log("DEBUG BACKEND pickupLocation:", pickupLocation);
+    console.log("DEBUG BACKEND vehicle.location:", vehicle.location);
     let _deliveryFee = 0;
-    if (vehicle.location && pickupLocation && pickupLocation.trim().toLowerCase() !== vehicle.location.trim().toLowerCase()) {
+    if (
+      vehicle.location &&
+      pickupLocation &&
+      pickupLocation.trim().toLowerCase() !==
+        vehicle.location.trim().toLowerCase()
+    ) {
       _deliveryFee = 200000;
     } else if (!vehicle.location) {
       _deliveryFee = 0;
     }
     const _totalCost = vehicle.pricePerDay * totalDays;
-    const _discountAmount = typeof discountAmount === 'number' ? discountAmount : 0;
+    const _discountAmount =
+      typeof discountAmount === "number" ? discountAmount : 0;
     const _deposit = 0; // Không lưu deposit từ FE, sẽ tính khi thanh toán
     const _totalAmount = _totalCost + _deliveryFee - _discountAmount;
     // Ensure all values are >= 0
@@ -150,8 +156,8 @@ const createBooking = async (req, res) => {
     // 1. Notify renter (người thuê)
     await Notification.create({
       user: req.user._id,
-      type: 'booking',
-      title: 'Đặt xe thành công',
+      type: "booking",
+      title: "Đặt xe thành công",
       message: `Bạn đã đặt xe ${vehicle.brand} ${vehicle.model} thành công. Vui lòng thanh toán để xác nhận đơn!`,
       booking: booking._id,
       vehicle: vehicle._id,
@@ -161,8 +167,8 @@ const createBooking = async (req, res) => {
     if (vehicle.owner) {
       await Notification.create({
         user: vehicle.owner,
-        type: 'booking',
-        title: 'Có đơn đặt xe mới',
+        type: "booking",
+        title: "Có đơn đặt xe mới",
         message: `Xe ${vehicle.brand} ${vehicle.model} của bạn vừa có đơn đặt mới từ khách hàng.`,
         booking: booking._id,
         vehicle: vehicle._id,
@@ -170,13 +176,15 @@ const createBooking = async (req, res) => {
     }
 
     // 3. Notify all admins
-    const admins = await User.find({ role: 'admin' });
+    const admins = await User.find({ role: "admin" });
     for (const admin of admins) {
       await Notification.create({
         user: admin._id,
-        type: 'admin',
-        title: 'Đơn đặt xe mới',
-        message: `Có đơn đặt xe mới cho xe ${vehicle.brand} ${vehicle.model} từ người dùng ${req.user.name || req.user.email}.`,
+        type: "admin",
+        title: "Đơn đặt xe mới",
+        message: `Có đơn đặt xe mới cho xe ${vehicle.brand} ${
+          vehicle.model
+        } từ người dùng ${req.user.name || req.user.email}.`,
         booking: booking._id,
         vehicle: vehicle._id,
       });
@@ -197,7 +205,7 @@ const createBooking = async (req, res) => {
           deposit: _deposit,
           discountAmount: _discountAmount,
           totalAmount: _totalAmount,
-        }
+        },
       },
     });
   } catch (error) {
@@ -214,73 +222,98 @@ const ownerCancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const { compensationReason, compensationAmount } = req.body;
-    
-    const booking = await Booking.findById(id).populate('vehicle').populate('renter');
+
+    const booking = await Booking.findById(id)
+      .populate("vehicle")
+      .populate("renter");
     if (!booking) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt xe." });
     }
-    
+
     // Check if user is the owner of the vehicle
-    if (!booking.vehicle || booking.vehicle.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền hủy đơn này.' });
+    if (
+      !booking.vehicle ||
+      booking.vehicle.owner.toString() !== req.user._id.toString()
+    ) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Bạn không có quyền hủy đơn này." });
     }
-    
+
     // Check if booking can be canceled
-    if (!['deposit_paid', 'fully_paid'].includes(booking.status)) {
-      return res.status(400).json({ success: false, message: 'Đơn này không thể hủy.' });
+    if (!["deposit_paid", "fully_paid"].includes(booking.status)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Đơn này không thể hủy." });
     }
-    
+
     // Validate compensation amount
     if (!compensationAmount || compensationAmount <= 0) {
-      return res.status(400).json({ success: false, message: 'Số tiền bồi thường không hợp lệ.' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Số tiền bồi thường không hợp lệ." });
     }
-    
+
     // Update booking status and compensation info
-    booking.status = 'owner_canceled';
+    booking.status = "owner_canceled";
     booking.cancelledAt = new Date();
-    booking.cancelledBy = 'owner';
+    booking.cancelledBy = "owner";
     booking.ownerCancelledAt = new Date();
-    booking.cancellationReason = compensationReason || 'Chủ xe hủy chuyến';
-    
+    booking.cancellationReason = compensationReason || "Chủ xe hủy chuyến";
+
     // Set compensation details
-    booking.refundStatusOwner = 'pending';
+    booking.refundStatusOwner = "pending";
     booking.totalRefundForOwnerCancel = compensationAmount;
     booking.ownerCompensationReason = compensationReason;
     booking.ownerCompensationCreatedAt = new Date();
-    
+
     await booking.save();
-    
+
     // Notify renter about cancellation
     await Notification.create({
       user: booking.renter._id,
-      type: 'booking',
-      title: 'Chủ xe đã hủy chuyến',
-      message: `Chủ xe đã hủy đơn đặt xe #${booking._id.toString().slice(-6)}. Bạn sẽ được hoàn tiền và nhận bồi thường ${compensationAmount.toLocaleString('vi-VN')} VND.`,
+      type: "booking",
+      title: "Chủ xe đã hủy chuyến",
+      message: `Chủ xe đã hủy đơn đặt xe #${booking._id
+        .toString()
+        .slice(
+          -6
+        )}. Bạn sẽ được hoàn tiền và nhận bồi thường ${compensationAmount.toLocaleString(
+        "vi-VN"
+      )} VND.`,
       booking: booking._id,
       vehicle: booking.vehicle._id,
     });
-    
+
     // Notify all admins about owner cancellation compensation request
-    const admins = await User.find({ role: 'admin' });
+    const admins = await User.find({ role: "admin" });
     for (const admin of admins) {
       await Notification.create({
         user: admin._id,
-        type: 'admin',
-        title: 'Yêu cầu duyệt bồi thường chủ xe',
-        message: `Chủ xe đã hủy đơn #${booking._id.toString().slice(-6)} và yêu cầu bồi thường ${compensationAmount.toLocaleString('vi-VN')} VND cho khách hàng.`,
+        type: "admin",
+        title: "Yêu cầu duyệt bồi thường chủ xe",
+        message: `Chủ xe đã hủy đơn #${booking._id
+          .toString()
+          .slice(-6)} và yêu cầu bồi thường ${compensationAmount.toLocaleString(
+          "vi-VN"
+        )} VND cho khách hàng.`,
         booking: booking._id,
         vehicle: booking.vehicle._id,
       });
     }
-    
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Đã hủy chuyến và tạo yêu cầu bồi thường. Chờ admin duyệt.',
-      data: { compensationAmount }
+
+    return res.status(200).json({
+      success: true,
+      message: "Đã hủy chuyến và tạo yêu cầu bồi thường. Chờ admin duyệt.",
+      data: { compensationAmount },
     });
   } catch (err) {
-    console.error('Error in ownerCancelBooking:', err);
-    return res.status(500).json({ success: false, message: 'Lỗi server khi hủy chuyến.' });
+    console.error("Error in ownerCancelBooking:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi hủy chuyến." });
   }
 };
 
@@ -290,20 +323,22 @@ const getVehicleBookedDates = async (req, res) => {
     const { vehicleId } = req.params;
     const vehicle = await Vehicle.findById(vehicleId);
     if (!vehicle) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy xe.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy xe." });
     }
     const bookings = await Booking.find({
       vehicle: vehicle._id,
       status: {
         $in: [
-          'pending',
-          'deposit_paid',
-          'in_progress',
-          'fully_paid',
-          'cancel_requested'
+          "pending",
+          "deposit_paid",
+          "in_progress",
+          "fully_paid",
+          "cancel_requested",
         ],
       },
-    }).select('startDate endDate pickupTime returnTime');
+    }).select("startDate endDate pickupTime returnTime");
 
     const bookedDates = bookings.map((booking) => {
       const startDateTime = new Date(booking.startDate);
@@ -324,7 +359,7 @@ const getVehicleBookedDates = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi lấy thông tin lịch đặt xe',
+      message: "Lỗi khi lấy thông tin lịch đặt xe",
       error: error.message,
     });
   }
@@ -346,7 +381,10 @@ const getUserBookings = async (req, res) => {
     }
 
     const bookings = await Booking.find(query)
-      .populate("vehicle", "brand model primaryImage gallery pricePerDay owner location")
+      .populate(
+        "vehicle",
+        "brand model primaryImage gallery pricePerDay owner location"
+      )
       .populate("renter", "fullName email phone")
       .populate({
         path: "transactions",
@@ -381,7 +419,6 @@ const getUserBookings = async (req, res) => {
 // Lấy chi tiết booking theo ID
 const getBookingDetails = async (req, res) => {
   try {
-
     const booking = await Booking.findById(req.params.id)
       .populate({
         path: "renter",
@@ -638,8 +675,6 @@ const getAllBookingOfSpecificUser = async (req, res) => {
   }
 };
 
-
-
 // Get all bookings of a specific user with filters from client
 const getFilteredBookingsOfUser = async (req, res) => {
   try {
@@ -758,19 +793,26 @@ const cancelBookingByUser = async (req, res) => {
     const { id } = req.params;
     const booking = await Booking.findById(id);
     if (!booking) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt xe." });
     }
-    if (!['pending', 'deposit_paid'].includes(booking.status)) {
-      return res.status(400).json({ success: false, message: 'Chỉ có thể huỷ đơn khi chưa hoặc mới thanh toán cọc.' });
+    if (!["pending", "deposit_paid"].includes(booking.status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Chỉ có thể huỷ đơn khi chưa hoặc mới thanh toán cọc.",
+      });
     }
-    booking.status = 'canceled';
+    booking.status = "canceled";
     booking.cancelledAt = new Date();
-    booking.cancellationReason = req.body.reason || 'User canceled';
-    booking.cancelledBy = 'renter';
+    booking.cancellationReason = req.body.reason || "User canceled";
+    booking.cancelledBy = "renter";
     await booking.save();
-    return res.json({ success: true, message: 'Huỷ đơn thành công.' });
+    return res.json({ success: true, message: "Huỷ đơn thành công." });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Lỗi server khi huỷ đơn.' });
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi huỷ đơn." });
   }
 };
 
@@ -780,55 +822,74 @@ const deleteBookingByUser = async (req, res) => {
     const { id } = req.params;
     const booking = await Booking.findById(id);
     if (!booking) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt xe." });
     }
     // Chỉ renter hoặc admin được xoá
     if (
       booking.renter.toString() !== req.user._id.toString() &&
-      !req.user.role.includes('admin')
+      !req.user.role.includes("admin")
     ) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền xoá đơn này.' });
+      return res
+        .status(403)
+        .json({ success: false, message: "Bạn không có quyền xoá đơn này." });
     }
     await booking.deleteOne();
-    return res.json({ success: true, message: 'Đã xoá đơn đặt xe.' });
+    return res.json({ success: true, message: "Đã xoá đơn đặt xe." });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Lỗi server khi xoá đơn.' });
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi xoá đơn." });
   }
 };
-
 
 // Owner approves cancellation
 const ownerApproveCancel = async (req, res) => {
   try {
     const { id } = req.params;
-    const booking = await Booking.findById(id).populate('vehicle').populate('renter').populate('transactions');
-    if (!booking) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
-    if (!booking.vehicle || booking.vehicle.owner.toString() !== req.user._id.toString())
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền duyệt huỷ đơn này.' });
-    if (booking.status !== 'cancel_requested')
-      return res.status(400).json({ success: false, message: 'Đơn không ở trạng thái chờ huỷ.' });
+    const booking = await Booking.findById(id)
+      .populate("vehicle")
+      .populate("renter")
+      .populate("transactions");
+    if (!booking)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt xe." });
+    if (
+      !booking.vehicle ||
+      booking.vehicle.owner.toString() !== req.user._id.toString()
+    )
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền duyệt huỷ đơn này.",
+      });
+    if (booking.status !== "cancel_requested")
+      return res
+        .status(400)
+        .json({ success: false, message: "Đơn không ở trạng thái chờ huỷ." });
 
     // Lấy thông tin refund đã được tính toán từ requestCancelBooking
     const totalRefund = booking.totalRefundForRenterCancel || 0;
     const ownerCompensation = booking.totalRefundForOwnerCancel || 0;
 
     // Update booking status to canceled after owner approval
-    booking.status = 'canceled';
+    booking.status = "canceled";
     booking.cancelledAt = new Date();
-    booking.cancelledBy = 'owner';
-    
+    booking.cancelledBy = "owner";
+
     // Tạo refund request ngay khi owner duyệt
-    booking.refundStatusRenter = 'pending';
+    booking.refundStatusRenter = "pending";
     booking.totalRefundForRenterCancel = totalRefund;
     booking.refundRequestCreatedAt = new Date();
-    
+
     // Tạo owner compensation request nếu có
     if (ownerCompensation > 0) {
-      booking.refundStatusOwner = 'pending';
+      booking.refundStatusOwner = "pending";
       booking.totalRefundForOwnerCancel = ownerCompensation;
       booking.ownerCompensationCreatedAt = new Date();
     }
-    
+
     await booking.save();
 
     // Tạo transaction ngân hàng cho việc hoàn tiền cho renter
@@ -836,18 +897,22 @@ const ownerApproveCancel = async (req, res) => {
       const refundTransaction = new Transaction({
         user: booking.renter._id,
         booking: booking._id,
-        type: 'bank_transfer_refund',
+        type: "bank_transfer_refund",
         amount: totalRefund,
-        status: 'PENDING',
-        description: `Hoàn tiền hủy đơn #${booking._id.toString().slice(-6)} - Chủ xe duyệt`,
-        paymentMethod: 'bank_transfer',
+        status: "PENDING",
+        description: `Hoàn tiền hủy đơn #${booking._id
+          .toString()
+          .slice(-6)} - Chủ xe duyệt`,
+        paymentMethod: "bank_transfer",
         bankTransferInfo: {
           recipientName: booking.renter.name,
-          accountNumber: booking.renter.bankAccounts?.[0]?.accountNumber || '',
-          bankName: booking.renter.bankAccounts?.[0]?.bankName || '',
-          accountHolder: booking.renter.bankAccounts?.[0]?.accountHolder || booking.renter.name
+          accountNumber: booking.renter.bankAccounts?.[0]?.accountNumber || "",
+          bankName: booking.renter.bankAccounts?.[0]?.bankName || "",
+          accountHolder:
+            booking.renter.bankAccounts?.[0]?.accountHolder ||
+            booking.renter.name,
         },
-        createdAt: new Date()
+        createdAt: new Date(),
       });
       await refundTransaction.save();
     }
@@ -857,37 +922,50 @@ const ownerApproveCancel = async (req, res) => {
       const compensationTransaction = new Transaction({
         user: booking.vehicle.owner,
         booking: booking._id,
-        type: 'bank_transfer_compensation',
+        type: "bank_transfer_compensation",
         amount: ownerCompensation,
-        status: 'PENDING',
-        description: `Bồi thường hủy đơn #${booking._id.toString().slice(-6)} - Khách hàng hủy`,
-        paymentMethod: 'bank_transfer',
+        status: "PENDING",
+        description: `Bồi thường hủy đơn #${booking._id
+          .toString()
+          .slice(-6)} - Khách hàng hủy`,
+        paymentMethod: "bank_transfer",
         bankTransferInfo: {
-          recipientName: booking.vehicle.ownerInfo?.name || 'Chủ xe',
-          accountNumber: booking.vehicle.ownerInfo?.bankAccounts?.[0]?.accountNumber || '',
-          bankName: booking.vehicle.ownerInfo?.bankAccounts?.[0]?.bankName || '',
-          accountHolder: booking.vehicle.ownerInfo?.bankAccounts?.[0]?.accountHolder || booking.vehicle.ownerInfo?.name || 'Chủ xe'
+          recipientName: booking.vehicle.ownerInfo?.name || "Chủ xe",
+          accountNumber:
+            booking.vehicle.ownerInfo?.bankAccounts?.[0]?.accountNumber || "",
+          bankName:
+            booking.vehicle.ownerInfo?.bankAccounts?.[0]?.bankName || "",
+          accountHolder:
+            booking.vehicle.ownerInfo?.bankAccounts?.[0]?.accountHolder ||
+            booking.vehicle.ownerInfo?.name ||
+            "Chủ xe",
         },
-        createdAt: new Date()
+        createdAt: new Date(),
       });
       await compensationTransaction.save();
     }
 
     // Notify admin about owner approval - admin needs to approve bank transfers
-    const admins = await User.find({ role: 'admin' });
+    const admins = await User.find({ role: "admin" });
     for (const admin of admins) {
-      let message = `Chủ xe đã duyệt hủy đơn #${booking._id.toString().slice(-6)}.`;
+      let message = `Chủ xe đã duyệt hủy đơn #${booking._id
+        .toString()
+        .slice(-6)}.`;
       if (totalRefund > 0) {
-        message += ` Cần xác nhận chuyển tiền hoàn trả ${totalRefund.toLocaleString('vi-VN')} VND cho khách hàng.`;
+        message += ` Cần xác nhận chuyển tiền hoàn trả ${totalRefund.toLocaleString(
+          "vi-VN"
+        )} VND cho khách hàng.`;
       }
       if (ownerCompensation > 0) {
-        message += ` Cần xác nhận chuyển tiền bồi thường ${ownerCompensation.toLocaleString('vi-VN')} VND cho chủ xe.`;
+        message += ` Cần xác nhận chuyển tiền bồi thường ${ownerCompensation.toLocaleString(
+          "vi-VN"
+        )} VND cho chủ xe.`;
       }
-      
+
       await Notification.create({
         user: admin._id,
-        type: 'admin',
-        title: 'Yêu cầu xác nhận chuyển tiền ngân hàng',
+        type: "admin",
+        title: "Yêu cầu xác nhận chuyển tiền ngân hàng",
         message: message,
         booking: booking._id,
         vehicle: booking.vehicle._id,
@@ -897,13 +975,15 @@ const ownerApproveCancel = async (req, res) => {
     // Notify renter about owner approval
     let renterMessage = `Chủ xe đã duyệt yêu cầu hủy đơn của bạn.`;
     if (totalRefund > 0) {
-      renterMessage += ` Admin sẽ xử lý chuyển tiền hoàn trả ${totalRefund.toLocaleString('vi-VN')} VND về tài khoản ngân hàng của bạn.`;
+      renterMessage += ` Admin sẽ xử lý chuyển tiền hoàn trả ${totalRefund.toLocaleString(
+        "vi-VN"
+      )} VND về tài khoản ngân hàng của bạn.`;
     }
-    
+
     await Notification.create({
       user: booking.renter._id,
-      type: 'booking',
-      title: 'Chủ xe đã duyệt hủy đơn',
+      type: "booking",
+      title: "Chủ xe đã duyệt hủy đơn",
       message: renterMessage,
       booking: booking._id,
       vehicle: booking.vehicle._id,
@@ -913,27 +993,31 @@ const ownerApproveCancel = async (req, res) => {
     if (ownerCompensation > 0) {
       await Notification.create({
         user: booking.vehicle.owner,
-        type: 'booking',
-        title: 'Bồi thường hủy đơn',
-        message: `Bạn sẽ nhận được bồi thường ${ownerCompensation.toLocaleString('vi-VN')} VND do khách hàng hủy đơn. Admin sẽ xử lý chuyển tiền về tài khoản ngân hàng của bạn.`,
+        type: "booking",
+        title: "Bồi thường hủy đơn",
+        message: `Bạn sẽ nhận được bồi thường ${ownerCompensation.toLocaleString(
+          "vi-VN"
+        )} VND do khách hàng hủy đơn. Admin sẽ xử lý chuyển tiền về tài khoản ngân hàng của bạn.`,
         booking: booking._id,
         vehicle: booking.vehicle._id,
       });
     }
 
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Đã duyệt yêu cầu hủy đơn và tạo yêu cầu chuyển tiền ngân hàng.', 
-      data: { 
-        totalRefundForRenterCancel: totalRefund, 
+    return res.status(200).json({
+      success: true,
+      message: "Đã duyệt yêu cầu hủy đơn và tạo yêu cầu chuyển tiền ngân hàng.",
+      data: {
+        totalRefundForRenterCancel: totalRefund,
         totalRefundForOwnerCancel: ownerCompensation,
         refundStatusRenter: booking.refundStatusRenter,
-        refundStatusOwner: booking.refundStatusOwner
-      } 
+        refundStatusOwner: booking.refundStatusOwner,
+      },
     });
   } catch (err) {
-    console.error('Error in ownerApproveCancel:', err);
-    return res.status(500).json({ success: false, message: 'Lỗi server khi duyệt huỷ.' });
+    console.error("Error in ownerApproveCancel:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi duyệt huỷ." });
   }
 };
 
@@ -941,24 +1025,36 @@ const ownerApproveCancel = async (req, res) => {
 const ownerRejectCancel = async (req, res) => {
   try {
     const { id } = req.params;
-    const booking = await Booking.findById(id).populate('vehicle').populate('renter');
+    const booking = await Booking.findById(id)
+      .populate("vehicle")
+      .populate("renter");
     if (!booking) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt xe." });
     }
     // Only owner can reject
-    if (!booking.vehicle || booking.vehicle.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền từ chối huỷ đơn này.' });
+    if (
+      !booking.vehicle ||
+      booking.vehicle.owner.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền từ chối huỷ đơn này.",
+      });
     }
-    if (booking.status !== 'cancel_requested') {
-      return res.status(400).json({ success: false, message: 'Đơn không ở trạng thái chờ huỷ.' });
+    if (booking.status !== "cancel_requested") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Đơn không ở trạng thái chờ huỷ." });
     }
     // Khôi phục lại status trước khi huỷ
     if (booking.totalPaid >= booking.totalAmount) {
-      booking.status = 'fully_paid';
+      booking.status = "fully_paid";
     } else {
-      booking.status = 'deposit_paid';
+      booking.status = "deposit_paid";
     }
-    booking.cancellationReason = '';
+    booking.cancellationReason = "";
     booking.cancelRequestedAt = null;
     // Reset refund fields
     booking.totalRefundForRenterCancel = 0;
@@ -969,25 +1065,30 @@ const ownerRejectCancel = async (req, res) => {
     // Notify renter
     await Notification.create({
       user: booking.renter._id,
-      type: 'booking',
-      title: 'Yêu cầu huỷ đơn bị từ chối',
-      message: 'Chủ xe đã từ chối yêu cầu huỷ đơn của bạn. Đơn vẫn tiếp tục hoạt động.',
+      type: "booking",
+      title: "Yêu cầu huỷ đơn bị từ chối",
+      message:
+        "Chủ xe đã từ chối yêu cầu huỷ đơn của bạn. Đơn vẫn tiếp tục hoạt động.",
       booking: booking._id,
       vehicle: booking.vehicle._id,
     });
-    return res.status(200).json({ success: true, message: 'Đã từ chối yêu cầu huỷ đơn.' });
+    return res
+      .status(200)
+      .json({ success: true, message: "Đã từ chối yêu cầu huỷ đơn." });
   } catch (err) {
-    console.error('Error in ownerRejectCancel:', err);
-    return res.status(500).json({ success: false, message: 'Lỗi server khi từ chối huỷ.' });
+    console.error("Error in ownerRejectCancel:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi từ chối huỷ." });
   }
 };
-
 
 // Xác nhận giao xe (handover)
 const confirmHandover = async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id).populate('vehicle');
-    if (!booking) return res.status(404).json({ message: 'Không tìm thấy booking' });
+    const booking = await Booking.findById(req.params.id).populate("vehicle");
+    if (!booking)
+      return res.status(404).json({ message: "Không tìm thấy booking" });
     let changed = false;
     // Chủ xe xác nhận
     if (booking.vehicle.owner.toString() === req.user._id.toString()) {
@@ -1003,33 +1104,42 @@ const confirmHandover = async (req, res) => {
         changed = true;
       }
     }
-    if (!changed) return res.status(400).json({ message: 'Bạn đã xác nhận rồi hoặc không có quyền.' });
+    if (!changed)
+      return res
+        .status(400)
+        .json({ message: "Bạn đã xác nhận rồi hoặc không có quyền." });
     // Nếu cả hai bên đã xác nhận, chuyển trạng thái sang in_progress
     if (booking.ownerHandoverConfirmed && booking.renterHandoverConfirmed) {
-      booking.status = 'in_progress';
+      booking.status = "in_progress";
     }
     await booking.save();
     // Gửi notification cho bên còn lại
-    const notifyUser = (booking.vehicle.owner.toString() === req.user._id.toString()) ? booking.renter : booking.vehicle.owner;
+    const notifyUser =
+      booking.vehicle.owner.toString() === req.user._id.toString()
+        ? booking.renter
+        : booking.vehicle.owner;
     await Notification.create({
       user: notifyUser,
-      type: 'booking',
-      title: 'Xác nhận giao xe',
-      message: `${req.user.name || req.user.email} đã xác nhận giao/nhận xe.`,
+      type: "booking",
+      title: "Xác nhận giao xe",
+      message: `${req.user.name || req.user.email} đã xác nhận giao xe.`,
       booking: booking._id,
       vehicle: booking.vehicle._id,
     });
     res.json({ success: true, booking });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server khi xác nhận giao xe', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Lỗi server khi xác nhận giao xe", error: err.message });
   }
 };
 
 // Xác nhận trả xe (return)
 const confirmReturn = async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id).populate('vehicle');
-    if (!booking) return res.status(404).json({ message: 'Không tìm thấy booking' });
+    const booking = await Booking.findById(req.params.id).populate("vehicle");
+    if (!booking)
+      return res.status(404).json({ message: "Không tìm thấy booking" });
     let changed = false;
     let isRenterConfirmed = false;
     // Chủ xe xác nhận
@@ -1047,18 +1157,45 @@ const confirmReturn = async (req, res) => {
         isRenterConfirmed = true; // Đánh dấu người thuê vừa xác nhận
       }
     }
-    if (!changed) return res.status(400).json({ message: 'Bạn đã xác nhận rồi hoặc không có quyền.' });
-    
+    if (!changed)
+      return res
+        .status(400)
+        .json({ message: "Bạn đã xác nhận rồi hoặc không có quyền." });
+
     // Nếu cả hai bên đã xác nhận, chuyển trạng thái sang completed
     if (booking.ownerReturnConfirmed && booking.renterReturnConfirmed) {
-      booking.status = 'completed';
+      booking.status = "completed";
       // Nếu payoutStatus chưa phải là 'pending' hoặc 'approved', thì set thành 'pending'
-      if (booking.payoutStatus !== 'pending' && booking.payoutStatus !== 'approved') {
-        booking.payoutStatus = 'pending';
+      if (
+        booking.payoutStatus !== "pending" &&
+        booking.payoutStatus !== "approved"
+      ) {
+        booking.payoutStatus = "pending";
+        booking.payoutRequestedAt = new Date();
+
+        // Tạo thông báo cho tất cả admin về việc cần duyệt giải ngân cho chủ xe
+        const admins = await User.find({ role: "admin" });
+        for (const admin of admins) {
+          await Notification.create({
+            user: admin._id,
+            type: "admin",
+            title: "Yêu cầu duyệt giải ngân cho chủ xe",
+            message: `Chuyến đi #${booking._id
+              .toString()
+              .slice(-6)} đã hoàn thành. Cần duyệt giải ngân cho chủ xe ${
+              booking.vehicle.brand
+            } ${booking.vehicle.model}.`,
+            booking: booking._id,
+            vehicle: booking.vehicle._id,
+          });
+        }
       }
       // Nếu depositRefundStatus chưa phải là 'pending' hoặc 'approved', thì set thành 'pending'
-      if (booking.depositRefundStatus !== 'pending' && booking.depositRefundStatus !== 'approved') {
-        booking.depositRefundStatus = 'pending';
+      if (
+        booking.depositRefundStatus !== "pending" &&
+        booking.depositRefundStatus !== "approved"
+      ) {
+        booking.depositRefundStatus = "pending";
       }
     }
 
@@ -1066,26 +1203,30 @@ const confirmReturn = async (req, res) => {
 
     // Tăng rentalCount lên 1 khi người thuê xác nhận trả xe
     if (isRenterConfirmed) {
-      const Vehicle = require('../models/Vehicle');
-      await Vehicle.findByIdAndUpdate(
-        booking.vehicle._id,
-        { $inc: { rentalCount: 1 } }
-      );
+      const Vehicle = require("../models/Vehicle");
+      await Vehicle.findByIdAndUpdate(booking.vehicle._id, {
+        $inc: { rentalCount: 1 },
+      });
     }
 
     // Gửi notification cho bên còn lại
-    const notifyUser = (booking.vehicle.owner.toString() === req.user._id.toString()) ? booking.renter : booking.vehicle.owner;
+    const notifyUser =
+      booking.vehicle.owner.toString() === req.user._id.toString()
+        ? booking.renter
+        : booking.vehicle.owner;
     await Notification.create({
       user: notifyUser,
-      type: 'booking',
-      title: 'Xác nhận trả xe',
-      message: `${req.user.name || req.user.email} đã xác nhận trả/nhận lại xe.`,
+      type: "booking",
+      title: "Xác nhận trả xe",
+      message: `${req.user.name || req.user.email} đã xác nhận trả xe.`,
       booking: booking._id,
       vehicle: booking.vehicle._id,
     });
     res.json({ success: true, booking });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server khi xác nhận trả xe', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Lỗi server khi xác nhận trả xe", error: err.message });
   }
 };
 
@@ -1096,25 +1237,39 @@ const reviewBooking = async (req, res) => {
     const { rating, review } = req.body;
     // Validate input
     if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ success: false, message: 'Số sao không hợp lệ.' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Số sao không hợp lệ." });
     }
     if (!review || review.trim().length < 5) {
-      return res.status(400).json({ success: false, message: 'Nội dung đánh giá quá ngắn.' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Nội dung đánh giá quá ngắn." });
     }
     const booking = await Booking.findById(id);
     if (!booking) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt xe." });
     }
     // Chỉ người thuê mới được đánh giá
     if (booking.renter.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền đánh giá đơn này.' });
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền đánh giá đơn này.",
+      });
     }
     // Chỉ cho phép đánh giá khi đã completed và chưa có đánh giá
-    if (booking.status !== 'completed') {
-      return res.status(400).json({ success: false, message: 'Chỉ có thể đánh giá khi chuyến đi đã hoàn thành.' });
+    if (booking.status !== "completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Chỉ có thể đánh giá khi chuyến đi đã hoàn thành.",
+      });
     }
     if (booking.rating || booking.review) {
-      return res.status(400).json({ success: false, message: 'Bạn đã đánh giá đơn này rồi.' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Bạn đã đánh giá đơn này rồi." });
     }
     booking.rating = rating;
     booking.review = review;
@@ -1125,18 +1280,28 @@ const reviewBooking = async (req, res) => {
     if (vehicle && vehicle.owner) {
       await Notification.create({
         user: vehicle.owner,
-        type: 'booking',
-        title: 'Đơn thuê đã được đánh giá',
-        message: `Khách thuê đã đánh giá đơn thuê #${booking._id} với ${rating} sao: \"${review.slice(0, 60)}${review.length > 60 ? '...' : ''}\"`,
+        type: "booking",
+        title: "Đơn thuê đã được đánh giá",
+        message: `Khách thuê đã đánh giá đơn thuê #${
+          booking._id
+        } với ${rating} sao: \"${review.slice(0, 60)}${
+          review.length > 60 ? "..." : ""
+        }\"`,
         booking: booking._id,
         vehicle: vehicle._id,
       });
     }
 
-    return res.json({ success: true, message: 'Đánh giá thành công!', booking });
+    return res.json({
+      success: true,
+      message: "Đánh giá thành công!",
+      booking,
+    });
   } catch (err) {
-    console.error('Review booking error:', err);
-    return res.status(500).json({ success: false, message: 'Lỗi server khi gửi đánh giá.' });
+    console.error("Review booking error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi gửi đánh giá." });
   }
 };
 
@@ -1147,57 +1312,61 @@ const getOwnerReviews = async (req, res) => {
     // 1. Lấy các booking đã được đánh giá của các xe thuộc owner này
     const bookings = await Booking.find({
       rating: { $exists: true, $ne: null },
-      review: { $exists: true, $ne: "" }
+      review: { $exists: true, $ne: "" },
     })
       .populate({
-        path: 'vehicle',
-        match: { owner: ownerId }
+        path: "vehicle",
+        match: { owner: ownerId },
       })
-      .populate('renter', 'name avatar_url');
+      .populate("renter", "name avatar_url");
 
     // 2. Lọc booking có vehicle thuộc owner
-    const filtered = bookings.filter(b => b.vehicle);
+    const filtered = bookings.filter((b) => b.vehicle);
 
     // 3. Tính điểm trung bình, tổng số đánh giá
     const avgRating = filtered.length
-      ? (filtered.reduce((sum, b) => sum + (b.rating || 0), 0) / filtered.length).toFixed(1)
+      ? (
+          filtered.reduce((sum, b) => sum + (b.rating || 0), 0) /
+          filtered.length
+        ).toFixed(1)
       : 0;
 
     // 4. Chuẩn hóa danh sách review
-    const reviews = filtered.map(b => ({
-      name: b.renter?.name || 'Ẩn danh',
-      avatar: b.renter?.avatar_url || '/default-avatar.png',
+    const reviews = filtered.map((b) => ({
+      name: b.renter?.name || "Ẩn danh",
+      avatar: b.renter?.avatar_url || "/default-avatar.png",
       rating: b.rating,
       content: b.review,
-      date: new Date(b.updatedAt).toLocaleDateString('vi-VN')
+      date: new Date(b.updatedAt).toLocaleDateString("vi-VN"),
     }));
 
     // 5. Lấy thông tin chủ xe
     const owner = await User.findById(ownerId);
-    if (!owner) return res.status(404).json({ message: 'Không tìm thấy chủ xe.' });
+    if (!owner)
+      return res.status(404).json({ message: "Không tìm thấy chủ xe." });
 
     // 6. Tổng số booking của owner
     const totalBookings = await Booking.countDocuments({
-      vehicle: { $in: (await Vehicle.find({ owner: ownerId }).distinct('_id')) }
+      vehicle: { $in: await Vehicle.find({ owner: ownerId }).distinct("_id") },
     });
 
     res.json({
       owner: {
         name: owner.name,
-        avatar: owner.avatar_url || '/default-avatar.png',
+        avatar: owner.avatar_url || "/default-avatar.png",
         brand: owner.brand || owner.name,
         responseRate: 100, // TODO: Tính toán thực tế nếu có
-        responseTime: '5 phút', // TODO: Tính toán thực tế nếu có
+        responseTime: "5 phút", // TODO: Tính toán thực tế nếu có
         acceptanceRate: 100, // TODO: Tính toán thực tế nếu có
         avgRating,
         totalReviews: filtered.length,
-        totalBookings
+        totalBookings,
       },
-      reviews
+      reviews,
     });
   } catch (err) {
-    console.error('getOwnerReviews error:', err);
-    res.status(500).json({ message: 'Lỗi server khi lấy đánh giá chủ xe' });
+    console.error("getOwnerReviews error:", err);
+    res.status(500).json({ message: "Lỗi server khi lấy đánh giá chủ xe" });
   }
 };
 
@@ -1209,31 +1378,39 @@ const getBookingByIdForOwner = async (req, res) => {
     // Tìm booking và populate các trường cần thiết
     const booking = await Booking.findById(id)
       .populate({
-        path: 'renter',
-        select: 'name email phone avatar_url driver_license_full_name driver_license_number driver_license_birth_date driver_license_image driver_license_verification_status'
+        path: "renter",
+        select:
+          "name email phone avatar_url driver_license_full_name driver_license_number driver_license_birth_date driver_license_image driver_license_verification_status",
       })
       .populate({
-        path: 'vehicle',
-        select: 'brand model year licensePlate owner location',
+        path: "vehicle",
+        select: "brand model year licensePlate owner location",
       })
       .populate({
-        path: 'transactions',
-        select: 'amount type status paymentMethod paymentMetadata createdAt',
+        path: "transactions",
+        select: "amount type status paymentMethod paymentMetadata createdAt",
       });
 
     if (!booking) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt xe." });
     }
 
     // Kiểm tra quyền: chỉ chủ xe mới được xem
     if (booking.vehicle.owner.toString() !== ownerId.toString()) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền xem đơn này.' });
+      return res
+        .status(403)
+        .json({ success: false, message: "Bạn không có quyền xem đơn này." });
     }
 
     res.json({ success: true, booking });
   } catch (err) {
-    console.error('getBookingByIdForOwner error:', err);
-    res.status(500).json({ success: false, message: 'Lỗi server khi lấy chi tiết đơn thuê.' });
+    console.error("getBookingByIdForOwner error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy chi tiết đơn thuê.",
+    });
   }
 };
 
@@ -1253,19 +1430,27 @@ const streamUpload = (buffer, folder) => {
 const uploadPreDeliveryImages = async (req, res) => {
   try {
     const { id } = req.params;
-    const booking = await Booking.findById(id).populate('vehicle');
-    if (!booking) return res.status(404).json({ success: false, message: 'Không tìm thấy booking.' });
+    const booking = await Booking.findById(id).populate("vehicle");
+    if (!booking)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy booking." });
     // Chỉ chủ xe được upload
     if (booking.vehicle.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền upload ảnh cho booking này.' });
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền upload ảnh cho booking này.",
+      });
     }
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ success: false, message: 'Vui lòng chọn ít nhất một ảnh.' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Vui lòng chọn ít nhất một ảnh." });
     }
     // Upload từng ảnh từ buffer lên cloudinary
     const urls = [];
     for (const file of req.files) {
-      const result = await streamUpload(file.buffer, 'rentzy/preRentalImages');
+      const result = await streamUpload(file.buffer, "rentzy/preRentalImages");
       urls.push(result.secure_url);
     }
     // Lưu vào booking
@@ -1273,27 +1458,37 @@ const uploadPreDeliveryImages = async (req, res) => {
     await booking.save();
     res.json({ success: true, urls });
   } catch (err) {
-    console.error('uploadPreDeliveryImages error:', err);
-    res.status(500).json({ success: false, message: 'Lỗi server khi upload ảnh.' });
+    console.error("uploadPreDeliveryImages error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi upload ảnh." });
   }
 };
 // API: Upload ảnh sau khi nhận lại xe (postRentalImages)
 const uploadPostDeliveryImages = async (req, res) => {
   try {
     const { id } = req.params;
-    const booking = await Booking.findById(id).populate('vehicle');
-    if (!booking) return res.status(404).json({ success: false, message: 'Không tìm thấy booking.' });
+    const booking = await Booking.findById(id).populate("vehicle");
+    if (!booking)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy booking." });
     // Chỉ chủ xe được upload
     if (booking.vehicle.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền upload ảnh cho booking này.' });
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền upload ảnh cho booking này.",
+      });
     }
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ success: false, message: 'Vui lòng chọn ít nhất một ảnh.' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Vui lòng chọn ít nhất một ảnh." });
     }
     // Upload từng ảnh từ buffer lên cloudinary
     const urls = [];
     for (const file of req.files) {
-      const result = await streamUpload(file.buffer, 'rentzy/postRentalImages');
+      const result = await streamUpload(file.buffer, "rentzy/postRentalImages");
       urls.push(result.secure_url);
     }
     // Lưu vào booking
@@ -1301,8 +1496,10 @@ const uploadPostDeliveryImages = async (req, res) => {
     await booking.save();
     res.json({ success: true, urls });
   } catch (err) {
-    console.error('uploadPostDeliveryImages error:', err);
-    res.status(500).json({ success: false, message: 'Lỗi server khi upload ảnh.' });
+    console.error("uploadPostDeliveryImages error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi upload ảnh." });
   }
 };
 // API lấy hợp đồng booking: trả về đầy đủ thông tin booking, renter, owner
@@ -1310,33 +1507,43 @@ const getBookingContract = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
       .populate({
-        path: 'renter',
-        select: 'name phone driver_license_number ',
+        path: "renter",
+        select: "name phone driver_license_number ",
       })
       .populate({
-        path: 'vehicle',
-        select: 'brand model licensePlate seatCount bodyType transmission fuelType fuelConsumption location pricePerDay deposit features rentalPolicy primaryImage gallery description approvalStatus status owner',
+        path: "vehicle",
+        select:
+          "brand model licensePlate seatCount bodyType transmission fuelType fuelConsumption location pricePerDay deposit features rentalPolicy primaryImage gallery description approvalStatus status owner",
         populate: {
-          path: 'owner',
-          select: 'name email phone cccd_number',
+          path: "owner",
+          select: "name email phone cccd_number",
         },
       });
     if (!booking) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt xe." });
     }
     res.json({ success: true, booking });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Lỗi server khi lấy hợp đồng.', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy hợp đồng.",
+      error: error.message,
+    });
   }
 };
 
 function calculateDepositRefund(booking, cancelTime = new Date()) {
-  const moment = require('moment');
+  const moment = require("moment");
   // Lấy transaction cọc đầu tiên thành công
   let depositTx = booking.transactions.find(
-    t => (t.type === 'RENTAL' || t.type === 'DEPOSIT') && t.status === 'COMPLETED'
+    (t) =>
+      (t.type === "RENTAL" || t.type === "DEPOSIT") && t.status === "COMPLETED"
   );
-  const depositAmount = depositTx ? depositTx.amount : Math.round((booking.totalAmount || 0) * 0.3);
+  const depositAmount = depositTx
+    ? depositTx.amount
+    : Math.round((booking.totalAmount || 0) * 0.3);
   const pickupTime = new Date(booking.startDate);
   let depositTime = booking.createdAt;
   if (depositTx) depositTime = depositTx.createdAt;
@@ -1345,75 +1552,89 @@ function calculateDepositRefund(booking, cancelTime = new Date()) {
   const diffMs = pickupTime - nowVN;
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
   // Thời gian từ lúc đặt cọc đến lúc huỷ
-  const cancelSinceDeposit = nowVN.diff(depositTimeVN, 'milliseconds');
+  const cancelSinceDeposit = nowVN.diff(depositTimeVN, "milliseconds");
   const cancelSinceDepositHours = cancelSinceDeposit / (1000 * 60 * 60);
   const totalPaid = booking.transactions
-    ? booking.transactions.filter(t => t.status === 'COMPLETED' && t.type !== 'REFUND').reduce((sum, t) => sum + t.amount, 0)
+    ? booking.transactions
+        .filter((t) => t.status === "COMPLETED" && t.type !== "REFUND")
+        .reduce((sum, t) => sum + t.amount, 0)
     : 0;
   const totalAmount = booking.totalAmount || 0;
   const status = booking.status;
 
-  let refund = 0, lost = 0, ownerCompensation = 0, policy = '', message = '';
+  let refund = 0,
+    lost = 0,
+    ownerCompensation = 0,
+    policy = "",
+    message = "";
 
   // --- Xác định policy ---
   if (cancelSinceDepositHours <= 1) {
-    policy = 'refund_100_1h';
+    policy = "refund_100_1h";
   } else if (diffDays > 7) {
-    policy = 'refund_50';
+    policy = "refund_50";
   } else if (diffMs > 0) {
-    policy = 'lost_100_7days'; // Hủy trong vòng 7 ngày trước khi nhận xe: mất 100% tiền cọc
+    policy = "lost_100_7days"; // Hủy trong vòng 7 ngày trước khi nhận xe: mất 100% tiền cọc
   } else {
-    policy = 'lost_100_after';
+    policy = "lost_100_after";
   }
 
   // --- Xử lý từng trường hợp theo status ---
-  if (status === 'deposit_paid' || totalPaid < totalAmount) {
+  if (status === "deposit_paid" || totalPaid < totalAmount) {
     // Chỉ thanh toán cọc
-    if (policy === 'refund_100_1h') {
+    if (policy === "refund_100_1h") {
       refund = depositAmount;
       lost = 0;
       ownerCompensation = 0;
-      message = 'Bạn vừa đặt cọc, huỷ trong vòng 1 giờ sẽ được hoàn lại toàn bộ tiền cọc.';
-    } else if (policy === 'refund_50') {
+      message =
+        "Bạn vừa đặt cọc, huỷ trong vòng 1 giờ sẽ được hoàn lại toàn bộ tiền cọc.";
+    } else if (policy === "refund_50") {
       refund = Math.round(depositAmount * 0.5);
       lost = depositAmount - refund;
       ownerCompensation = 0;
-      message = 'Bạn sẽ được hoàn lại 50% tiền cọc đã thanh toán, mất 50% còn lại.';
-    } else if (policy === 'lost_100_7days') {
+      message =
+        "Bạn sẽ được hoàn lại 50% tiền cọc đã thanh toán, mất 50% còn lại.";
+    } else if (policy === "lost_100_7days") {
       // Mất 100% tiền cọc khi hủy trong vòng 7 ngày trước khi nhận xe
       refund = 0;
       lost = depositAmount;
       ownerCompensation = Math.round(depositAmount * 0.5); // Owner được 50% tiền cọc
-      message = 'Bạn sẽ bị mất toàn bộ tiền cọc đã thanh toán do hủy trong vòng 7 ngày trước khi nhận xe.';
-    } else if (policy === 'lost_100_after') {
+      message =
+        "Bạn sẽ bị mất toàn bộ tiền cọc đã thanh toán do hủy trong vòng 7 ngày trước khi nhận xe.";
+    } else if (policy === "lost_100_after") {
       refund = 0;
       lost = depositAmount;
       ownerCompensation = Math.round(depositAmount * 0.5); // Owner được 50% tiền cọc
-      message = 'Bạn sẽ bị mất toàn bộ tiền cọc đã thanh toán do huỷ sau thời điểm nhận xe hoặc không tới nhận xe.';
+      message =
+        "Bạn sẽ bị mất toàn bộ tiền cọc đã thanh toán do huỷ sau thời điểm nhận xe hoặc không tới nhận xe.";
     }
-  } else if (status === 'fully_paid' || totalPaid >= totalAmount) {
+  } else if (status === "fully_paid" || totalPaid >= totalAmount) {
     // Đã thanh toán toàn bộ
-    if (policy === 'refund_100_1h') {
+    if (policy === "refund_100_1h") {
       refund = totalAmount;
       lost = 0;
       ownerCompensation = 0;
-      message = 'Bạn đã thanh toán đủ đơn hàng. Khi huỷ, bạn sẽ được hoàn lại toàn bộ số tiền đã thanh toán.';
-    } else if (policy === 'refund_50') {
+      message =
+        "Bạn đã thanh toán đủ đơn hàng. Khi huỷ, bạn sẽ được hoàn lại toàn bộ số tiền đã thanh toán.";
+    } else if (policy === "refund_50") {
       refund = totalAmount - Math.round(depositAmount * 0.5);
       lost = Math.round(depositAmount * 0.5);
       ownerCompensation = 0;
-      message = 'Bạn đã thanh toán đủ đơn hàng. Khi huỷ, bạn sẽ được hoàn lại toàn bộ số tiền đã thanh toán trừ 50% tiền cọc.';
-    } else if (policy === 'lost_100_7days') {
+      message =
+        "Bạn đã thanh toán đủ đơn hàng. Khi huỷ, bạn sẽ được hoàn lại toàn bộ số tiền đã thanh toán trừ 50% tiền cọc.";
+    } else if (policy === "lost_100_7days") {
       // Hoàn lại toàn bộ trừ 100% tiền cọc
       refund = totalAmount - depositAmount;
       lost = depositAmount;
       ownerCompensation = Math.round(depositAmount * 0.5); // Owner được 50% tiền cọc
-      message = 'Bạn đã thanh toán đủ đơn hàng. Khi hủy trong vòng 7 ngày trước khi nhận xe, bạn sẽ được hoàn lại toàn bộ số tiền đã thanh toán trừ toàn bộ tiền cọc.';
-    } else if (policy === 'lost_100_after') {
+      message =
+        "Bạn đã thanh toán đủ đơn hàng. Khi hủy trong vòng 7 ngày trước khi nhận xe, bạn sẽ được hoàn lại toàn bộ số tiền đã thanh toán trừ toàn bộ tiền cọc.";
+    } else if (policy === "lost_100_after") {
       refund = totalAmount - depositAmount;
       lost = depositAmount;
       ownerCompensation = Math.round(depositAmount * 0.5); // Owner được 50% tiền cọc
-      message = 'Bạn đã thanh toán đủ đơn hàng. Khi huỷ, bạn sẽ được hoàn lại toàn bộ số tiền đã thanh toán trừ toàn bộ tiền cọc.';
+      message =
+        "Bạn đã thanh toán đủ đơn hàng. Khi huỷ, bạn sẽ được hoàn lại toàn bộ số tiền đã thanh toán trừ toàn bộ tiền cọc.";
     }
   }
 
@@ -1434,10 +1655,15 @@ function calculateDepositRefund(booking, cancelTime = new Date()) {
 // API: GET /api/bookings/:id/expected-refund
 const getExpectedDepositRefund = async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id).populate('transactions');
-    if (!booking) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn' });
+    const booking = await Booking.findById(req.params.id).populate(
+      "transactions"
+    );
+    if (!booking)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn" });
     const refundResult = calculateDepositRefund(booking, new Date());
-    console.log("tiền hoàn" , refundResult.refund)
+    console.log("tiền hoàn", refundResult.refund);
     res.status(200).json({
       success: true,
       data: {
@@ -1452,10 +1678,14 @@ const getExpectedDepositRefund = async (req, res) => {
         pickupTime: refundResult.pickupTime,
         cancelTime: refundResult.cancelTime,
         // Có thể trả thêm các trường khác nếu cần
-      }
+      },
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Lỗi server khi tính hoàn tiền', error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi tính hoàn tiền",
+      error: err.message,
+    });
   }
 };
 
@@ -1464,41 +1694,54 @@ const getExpectedDepositRefund = async (req, res) => {
 // Chỉ sử dụng khi cần thiết để fix dữ liệu cũ
 const recalculateBookingRefund = async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id).populate('transactions').populate('vehicle');
-    if (!booking) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn' });
-    
+    const booking = await Booking.findById(req.params.id)
+      .populate("transactions")
+      .populate("vehicle");
+    if (!booking)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn" });
+
     // Chỉ cho phép recalculate cho booking có status cancel_requested
-    if (booking.status !== 'cancel_requested') {
-      return res.status(400).json({ success: false, message: 'Chỉ có thể tính lại cho đơn đang chờ duyệt hủy' });
+    if (booking.status !== "cancel_requested") {
+      return res.status(400).json({
+        success: false,
+        message: "Chỉ có thể tính lại cho đơn đang chờ duyệt hủy",
+      });
     }
-    
+
     // Tính lại với thời điểm hủy thực tế
     const cancelTime = booking.cancelRequestedAt || new Date();
     const refundResult = calculateDepositRefund(booking, cancelTime);
-    
+
     // CẢNH BÁO: Việc này sẽ ghi đè số tiền bồi thường từ frontend!
     // Cập nhật lại các giá trị
     booking.totalRefundForRenterCancel = refundResult.refund;
     booking.totalRefundForOwnerCancel = refundResult.ownerCompensation;
-    booking.refundStatusOwner = refundResult.ownerCompensation > 0 ? 'pending' : 'none';
-    
+    booking.refundStatusOwner =
+      refundResult.ownerCompensation > 0 ? "pending" : "none";
+
     await booking.save();
-    
+
     res.status(200).json({
       success: true,
-      message: 'Đã tính lại tiền hoàn thành công',
+      message: "Đã tính lại tiền hoàn thành công",
       data: {
         totalRefundForRenterCancel: booking.totalRefundForRenterCancel,
         totalRefundForOwnerCancel: booking.totalRefundForOwnerCancel,
         refundStatusRenter: booking.refundStatusRenter,
         refundStatusOwner: booking.refundStatusOwner,
         policy: refundResult.policy,
-        message: refundResult.message
-      }
+        message: refundResult.message,
+      },
     });
   } catch (err) {
-    console.error('Error in recalculateBookingRefund:', err);
-    res.status(500).json({ success: false, message: 'Lỗi server khi tính lại tiền hoàn', error: err.message });
+    console.error("Error in recalculateBookingRefund:", err);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi tính lại tiền hoàn",
+      error: err.message,
+    });
   }
 };
 // controller/bookingController.js
@@ -1506,56 +1749,72 @@ const requestCancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const { reason, ownerCompensationAmount } = req.body;
-    console.log("lí do huỷ " , reason );
+    console.log("lí do huỷ ", reason);
     console.log("số tiền bồi thường từ FE:", ownerCompensationAmount);
 
-    const booking = await Booking.findById(id).populate('vehicle').populate('transactions');
+    const booking = await Booking.findById(id)
+      .populate("vehicle")
+      .populate("transactions");
     if (!booking) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt xe." });
     }
     // Chỉ người thuê mới được gửi yêu cầu
     if (booking.renter.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền yêu cầu huỷ đơn này.' });
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền yêu cầu huỷ đơn này.",
+      });
     }
     // Chỉ cho phép khi chưa bắt đầu, chưa huỷ, chưa gửi yêu cầu
     const now = new Date();
     const startDate = new Date(booking.startDate);
-    if (startDate <= now || ['canceled', 'completed', 'cancel_requested'].includes(booking.status)) {
-      return res.status(400).json({ success: false, message: 'Không thể yêu cầu huỷ đơn này.' });
+    if (
+      startDate <= now ||
+      ["canceled", "completed", "cancel_requested"].includes(booking.status)
+    ) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Không thể yêu cầu huỷ đơn này." });
     }
 
     // Tính toán tiền hoàn cho renter (vẫn dùng logic cũ)
     const refundCalculation = calculateDepositRefund(booking, now);
-    
+
     // Sử dụng số tiền bồi thường từ frontend thay vì tính toán lại
     const ownerCompensation = ownerCompensationAmount || 0;
-    
+
     // Cập nhật booking với thông tin hủy
-    booking.status = 'cancel_requested';
-    booking.cancellationReason = reason || '';
+    booking.status = "cancel_requested";
+    booking.cancellationReason = reason || "";
     booking.cancelRequestedAt = new Date();
     booking.totalRefundForRenterCancel = refundCalculation.refund;
     booking.totalRefundForOwnerCancel = ownerCompensation;
-    booking.refundStatusRenter = 'pending';
-    booking.refundStatusOwner = ownerCompensation > 0 ? 'pending' : 'none';
-    
+    booking.refundStatusRenter = "pending";
+    booking.refundStatusOwner = ownerCompensation > 0 ? "pending" : "none";
+
     await booking.save();
-    
+
     // Gửi thông báo cho chủ xe
     if (booking.vehicle && booking.vehicle.owner) {
       await Notification.create({
         user: booking.vehicle.owner,
-        type: 'booking',
-        title: 'Yêu cầu huỷ đơn đặt xe',
-        message: `Khách thuê đã yêu cầu huỷ đơn đặt xe. Lý do: ${reason}. Tiền hoàn khách: ${booking.totalRefundForRenterCancel.toLocaleString('vi-VN')}₫, Bồi thường cho bạn: ${booking.totalRefundForOwnerCancel.toLocaleString('vi-VN')}₫`,
+        type: "booking",
+        title: "Yêu cầu huỷ đơn đặt xe",
+        message: `Khách thuê đã yêu cầu huỷ đơn đặt xe. Lý do: ${reason}. Tiền hoàn khách: ${booking.totalRefundForRenterCancel.toLocaleString(
+          "vi-VN"
+        )}₫, Bồi thường cho bạn: ${booking.totalRefundForOwnerCancel.toLocaleString(
+          "vi-VN"
+        )}₫`,
         booking: booking._id,
         vehicle: booking.vehicle._id,
       });
     }
-    
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Gửi yêu cầu hủy thành công',
+
+    return res.status(200).json({
+      success: true,
+      message: "Gửi yêu cầu hủy thành công",
       data: {
         totalRefundForRenterCancel: booking.totalRefundForRenterCancel,
         totalRefundForOwnerCancel: booking.totalRefundForOwnerCancel,
@@ -1563,54 +1822,61 @@ const requestCancelBooking = async (req, res) => {
         refundStatusOwner: booking.refundStatusOwner,
         policy: refundCalculation.policy,
         message: refundCalculation.message,
-        ownerCompensationFromFE: ownerCompensation
-      }
+        ownerCompensationFromFE: ownerCompensation,
+      },
     });
   } catch (err) {
-    console.error('Error in requestCancelBooking:', err);
-    return res.status(500).json({ success: false, message: 'Lỗi server khi gửi yêu cầu huỷ.' });
+    console.error("Error in requestCancelBooking:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi gửi yêu cầu huỷ." });
   }
 };
-
 
 const getMyBookingReviews = async (req, res) => {
   try {
     let userId = req.user._id;
-    if (typeof userId === 'object' && userId.toString) {
+    if (typeof userId === "object" && userId.toString) {
       userId = userId.toString();
     }
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: 'UserId không hợp lệ.' });
+      return res.status(400).json({ message: "UserId không hợp lệ." });
     }
     const reviews = await Booking.find({
       renter: userId,
-      review: { $exists: true, $ne: '' }
+      review: { $exists: true, $ne: "" },
     })
-      .select('vehicle rating review createdAt startDate endDate totalAmount renter')
-      .populate('vehicle', 'brand model licensePlate')
-      .populate('renter', 'name avatar_url')
+      .select(
+        "vehicle rating review createdAt startDate endDate totalAmount renter"
+      )
+      .populate("vehicle", "brand model licensePlate")
+      .populate("renter", "name avatar_url")
       .sort({ createdAt: -1 });
 
-    const formatted = reviews.map(b => ({
+    const formatted = reviews.map((b) => ({
       bookingId: b._id,
-      vehicle: b.vehicle ? {
-        brand: b.vehicle.brand,
-        model: b.vehicle.model,
-        licensePlate: b.vehicle.licensePlate
-      } : null,
+      vehicle: b.vehicle
+        ? {
+            brand: b.vehicle.brand,
+            model: b.vehicle.model,
+            licensePlate: b.vehicle.licensePlate,
+          }
+        : null,
       rating: b.rating,
       review: b.review,
       createdAt: b.createdAt,
       startDate: b.startDate,
       endDate: b.endDate,
       totalAmount: b.totalAmount,
-      name: b.renter?.name || 'Ẩn danh',
-      avatarUrl: b.renter?.avatar_url || null
+      name: b.renter?.name || "Ẩn danh",
+      avatarUrl: b.renter?.avatar_url || null,
     }));
 
     res.json({ reviews: formatted });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi lấy đánh giá của bạn.', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Lỗi lấy đánh giá của bạn.", error: err.message });
   }
 };
 
@@ -1619,130 +1885,151 @@ const saveBookingSignature = async (req, res) => {
   try {
     const { id } = req.params;
     const { type, signature } = req.body;
-    const booking = await Booking.findById(id).populate('vehicle');
-    if (!booking) return res.status(404).json({ message: 'Không tìm thấy booking' });
+    const booking = await Booking.findById(id).populate("vehicle");
+    if (!booking)
+      return res.status(404).json({ message: "Không tìm thấy booking" });
 
     // Upload chữ ký lên Cloudinary
     const uploadRes = await cloudinary.uploader.upload(signature, {
-      folder: 'rentzy/signatures',
-      format: 'png',
+      folder: "rentzy/signatures",
+      format: "png",
     });
     const signatureUrl = uploadRes.secure_url;
 
-    if (type === 'renter') {
+    if (type === "renter") {
       if (booking.renter.toString() !== req.user._id.toString())
-        return res.status(403).json({ message: 'Bạn không có quyền ký bên B' });
+        return res.status(403).json({ message: "Bạn không có quyền ký bên B" });
       booking.renterSignature = signatureUrl;
-    } else if (type === 'owner') {
+    } else if (type === "owner") {
       if (booking.vehicle.owner.toString() !== req.user._id.toString())
-        return res.status(403).json({ message: 'Bạn không có quyền ký bên A' });
+        return res.status(403).json({ message: "Bạn không có quyền ký bên A" });
       booking.ownerSignature = signatureUrl;
     } else {
-      return res.status(400).json({ message: 'Loại chữ ký không hợp lệ' });
+      return res.status(400).json({ message: "Loại chữ ký không hợp lệ" });
     }
     await booking.save();
     res.json({ success: true, url: signatureUrl });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server khi lưu chữ ký', error: err.message });
+    res
+      .status(500)
+      .json({ message: "Lỗi server khi lưu chữ ký", error: err.message });
   }
 };
-
 
 // Renter cancels booking and creates refund request directly
 const renterCancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const { reason, refundAmount } = req.body;
-    
-    const booking = await Booking.findById(id).populate('vehicle').populate('renter').populate('transactions');
+
+    const booking = await Booking.findById(id)
+      .populate("vehicle")
+      .populate("renter")
+      .populate("transactions");
     if (!booking) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt xe." });
     }
-    
+
     // Check if user is the renter
     if (booking.renter._id.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền hủy đơn này.' });
+      return res
+        .status(403)
+        .json({ success: false, message: "Bạn không có quyền hủy đơn này." });
     }
-    
+
     // Check if booking can be canceled
-    if (!['deposit_paid', 'fully_paid'].includes(booking.status)) {
-      return res.status(400).json({ success: false, message: 'Đơn này không thể hủy.' });
+    if (!["deposit_paid", "fully_paid"].includes(booking.status)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Đơn này không thể hủy." });
     }
-    
+
     // Validate refund amount
     if (!refundAmount || refundAmount <= 0) {
-      return res.status(400).json({ success: false, message: 'Số tiền hoàn trả không hợp lệ.' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Số tiền hoàn trả không hợp lệ." });
     }
-    
+
     // Update booking status
-    booking.status = 'canceled';
+    booking.status = "canceled";
     booking.cancelledAt = new Date();
-    booking.cancelledBy = 'renter';
-    booking.cancellationReason = reason || 'Renter hủy chuyến';
-    
+    booking.cancelledBy = "renter";
+    booking.cancellationReason = reason || "Renter hủy chuyến";
+
     // Create refund request
-    booking.refundStatusRenter = 'pending';
+    booking.refundStatusRenter = "pending";
     booking.totalRefundForRenterCancel = refundAmount;
     booking.refundRequestCreatedAt = new Date();
-    
+
     await booking.save();
-    
+
     // Create a pending refund transaction
     const refundTransaction = new Transaction({
       booking: booking._id,
       amount: refundAmount,
-      type: 'REFUND',
-      status: 'PENDING',
-      paymentMethod: 'BANK_TRANSFER',
+      type: "REFUND",
+      status: "PENDING",
+      paymentMethod: "BANK_TRANSFER",
       paymentMetadata: {
         originalBookingId: booking._id,
-        cancellationReason: reason || 'Renter hủy chuyến',
-        refundType: 'RENTER_CANCELLATION',
+        cancellationReason: reason || "Renter hủy chuyến",
+        refundType: "RENTER_CANCELLATION",
         cancelledByRenter: req.user._id,
       },
       user: booking.renter._id,
-      description: 'Yêu cầu hoàn tiền do renter hủy đặt xe'
+      description: "Yêu cầu hoàn tiền do renter hủy đặt xe",
     });
     await refundTransaction.save();
     booking.transactions.push(refundTransaction._id);
     await booking.save();
-    
+
     // Notify owner about cancellation
     if (booking.vehicle && booking.vehicle.owner) {
       await Notification.create({
         user: booking.vehicle.owner,
-        type: 'booking',
-        title: 'Khách hàng đã hủy chuyến',
-        message: `Khách hàng đã hủy đơn đặt xe #${booking._id.toString().slice(-6)}. Lý do: ${reason || 'Không có lý do'}.`,
+        type: "booking",
+        title: "Khách hàng đã hủy chuyến",
+        message: `Khách hàng đã hủy đơn đặt xe #${booking._id
+          .toString()
+          .slice(-6)}. Lý do: ${reason || "Không có lý do"}.`,
         booking: booking._id,
         vehicle: booking.vehicle._id,
       });
     }
-    
+
     // Notify all admins about new refund request
-    const admins = await User.find({ role: 'admin' });
+    const admins = await User.find({ role: "admin" });
     for (const admin of admins) {
       await Notification.create({
         user: admin._id,
-        type: 'admin',
-        title: 'Yêu cầu hoàn tiền mới từ renter',
-        message: `Renter đã hủy đơn #${booking._id.toString().slice(-6)} và yêu cầu hoàn tiền ${refundAmount.toLocaleString('vi-VN')} VND.`,
+        type: "admin",
+        title: "Yêu cầu hoàn tiền mới từ renter",
+        message: `Renter đã hủy đơn #${booking._id
+          .toString()
+          .slice(-6)} và yêu cầu hoàn tiền ${refundAmount.toLocaleString(
+          "vi-VN"
+        )} VND.`,
         booking: booking._id,
         vehicle: booking.vehicle._id,
       });
     }
-    
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Đã hủy chuyến và tạo yêu cầu hoàn tiền. Chờ admin duyệt.',
-      data: { 
+
+    return res.status(200).json({
+      success: true,
+      message: "Đã hủy chuyến và tạo yêu cầu hoàn tiền. Chờ admin duyệt.",
+      data: {
         refundAmount,
-        refundRequestId: refundTransaction._id
-      } 
+        refundRequestId: refundTransaction._id,
+      },
     });
   } catch (err) {
-    console.error('Error in renterCancelBooking:', err);
-    return res.status(500).json({ success: false, message: 'Lỗi server khi hủy chuyến.' });
+    console.error("Error in renterCancelBooking:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi hủy chuyến." });
   }
 };
 
@@ -1750,15 +2037,30 @@ const renterCancelBooking = async (req, res) => {
 const adminApproveCancel = async (req, res) => {
   try {
     const { id } = req.params;
-    const booking = await Booking.findById(id).populate('vehicle').populate('renter').populate('transactions');
-    if (!booking) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt xe.' });
-    
-    if (booking.status !== 'canceled')
-      return res.status(400).json({ success: false, message: 'Đơn chưa được hủy hoặc chưa được chủ xe duyệt.' });
+    const booking = await Booking.findById(id)
+      .populate("vehicle")
+      .populate("renter")
+      .populate("transactions");
+    if (!booking)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn đặt xe." });
+
+    if (booking.status !== "canceled")
+      return res.status(400).json({
+        success: false,
+        message: "Đơn chưa được hủy hoặc chưa được chủ xe duyệt.",
+      });
 
     // Check if refund status is pending
-    if (booking.refundStatusRenter !== 'pending' && booking.refundStatusOwner !== 'pending') {
-      return res.status(400).json({ success: false, message: 'Không có yêu cầu hoàn tiền nào đang chờ duyệt.' });
+    if (
+      booking.refundStatusRenter !== "pending" &&
+      booking.refundStatusOwner !== "pending"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Không có yêu cầu hoàn tiền nào đang chờ duyệt.",
+      });
     }
 
     // Get refund amounts from booking
@@ -1766,58 +2068,69 @@ const adminApproveCancel = async (req, res) => {
     const totalRefundForOwner = booking.totalRefundForOwnerCancel || 0;
 
     // Update refund statuses
-    if (booking.refundStatusRenter === 'pending') {
-      booking.refundStatusRenter = 'approved';
+    if (booking.refundStatusRenter === "pending") {
+      booking.refundStatusRenter = "approved";
     }
-    if (booking.refundStatusOwner === 'pending') {
-      booking.refundStatusOwner = 'approved';
+    if (booking.refundStatusOwner === "pending") {
+      booking.refundStatusOwner = "approved";
     }
-    
+
     booking.adminApprovedCancelAt = new Date();
     booking.adminApprovedCancelBy = req.user._id;
-    
+
     await booking.save();
 
     // Create refund transactions
     const transactions = [];
-    
+
     // Create refund transaction for renter if applicable
     if (totalRefundForRenter > 0) {
       const renterRefundTransaction = new Transaction({
         booking: booking._id,
         amount: totalRefundForRenter,
-        type: 'bank_transfer_refund',
-        status: 'completed',
-        paymentMethod: 'bank_transfer',
+        type: "bank_transfer_refund",
+        status: "completed",
+        paymentMethod: "bank_transfer",
         bankTransferInfo: {
           recipientName: booking.renter.name,
-          accountNumber: booking.renter.bankAccounts?.[0]?.accountNumber || '',
-          bankName: booking.renter.bankAccounts?.[0]?.bankName || '',
-          accountHolder: booking.renter.bankAccounts?.[0]?.accountHolder || booking.renter.name
+          accountNumber: booking.renter.bankAccounts?.[0]?.accountNumber || "",
+          bankName: booking.renter.bankAccounts?.[0]?.bankName || "",
+          accountHolder:
+            booking.renter.bankAccounts?.[0]?.accountHolder ||
+            booking.renter.name,
         },
         user: booking.renter._id,
-        description: `Hoàn tiền hủy đơn #${booking._id.toString().slice(-6)} - Admin duyệt`
+        description: `Hoàn tiền hủy đơn #${booking._id
+          .toString()
+          .slice(-6)} - Admin duyệt`,
       });
       await renterRefundTransaction.save();
       transactions.push(renterRefundTransaction);
     }
-    
+
     // Create compensation transaction for owner if applicable
     if (totalRefundForOwner > 0) {
       const ownerCompensationTransaction = new Transaction({
         booking: booking._id,
         amount: totalRefundForOwner,
-        type: 'bank_transfer_compensation',
-        status: 'completed',
-        paymentMethod: 'bank_transfer',
+        type: "bank_transfer_compensation",
+        status: "completed",
+        paymentMethod: "bank_transfer",
         bankTransferInfo: {
-          recipientName: booking.vehicle.ownerInfo?.name || 'Chủ xe',
-          accountNumber: booking.vehicle.ownerInfo?.bankAccounts?.[0]?.accountNumber || '',
-          bankName: booking.vehicle.ownerInfo?.bankAccounts?.[0]?.bankName || '',
-          accountHolder: booking.vehicle.ownerInfo?.bankAccounts?.[0]?.accountHolder || booking.vehicle.ownerInfo?.name || 'Chủ xe'
+          recipientName: booking.vehicle.ownerInfo?.name || "Chủ xe",
+          accountNumber:
+            booking.vehicle.ownerInfo?.bankAccounts?.[0]?.accountNumber || "",
+          bankName:
+            booking.vehicle.ownerInfo?.bankAccounts?.[0]?.bankName || "",
+          accountHolder:
+            booking.vehicle.ownerInfo?.bankAccounts?.[0]?.accountHolder ||
+            booking.vehicle.ownerInfo?.name ||
+            "Chủ xe",
         },
         user: booking.vehicle.owner,
-        description: `Bồi thường hủy đơn #${booking._id.toString().slice(-6)} - Admin duyệt`
+        description: `Bồi thường hủy đơn #${booking._id
+          .toString()
+          .slice(-6)} - Admin duyệt`,
       });
       await ownerCompensationTransaction.save();
       transactions.push(ownerCompensationTransaction);
@@ -1827,9 +2140,11 @@ const adminApproveCancel = async (req, res) => {
     if (totalRefundForRenter > 0) {
       await Notification.create({
         user: booking.renter._id,
-        type: 'booking',
-        title: 'Hoàn tiền đã được duyệt',
-        message: `Admin đã duyệt và chuyển tiền hoàn trả ${totalRefundForRenter.toLocaleString('vi-VN')} VND về tài khoản ngân hàng của bạn.`,
+        type: "booking",
+        title: "Hoàn tiền đã được duyệt",
+        message: `Admin đã duyệt và chuyển tiền hoàn trả ${totalRefundForRenter.toLocaleString(
+          "vi-VN"
+        )} VND về tài khoản ngân hàng của bạn.`,
         booking: booking._id,
         vehicle: booking.vehicle._id,
       });
@@ -1839,28 +2154,32 @@ const adminApproveCancel = async (req, res) => {
     if (totalRefundForOwner > 0) {
       await Notification.create({
         user: booking.vehicle.owner,
-        type: 'booking',
-        title: 'Bồi thường đã được duyệt',
-        message: `Admin đã duyệt và chuyển tiền bồi thường ${totalRefundForOwner.toLocaleString('vi-VN')} VND về tài khoản ngân hàng của bạn.`,
+        type: "booking",
+        title: "Bồi thường đã được duyệt",
+        message: `Admin đã duyệt và chuyển tiền bồi thường ${totalRefundForOwner.toLocaleString(
+          "vi-VN"
+        )} VND về tài khoản ngân hàng của bạn.`,
         booking: booking._id,
         vehicle: booking.vehicle._id,
       });
     }
 
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Đã duyệt và hoàn tất chuyển tiền hủy đơn.', 
-      data: { 
+    return res.status(200).json({
+      success: true,
+      message: "Đã duyệt và hoàn tất chuyển tiền hủy đơn.",
+      data: {
         totalRefundForRenterCancel: totalRefundForRenter,
         totalRefundForOwnerCancel: totalRefundForOwner,
         refundStatusRenter: booking.refundStatusRenter,
         refundStatusOwner: booking.refundStatusOwner,
-        transactions: transactions.map(t => t._id)
-      } 
+        transactions: transactions.map((t) => t._id),
+      },
     });
   } catch (err) {
-    console.error('Error in adminApproveCancel:', err);
-    return res.status(500).json({ success: false, message: 'Lỗi server khi duyệt hủy đơn.' });
+    console.error("Error in adminApproveCancel:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi duyệt hủy đơn." });
   }
 };
 
@@ -1898,5 +2217,5 @@ module.exports = {
   saveBookingSignature,
   deleteBookingByUser,
   ownerCancelBooking,
-  calculateDepositRefund
+  calculateDepositRefund,
 };

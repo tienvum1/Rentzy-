@@ -88,7 +88,13 @@ const getOwnerBookings = async (req, res) => {
     
     // Add status filter if provided
     if (status) {
-      searchQuery.status = status;
+      if (status === 'completed_pending_payout') {
+        // Filter for completed bookings that are pending payout
+        searchQuery.status = 'completed';
+        searchQuery.payoutStatus = 'pending';
+      } else {
+        searchQuery.status = status;
+      }
     }
 
     // Build sort query
