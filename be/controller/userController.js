@@ -7,7 +7,10 @@ const bcrypt = require("bcryptjs");
 const path = require("path");
 const cloudinary = require("../utils/cloudinary");
 const fs = require("fs");
+
+// Initialize Twilio client
 const twilio = require("twilio");
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 const axios = require("axios");
 const { URL } = require("url");
@@ -26,6 +29,55 @@ exports.getProfile = async (req, res) => {
   } catch (error) {
     console.error("Error fetching profile:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+const sendVerificationSMS = async (phone, otp) => {
+  try {
+    // Validate Twilio configuration
+    if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
+      console.error("Twilio configuration is missing. Please check your .env file.");
+      throw new Error("Dịch vụ SMS không được cấu hình. OTP (dev only): " + otp);
+    }
+
+    // Format phone number for Vietnam (+84)
+    let formattedPhone = phone;
+    if (phone.startsWith('0')) {
+      formattedPhone = '+84' + phone.substring(1);
+    } else if (!phone.startsWith('+')) {
+      formattedPhone = '+84' + phone;
+    }
+
+    const message = `Mã xác minh Rentzy của bạn là: ${otp}. Mã có hiệu lực trong 10 phút.`;
+
+    console.log(`Sending SMS to ${formattedPhone} via Twilio...`);
+
+    const twilioMessage = await twilioClient.messages.create({
+      body: message,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: formattedPhone
+    });
+
+    console.log(`SMS sent successfully. Message SID: ${twilioMessage.sid}`);
+    return twilioMessage;
+
+  } catch (error) {
+    console.error("Error sending SMS via Twilio:", error.message);
+    
+    // Handle specific Twilio errors
+    if (error.code) {
+      switch (error.code) {
+        case 21211:
+          throw new Error("Số điện thoại không hợp lệ.");
+        case 21408:
+          throw new Error("Không thể gửi tin nhắn đến số điện thoại này.");
+        case 21614:
+          throw new Error("Số điện thoại không hợp lệ cho quốc gia này.");
+        default:
+          throw new Error("Lỗi khi gửi tin nhắn SMS: " + error.message);
+      }
+    }
+    
+    throw new Error("Không thể gửi tin nhắn SMS. Vui lòng thử lại sau.");
   }
 };
 
@@ -285,46 +337,6 @@ exports.resendEmailOtp = async (req, res) => {
   }
 };
 
-// --- UPDATED IMPLEMENTATION FOR "SmsGateway" (blue icon) ---
-const sendVerificationSMS = async (phone, otp) => {
-  // The BASE URL of your self-hosted SMS gateway server (e.g., http://192.168.1.15:38261)
-  // This needs to be configured in your .env file.
-  const smsGatewayBaseUrl = process.env.SMS_GATEWAY_URL;
-
-  if (!smsGatewayBaseUrl) {
-    console.error(
-      "SMS Gateway URL is not configured. Please set SMS_GATEWAY_URL in your .env file."
-    );
-    throw new Error("Dịch vụ SMS không được cấu hình. OTP (dev anly): " + otp);
-  }
-
-  try {
-    const message = `Ma xac minh Rentzy cua ban la: ${otp}`; // Sending without accents for better compatibility
-
-    // Construct the full URL with query parameters based on the app's settings
-    const url = new URL(smsGatewayBaseUrl);
-    url.searchParams.append("tel", phone); // Phone number parameter key is 'tel'
-    url.searchParams.append("message", message); // Text parameter key is 'message'
-
-    console.log(`Sending GET request to Gateway: ${url.href}`);
-
-    // Using axios to send a GET request
-    const response = await axios.get(url.href);
-
-    // Assuming a 200 OK status means the gateway accepted the request.
-    // The actual success/error response may vary by app.
-    if (response.status === 200) {
-      console.log(`Gateway accepted request to send SMS to: ${phone}`);
-    } else {
-      throw new Error(
-        `Gateway returned an error with status: ${response.status}`
-      );
-    }
-  } catch (error) {
-    console.error("Lỗi khi kết nối tới SMS Gateway:", error.message);
-    throw new Error("Không thể kết nối tới dịch vụ SMS.");
-  }
-};
 
 // @desc    Update user phone and send verification OTP
 // @route   PUT /api/user/update-phone
@@ -368,13 +380,22 @@ exports.updatePhone = async (req, res) => {
 
     await user.save();
 
-    // Send verification SMS with OTP
-    await sendVerificationSMS(user.phone, otp);
-
-    res.status(200).json({
-      message: "Vui lòng kiểm tra điện thoại để xác minh số mới.",
-      requiresVerification: true,
-    });
+    // Send verification SMS with OTP using Twilio
+    try {
+      await sendVerificationSMS(user.phone, otp);
+      res.status(200).json({
+        message: "Vui lòng kiểm tra điện thoại để xác minh số mới.",
+        requiresVerification: true,
+      });
+    } catch (smsError) {
+      // If SMS fails, still save the user but inform about SMS failure
+      console.error("SMS sending failed:", smsError.message);
+      res.status(200).json({
+        message: "Số điện thoại đã được cập nhật nhưng không thể gửi SMS. Vui lòng thử gửi lại OTP.",
+        requiresVerification: true,
+        smsError: true
+      });
+    }
   } catch (error) {
     console.error("Error updating phone and sending OTP:", error);
     // Handle duplicate phone error specifically (assuming your DB enforces unique phones)
@@ -466,10 +487,16 @@ exports.resendPhoneOtp = async (req, res) => {
     user.phone_otp_expires = otpExpires;
     await user.save();
 
-    // Resend SMS
-    await sendVerificationSMS(user.phone, otp);
-
-    res.status(200).json({ message: "Đã gửi lại mã OTP thành công." });
+    // Resend SMS using Twilio
+    try {
+      await sendVerificationSMS(user.phone, otp);
+      res.status(200).json({ message: "Đã gửi lại mã OTP thành công." });
+    } catch (smsError) {
+      console.error("Error resending SMS:", smsError.message);
+      res.status(500).json({ 
+        message: "Không thể gửi lại mã OTP. Vui lòng thử lại sau." 
+      });
+    }
   } catch (error) {
     console.error("Lỗi khi gửi lại OTP điện thoại:", error);
     res

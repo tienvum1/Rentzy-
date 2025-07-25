@@ -43,16 +43,17 @@ const VerifyPhonePopup = ({ open, onClose, onVerifyOtp, userPhone, errorMessage,
     setMessage('');
     setErrorMessage('');
     try {
-      await axios.post(
+      const response = await axios.post(
         `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999'}/api/user/resend-phone-otp`,
-        { phone: userPhone }, // Send the current phone number with the correct key 'phone'
+        { phone: userPhone },
         {
           withCredentials: true,
         }
       );
       setMessage('Mã OTP mới đã được gửi thành công.');
     } catch (err) {
-      setErrorMessage(err.response?.data?.message || 'Lỗi khi gửi lại mã OTP.');
+      const errorMsg = err.response?.data?.message || 'Lỗi khi gửi lại mã OTP.';
+      setErrorMessage(errorMsg);
       setCooldown(0); // Reset cooldown on error so user can try again
     }
   };
@@ -92,4 +93,4 @@ const VerifyPhonePopup = ({ open, onClose, onVerifyOtp, userPhone, errorMessage,
   );
 };
 
-export default VerifyPhonePopup; 
+export default VerifyPhonePopup;
