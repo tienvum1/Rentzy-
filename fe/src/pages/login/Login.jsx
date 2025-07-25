@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./Login.css";
 import Header from "../../components/Header/Header";
 import Footer from "../../components/footer/Footer";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import validator from "validator";
 
@@ -15,6 +15,27 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Check for URL parameters on component mount
+  useEffect(() => {
+    const error = searchParams.get('error');
+    const errorMessage = searchParams.get('message');
+    
+    if (error === 'account_blocked' && errorMessage) {
+      setMessage(decodeURIComponent(errorMessage));
+      setIsError(true);
+    } else if (error === 'google_fail') {
+      setMessage('Đăng nhập Google thất bại. Vui lòng thử lại.');
+      setIsError(true);
+    } else if (error === 'google_auth_failed') {
+      setMessage('Xác thực Google thất bại hoặc không tìm thấy thông tin người dùng.');
+      setIsError(true);
+    } else if (error === 'google_auth_failed_server') {
+      setMessage('Lỗi server trong quá trình xác thực Google.');
+      setIsError(true);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,6 +94,8 @@ const Login = () => {
         } else if (backendMessage === "Please verify your email") {
           errorMessage =
             "Tài khoản chưa xác thực. Vui lòng kiểm tra email để xác thực.";
+        } else if (backendMessage === "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để được hỗ trợ.") {
+          errorMessage = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để được hỗ trợ.";
         } else {
           errorMessage = `Đăng nhập thất bại: ${backendMessage}`;
         }

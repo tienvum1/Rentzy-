@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const Transaction = require("../models/Transaction");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
@@ -847,5 +848,93 @@ exports.blockUser = async (req, res) => {
   } catch (error) {
     console.error("Block user error:", error);
     res.status(500).json({ message: "Lỗi server khi block user." });
+  }
+};
+
+// @desc    Get user transactions
+// @route   GET /api/user/my-transactions
+// @access  Private
+exports.getUserTransactions = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const { type, status, paymentMethod } = req.query;
+
+    // Build filter query
+    const filter = { user: req.user._id };
+    if (type) filter.type = type;
+    if (status) filter.status = status;
+    if (paymentMethod) filter.paymentMethod = paymentMethod;
+
+    // Get transactions with pagination
+    const transactions = await Transaction.find(filter)
+      .populate("booking", "_id startDate endDate vehicle")
+      .populate({
+        path: "booking",
+        populate: {
+          path: "vehicle",
+          select: "name model images",
+        },
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Transaction.countDocuments(filter);
+    const totalPages = Math.ceil(total / limit);
+
+    // Calculate summary statistics
+    const summary = await Transaction.aggregate([
+      { $match: { user: req.user._id } },
+      {
+        $group: {
+          _id: null,
+          totalTransactions: { $sum: 1 },
+          totalAmount: { $sum: "$amount" },
+          completedTransactions: {
+            $sum: { $cond: [{ $eq: ["$status", "COMPLETED"] }, 1, 0] },
+          },
+          completedAmount: {
+            $sum: { $cond: [{ $eq: ["$status", "COMPLETED"] }, "$amount", 0] },
+          },
+          pendingTransactions: {
+            $sum: { $cond: [{ $eq: ["$status", "PENDING"] }, 1, 0] },
+          },
+          pendingAmount: {
+            $sum: { $cond: [{ $eq: ["$status", "PENDING"] }, "$amount", 0] },
+          },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        transactions,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalItems: total,
+          itemsPerPage: limit,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+        summary: summary[0] || {
+          totalTransactions: 0,
+          totalAmount: 0,
+          completedTransactions: 0,
+          completedAmount: 0,
+          pendingTransactions: 0,
+          pendingAmount: 0,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching user transactions:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy danh sách giao dịch",
+    });
   }
 };

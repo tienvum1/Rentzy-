@@ -68,5 +68,7 @@ router.post('/verify-cccd', protect, upload.single('cccd_image'), userController
 // Admin block user
 router.put('/admin/users/:id/block', protect, adminOnly, blockUser);
 
+// Get user transactions
+router.get('/my-transactions', protect, userController.getUserTransactions);
 
 module.exports = router;

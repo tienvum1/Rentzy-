@@ -42,8 +42,7 @@ const SidebarAdmin = () => {
 
 
 
-                {/* Withdrawals Management */}
-                <li onClick={() => handleMenuItemClick('/admin/promotions')}>Quản lý mã khuyến mãi</li>
+
         
         <li onClick={() => handleMenuItemClick('/admin/vehicle-reports')}>Quản lý báo cáo</li>
     
@@ -59,6 +58,8 @@ const SidebarAdmin = () => {
                 {/* Example: Transaction Management, Reports, etc. */}
                 {/* <li onClick={() => handleMenuItemClick('/admin/transactions')}>Quản lý giao dịch</li> */}
                 {/* <li onClick={() => handleMenuItemClick('/admin/reports')}>Báo cáo thống kê</li> */}
+                                {/* Withdrawals Management */}
+                <li onClick={() => handleMenuItemClick('/admin/promotions')}>Quản lý mã khuyến mãi</li>
             </ul>
         </div>
     );

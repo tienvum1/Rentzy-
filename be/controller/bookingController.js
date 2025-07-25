@@ -2089,7 +2089,7 @@ const adminApproveCancel = async (req, res) => {
         booking: booking._id,
         amount: totalRefundForRenter,
         type: "bank_transfer_refund",
-        status: "completed",
+        status: "COMPLETED",
         paymentMethod: "bank_transfer",
         bankTransferInfo: {
           recipientName: booking.renter.name,
@@ -2106,6 +2106,9 @@ const adminApproveCancel = async (req, res) => {
       });
       await renterRefundTransaction.save();
       transactions.push(renterRefundTransaction);
+
+      // Thêm transaction vào booking
+      booking.transactions.push(renterRefundTransaction._id);
     }
 
     // Create compensation transaction for owner if applicable
@@ -2114,7 +2117,7 @@ const adminApproveCancel = async (req, res) => {
         booking: booking._id,
         amount: totalRefundForOwner,
         type: "bank_transfer_compensation",
-        status: "completed",
+        status: "COMPLETED",
         paymentMethod: "bank_transfer",
         bankTransferInfo: {
           recipientName: booking.vehicle.ownerInfo?.name || "Chủ xe",
@@ -2134,6 +2137,14 @@ const adminApproveCancel = async (req, res) => {
       });
       await ownerCompensationTransaction.save();
       transactions.push(ownerCompensationTransaction);
+
+      // Thêm transaction vào booking
+      booking.transactions.push(ownerCompensationTransaction._id);
+    }
+
+    // Lưu booking với các transaction mới
+    if (transactions.length > 0) {
+      await booking.save();
     }
 
     // Notify renter about refund completion
@@ -2156,9 +2167,7 @@ const adminApproveCancel = async (req, res) => {
         user: booking.vehicle.owner,
         type: "booking",
         title: "Bồi thường đã được duyệt",
-        message: `Admin đã duyệt và chuyển tiền bồi thường ${totalRefundForOwner.toLocaleString(
-          "vi-VN"
-        )} VND về tài khoản ngân hàng của bạn.`,
+        message: `Admin đã duyệt chuyển tiền về tài khoản của bạn`,
         booking: booking._id,
         vehicle: booking.vehicle._id,
       });

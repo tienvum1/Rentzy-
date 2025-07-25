@@ -1,14 +1,14 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaUser, FaHeart, FaCar, FaSuitcaseRolling, FaClipboardCheck, FaLock, FaTrash, FaBell } from 'react-icons/fa';
+import { FaUser, FaHeart, FaCar, FaSuitcaseRolling, FaClipboardCheck, FaLock, FaTrash, FaBell, FaExchangeAlt } from 'react-icons/fa';
 import './ProfileSidebar.css';
 
 const menuItems = [
   { id: 'account', icon: <FaUser />, label: 'Tài khoản của tôi', path: '/profile/account' },
   { id: 'favorites', icon: <FaHeart />, label: 'Xe yêu thích', path: '/profile/favorites' },
   { id: 'my-bookings', icon: <FaSuitcaseRolling />, label: 'Đơn thuê của tôi', path: '/profile/my-bookings' },
+  { id: 'my-transactions', icon: <FaExchangeAlt />, label: 'Lịch sử giao dịch', path: '/profile/my-transactions' },
   { id: 'my-reviews', icon: <FaSuitcaseRolling />, label: 'Đánh giá của tôi', path: '/profile/my-reviews' },
-
   { id: 'my-notifications', icon: <FaBell />, label: 'Thông báo', path: '/profile/my-notifications' },
   { id: 'owner-management', icon: <FaClipboardCheck />, label: 'Quản lí xe cho owner', path: '/ownerpage/overview' },
   { id: 'change-password', icon: <FaLock />, label: 'Đổi mật khẩu', path: '/profile/change-password' },

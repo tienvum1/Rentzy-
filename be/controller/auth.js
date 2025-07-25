@@ -165,6 +165,13 @@ exports.login = async (req, res) => {
     if (!user.is_verified)
       return res.status(400).json({ message: "Please verify your email" });
 
+    // Check if account is active (not blocked by admin)
+    if (!user.isActive) {
+      return res.status(403).json({ 
+        message: "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để được hỗ trợ." 
+      });
+    }
+
     // Check if password matches (only if password_hash exists)
     if (
       !user.password_hash ||
@@ -221,26 +228,40 @@ exports.googleCallback = async (req, res) => {
   const googleProfile = req.user;
 
   try {
+    let user;
+    
     // 1. Tìm theo googleId
-    let user = await User.findOne({ googleId: googleProfile.id });
+    user = await User.findOne({ googleId: googleProfile.id });
 
     if (user) {
       console.log("User found by googleId:", user._id);
+
+      // Check if account is blocked by admin
+      if (!user.isActive) {
+        return res.redirect(
+          `${process.env.CLIENT_ORIGIN}/login?error=account_blocked&message=${encodeURIComponent('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để được hỗ trợ.')}`
+        );
+      }
 
       if (!user.loginMethods.includes("google")) {
         user.loginMethods.push("google");
       }
 
       user.is_verified = true;
-      user.isActive = true;
       await user.save();
-
-
+    } else {
       // 2. Tìm theo email nếu chưa có googleId
       user = await User.findOne({ email: googleProfile.email });
 
       if (user) {
         console.log("User found by email, linking Google ID:", user._id);
+
+        // Check if account is blocked by admin
+        if (!user.isActive) {
+          return res.redirect(
+            `${process.env.CLIENT_ORIGIN}/login?error=account_blocked&message=${encodeURIComponent('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để được hỗ trợ.')}`
+          );
+        }
 
         if (!user.googleId) {
           user.googleId = googleProfile.id;
@@ -255,10 +276,8 @@ exports.googleCallback = async (req, res) => {
         }
 
         user.is_verified = true;
-        user.isActive = true;
         await user.save();
-
-   
+      } else {
         // 3. Tạo tài khoản mới nếu chưa có
         console.log("New user via Google, creating account:", googleProfile.email);
 
@@ -275,8 +294,6 @@ exports.googleCallback = async (req, res) => {
         });
 
         await user.save();
-
-     
       }
     }
 

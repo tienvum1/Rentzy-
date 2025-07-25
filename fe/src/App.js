@@ -42,6 +42,7 @@ import UserBookings from "./pages/profile/myBookings/UserBookings"; // Import Us
 
 import NotificationPage from "./pages/profile/myNotifications/NotificationPage";
 import MyReviews from './pages/profile/myReviews/MyReviews';
+import MyTransactions from './pages/profile/myTransactions/MyTransactions';
 import FavoritesPage from "./pages/profile/FavoritesPage";
 
 // owner
@@ -118,6 +119,7 @@ function App() {
               element={<NotificationPage />}
             />
             <Route path="/profile/my-reviews" element={<MyReviews />} />
+            <Route path="/profile/my-transactions" element={<MyTransactions />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route

@@ -164,8 +164,19 @@ const createPayment = async (req, res) => {
     } else {
       // Nếu không có, tạo một bản ghi giao dịch mới
       console.log("No pending MoMo transaction found. Creating a new one...");
+      
+      // Lấy thông tin booking để có user ID
+      const booking = await Booking.findById(orderCode).populate('renter');
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          message: "Booking not found",
+        });
+      }
+      
       transaction = new Transaction({
         booking: orderCode, // Booking ID gốc
+        user: booking.renter._id, // Thêm user ID
         amount: amount,
         type: "DEPOSIT",
         status: "PENDING",
@@ -177,15 +188,13 @@ const createPayment = async (req, res) => {
           momoRequestId: requestId,
           momoOrderId: uniqueMoMoOrderId, // Unique MoMo order ID cho lần thử này
         },
+        description: "Thanh toán đặt cọc qua MoMo"
       });
       await transaction.save();
 
       // Cập nhật booking với transaction ID mới
-      const booking = await Booking.findById(orderCode);
-      if (booking) {
-        booking.transactions.push(transaction._id);
-        await booking.save();
-      }
+      booking.transactions.push(transaction._id);
+      await booking.save();
     }
 
     // Tạo raw signature cho API MoMo
@@ -913,7 +922,7 @@ const createPayOSLink = async (req, res) => {
     if (!bookingId || !returnUrl || !cancelUrl) {
       return res.status(400).json({ error: "Thiếu thông tin." });
     }
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(bookingId).populate('renter');
     if (!booking) {
       return res.status(404).json({ error: "Không tìm thấy đơn hàng." });
     }
@@ -950,6 +959,47 @@ const createPayOSLink = async (req, res) => {
       booking.orderCode = orderCode;
       await booking.save();
     }
+
+    // Tìm kiếm giao dịch PayOS đang chờ xử lý cho booking này
+    let transaction = await Transaction.findOne({
+      booking: bookingId,
+      paymentMethod: "PAYOS",
+      status: "PENDING",
+      type: "DEPOSIT"
+    });
+
+    // Nếu có giao dịch đang chờ xử lý, tái sử dụng và cập nhật PayOS-specific IDs
+    if (transaction) {
+      console.log(
+        "Existing pending PayOS transaction found. Reusing and updating..."
+      );
+      transaction.paymentMetadata.set('payosOrderCode', orderCode.toString());
+      await transaction.save();
+    } else {
+      // Nếu không có, tạo một bản ghi giao dịch mới
+      console.log("No pending PayOS transaction found. Creating a new one...");
+      transaction = new Transaction({
+        booking: bookingId,
+        user: booking.renter._id,
+        amount: amount,
+        type: "DEPOSIT",
+        status: "PENDING",
+        paymentMethod: "PAYOS",
+        paymentMetadata: {
+          orderCode: bookingId,
+          paymentMethod: "PAYOS",
+          paymentStatus: "PENDING",
+          payosOrderCode: orderCode.toString(),
+        },
+        description: "Thanh toán đặt cọc qua PayOS"
+      });
+      await transaction.save();
+
+      // Cập nhật booking với transaction ID mới
+      booking.transactions.push(transaction._id);
+      await booking.save();
+    }
+
     // description tối đa 25 ký tự
     const description = `Coc don ${orderCode}`;
     const body = {
@@ -1034,24 +1084,44 @@ const handlePayOSWebhook = async (req, res) => {
         await booking.save();
         console.log("Booking status updated to fully_paid:", booking._id);
       }
-      // Tạo transaction nếu chưa có
-      const existingTx = await Transaction.findOne({
+      // Tìm và cập nhật transaction đang pending
+      const transactionType = booking.orderCode === data.orderCode ? "DEPOSIT" : "RENTAL";
+      let transaction = await Transaction.findOne({
         booking: booking._id,
         paymentMethod: "PAYOS",
-        status: "COMPLETED",
+        status: "PENDING",
+        type: transactionType,
         amount: data.amount,
       });
-      if (!existingTx) {
+
+      if (transaction) {
+        // Cập nhật transaction đã có
+        transaction.status = "COMPLETED";
+        transaction.paymentMetadata.set('paymentStatus', 'COMPLETED');
+        if (data.id) {
+          transaction.paymentMetadata.set('payosTransId', data.id.toString());
+        }
+        await transaction.save();
+        console.log("PayOS transaction updated to COMPLETED:", transaction._id);
+      } else {
+        // Tạo transaction mới nếu không tìm thấy (fallback cho các trường hợp cũ)
+        const paymentMetadata = {
+          payosOrderCode: data.orderCode ? data.orderCode.toString() : '',
+          paymentStatus: "COMPLETED"
+        };
+        
+        if (data.id) {
+          paymentMetadata.payosTransId = data.id.toString();
+        }
+        
         const newTx = await Transaction.create({
           booking: booking._id,
+          user: booking.renter,
           amount: data.amount,
-          type: booking.orderCode === data.orderCode ? "DEPOSIT" : "RENTAL",
+          type: transactionType,
           status: "COMPLETED",
           paymentMethod: "PAYOS",
-          paymentMetadata: {
-            payosOrderId: data.orderCode,
-            payosTransId: data.id,
-          },
+          paymentMetadata: paymentMetadata,
           description:
             booking.orderCode === data.orderCode
               ? "Thanh toán đặt cọc qua PayOS"
@@ -1059,6 +1129,7 @@ const handlePayOSWebhook = async (req, res) => {
         });
         booking.transactions.push(newTx._id);
         await booking.save();
+        console.log("PayOS transaction created:", newTx._id);
       }
       return res.json({ success: true });
     } else {
@@ -1084,7 +1155,7 @@ const createPayOSLinkForRemaining = async (req, res) => {
     if (!bookingId || !returnUrl || !cancelUrl) {
       return res.status(400).json({ error: "Thiếu thông tin." });
     }
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(bookingId).populate('renter');
     if (!booking) {
       return res.status(404).json({ error: "Không tìm thấy đơn hàng." });
     }
@@ -1106,6 +1177,47 @@ const createPayOSLinkForRemaining = async (req, res) => {
       booking.orderCodeRemaining = orderCodeRemaining;
       await booking.save();
     }
+
+    // Tìm kiếm giao dịch PayOS đang chờ xử lý cho phần còn lại
+    let transaction = await Transaction.findOne({
+      booking: bookingId,
+      paymentMethod: "PAYOS",
+      status: "PENDING",
+      type: "RENTAL"
+    });
+
+    // Nếu có giao dịch đang chờ xử lý, tái sử dụng và cập nhật PayOS-specific IDs
+    if (transaction) {
+      console.log(
+        "Existing pending PayOS RENTAL transaction found. Reusing and updating..."
+      );
+      transaction.paymentMetadata.set('payosOrderCode', orderCodeRemaining.toString());
+      await transaction.save();
+    } else {
+      // Nếu không có, tạo một bản ghi giao dịch mới
+      console.log("No pending PayOS RENTAL transaction found. Creating a new one...");
+      transaction = new Transaction({
+        booking: bookingId,
+        user: booking.renter._id,
+        amount: remaining,
+        type: "RENTAL",
+        status: "PENDING",
+        paymentMethod: "PAYOS",
+        paymentMetadata: {
+          orderCode: bookingId,
+          paymentMethod: "PAYOS",
+          paymentStatus: "PENDING",
+          payosOrderCode: orderCodeRemaining.toString(),
+        },
+        description: "Thanh toán phần còn lại qua PayOS"
+      });
+      await transaction.save();
+
+      // Cập nhật booking với transaction ID mới
+      booking.transactions.push(transaction._id);
+      await booking.save();
+    }
+
     const description = `Con lai ${orderCodeRemaining}`;
     const body = {
       orderCode: orderCodeRemaining,
