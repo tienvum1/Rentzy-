@@ -859,6 +859,159 @@ const getAllPendingRefundRequests = async (req, res) => {
   }
 };
 
+// Lấy danh sách yêu cầu giải ngân cho chủ xe
+const getPendingPayoutRequests = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const bookings = await Booking.find({ payoutStatus: 'pending' })
+      .populate('renter', 'name email phone')
+      .populate('vehicle', 'brand model licensePlate primaryImage owner')
+      .populate('vehicle.owner', 'name email phone bankAccounts')
+      .sort({ payoutRequestedAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Booking.countDocuments({ payoutStatus: 'pending' });
+    const totalPages = Math.ceil(total / limit);
+
+    // Tính toán số tiền giải ngân cho mỗi booking
+    const payoutRequests = bookings.map(booking => {
+      const bookingObj = booking.toObject();
+      // Số tiền giải ngân = tổng tiền thuê - phí hệ thống (10%)
+      const systemFeeRate = 0.1; // 10%
+      const systemFee = Math.round(booking.totalCost * systemFeeRate);
+      const payoutAmount = Math.round(booking.totalCost * (1 - systemFeeRate));
+      
+      return {
+        ...bookingObj,
+        payoutAmount,
+        systemFee,
+        totalCost: booking.totalCost
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        bookings: payoutRequests,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalBookings: total,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        },
+        summary: {
+          totalPendingPayouts: total,
+          totalPayoutAmount: payoutRequests.reduce((sum, booking) => sum + booking.payoutAmount, 0)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching pending payout requests:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server khi lấy danh sách yêu cầu giải ngân' 
+    });
+  }
+};
+
+// Duyệt yêu cầu giải ngân cho chủ xe
+const approvePayoutRequest = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { note } = req.body;
+
+    const booking = await Booking.findById(bookingId)
+      .populate('vehicle')
+      .populate('vehicle.owner', 'name email bankAccounts');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy booking'
+      });
+    }
+
+    if (booking.payoutStatus !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'Yêu cầu giải ngân này đã được xử lý'
+      });
+    }
+
+    // Tính toán số tiền giải ngân
+    const systemFeeRate = 0.1; // 10%
+    const payoutAmount = Math.round(booking.totalCost * (1 - systemFeeRate));
+
+    // Cập nhật trạng thái giải ngân
+    booking.payoutStatus = 'approved';
+    booking.payoutApprovedAt = new Date();
+    booking.payoutApprovedBy = req.user._id;
+    booking.payoutNote = note || '';
+    await booking.save();
+
+    // Tạo transaction giải ngân
+    const payoutTransaction = new Transaction({
+      booking: booking._id,
+      user: booking.vehicle.owner._id,
+      amount: payoutAmount,
+      type: 'bank_transfer_compensation',
+      status: 'COMPLETED',
+      paymentMethod: 'bank_transfer',
+      description: `Giải ngân cho chủ xe - Booking #${booking._id.toString().slice(-6)}`,
+      bankTransferInfo: {
+        recipientName: booking.vehicle.owner.name,
+        accountNumber: booking.vehicle.owner.bankAccounts?.[0]?.accountNumber || '',
+        bankName: booking.vehicle.owner.bankAccounts?.[0]?.bankName || '',
+        accountHolder: booking.vehicle.owner.bankAccounts?.[0]?.accountHolder || booking.vehicle.owner.name,
+        transferDate: new Date(),
+        transferAmount: payoutAmount,
+        transferNote: note || `Giải ngân cho chủ xe - Booking #${booking._id.toString().slice(-6)}`
+      }
+    });
+    await payoutTransaction.save();
+
+    // Tạo thông báo cho chủ xe
+    const bankInfo = booking.vehicle.owner.bankAccounts?.[0];
+    const bankDetails = bankInfo ? `${bankInfo.bankName} - STK: ${bankInfo.accountNumber}` : 'tài khoản đã đăng ký';
+    
+    await Notification.create({
+      user: booking.vehicle.owner._id,
+      type: 'payout',
+      title: '🎉 Yêu cầu giải ngân đã được duyệt!',
+      message: `Chúc mừng! Yêu cầu giải ngân cho chuyến đi #${booking._id.toString().slice(-6)} đã được admin duyệt thành công.\n\n💰 Số tiền giải ngân: ${payoutAmount.toLocaleString('vi-VN')}đ\n🏦 Tài khoản nhận: ${bankDetails}\n⏰ Thời gian duyệt: ${new Date().toLocaleString('vi-VN')}\n\nSố tiền sẽ được chuyển vào tài khoản ngân hàng của bạn trong vòng 1-3 ngày làm việc. Cảm ơn bạn đã sử dụng dịch vụ Rentzy!`,
+      booking: booking._id,
+      vehicle: booking.vehicle._id,
+      data: {
+        payoutAmount,
+        bankInfo: bankDetails,
+        approvedAt: new Date(),
+        bookingCode: booking._id.toString().slice(-6)
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Đã duyệt yêu cầu giải ngân thành công',
+      data: {
+        booking,
+        payoutAmount,
+        transaction: payoutTransaction
+      }
+    });
+  } catch (error) {
+    console.error('Error approving payout request:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server khi duyệt yêu cầu giải ngân' 
+    });
+  }
+};
+
 // ✅ Export tất cả ở một chỗ duy nhất
 module.exports = {
     getOwnerRequests,
@@ -869,7 +1022,8 @@ module.exports = {
     getPendingVehicleDetail,
     reviewVehicleApproval,
     getDashboardStats,
-    // getPendingPayoutRequests, // Removed - withdrawals functionality deleted
+    getPendingPayoutRequests,
+    approvePayoutRequest,
     getPendingDepositRefundRequests,
     createOrUpdateDriverLicense,
     getPendingCCCDRequests,

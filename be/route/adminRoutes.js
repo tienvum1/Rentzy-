@@ -78,7 +78,9 @@ router.post('/approve-cancel/:id', protect, adminOnly, require('../controller/bo
 // Route để lấy tất cả các yêu cầu pending (cả renter và owner)
 router.get('/all-pending-refunds', protect, adminOnly, adminController.getAllPendingRefundRequests);
 
-// Removed payout-requests APIs - withdrawals functionality deleted
+// Routes cho quản lý giải ngân cho chủ xe
+router.get('/payout-requests', protect, adminOnly, adminController.getPendingPayoutRequests);
+router.post('/approve-payout/:bookingId', protect, adminOnly, adminController.approvePayoutRequest);
 
 
 

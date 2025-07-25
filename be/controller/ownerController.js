@@ -293,7 +293,7 @@ const getOwnerRevenue = async (req, res) => {
       groupId = { year: { $year: '$createdAt' } };
     }
 
-    // Tính doanh thu thực tế của chủ xe (trừ phí platform 10%)
+    // Tính doanh thu thực tế của chủ xe (trừ phí platform 5%)
     const PLATFORM_FEE_RATE = 0.1; // 10% phí platform
     
     const revenue = await Booking.aggregate([
