@@ -143,17 +143,16 @@ const OwnerBookingManagement = () => {
   // Helper function để hiển thị text trạng thái
   const getStatusText = (status) => {
     const statusMap = {
-      'pending': 'Chờ xác nhận',
-      'confirmed': 'Đã xác nhận',
-      'ongoing': 'Đang thuê',
-      'completed': 'Hoàn thành',
-      'cancelled': 'Đã hủy',
-      'cancel_requested': 'Yêu cầu hủy',
-      'owner_canceled': 'Chủ xe đã hủy',
-      'deposit_paid': 'Đã đặt cọc',
-      'fully_paid': 'Đã thanh toán đầy đủ',
-      'refund_requested': 'Yêu cầu hoàn tiền',
-      'refunded': 'Đã hoàn tiền'
+      'pending': 'Đơn mới tạo, chưa thanh toán',
+      'deposit_paid': 'Đã thanh toán cọc (30%)',
+      'fully_paid': 'Đã hoàn tất thanh toán (100%)',
+      'in_progress': 'Đang thuê xe',
+      'completed': 'Đã trả xe, hoàn tất',
+      'canceled': 'Đã hủy',
+      'owner_canceled': 'Chủ xe hủy',
+      'refunded': 'Đã hoàn tiền',
+      'rejected': 'Bị từ chối',
+      'cancel_requested': 'Đang chờ chủ xe duyệt huỷ'
     };
     return statusMap[status] || status;
   };
@@ -229,13 +228,16 @@ const OwnerBookingManagement = () => {
               className="status-filter-select"
             >
               <option value="">Tất cả trạng thái</option>
-              <option value="pending">Chờ xác nhận</option>
-              <option value="confirmed">Đã xác nhận</option>
-              <option value="ongoing">Đang thuê</option>
-              <option value="completed">Hoàn thành</option>
-              <option value="cancelled">Đã hủy</option>
-              <option value="cancel_requested">Yêu cầu hủy</option>
-              <option value="completed_pending_payout">Hoàn thành - Chờ giải ngân</option>
+              <option value="pending">Đơn mới tạo, chưa thanh toán</option>
+              <option value="deposit_paid">Đã thanh toán cọc (30%)</option>
+              <option value="fully_paid">Đã hoàn tất thanh toán (100%)</option>
+              <option value="in_progress">Đang thuê xe</option>
+              <option value="completed">Đã trả xe, hoàn tất</option>
+              <option value="canceled">Đã hủy</option>
+              <option value="owner_canceled">Chủ xe hủy</option>
+              <option value="refunded">Đã hoàn tiền</option>
+              <option value="rejected">Bị từ chối</option>
+              <option value="cancel_requested">Đang chờ chủ xe duyệt huỷ</option>
             </select>
           </div>
           <div className="sort-container">

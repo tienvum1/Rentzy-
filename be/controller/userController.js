@@ -362,43 +362,25 @@ exports.updatePhone = async (req, res) => {
           message: "Số điện thoại đã được xác thực và không thay đổi.",
         });
       }
-      // If phone is the same but not verified, potentially resend OTP for current phone?
-      // For now, let's assume if they explicitly update to the same phone, they want to verify that one.
-      // We proceed to generate/send OTP for the current phone.
     }
 
-    // If phone is different, update it and mark as not verified
-    if (user.phone !== phone) {
-      user.phone = phone;
-      user.is_phone_verified = false; // Mark as not verified with the new phone
-    }
-
-    // Generate OTP and set expiration (e.g., 10 minutes)
-    const otp = generateOTP();
-    user.phone_otp = otp;
-    user.phone_otp_expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    // Update phone and mark as verified immediately (no OTP required)
+    user.phone = phone;
+    user.is_phone_verified = true; // Set to true immediately
+    
+    // Clear any existing OTP data
+    user.phone_otp = undefined;
+    user.phone_otp_expires = undefined;
 
     await user.save();
 
-    // Send verification SMS with OTP using Twilio
-    try {
-      await sendVerificationSMS(user.phone, otp);
-      res.status(200).json({
-        message: "Vui lòng kiểm tra điện thoại để xác minh số mới.",
-        requiresVerification: true,
-      });
-    } catch (smsError) {
-      // If SMS fails, still save the user but inform about SMS failure
-      console.error("SMS sending failed:", smsError.message);
-      res.status(200).json({
-        message: "Số điện thoại đã được cập nhật nhưng không thể gửi SMS. Vui lòng thử gửi lại OTP.",
-        requiresVerification: true,
-        smsError: true
-      });
-    }
+    res.status(200).json({
+      message: "Số điện thoại đã được cập nhật và xác thực thành công.",
+      requiresVerification: false, // No verification needed
+    });
   } catch (error) {
-    console.error("Error updating phone and sending OTP:", error);
-    // Handle duplicate phone error specifically (assuming your DB enforces unique phones)
+    console.error("Error updating phone:", error);
+    // Handle duplicate phone error specifically
     if (error.code === 11000 && error.keyPattern && error.keyPattern.phone) {
       return res.status(409).json({
         message: "Số điện thoại này đã được sử dụng bởi người dùng khác.",
@@ -678,7 +660,7 @@ exports.addBankAccount = async (req, res) => {
     if (existingAccount) {
       return res
         .status(400)
-        .json({ message: "Tài khoản ngân hàng này đã được thêm trước đó." });
+        .json({ message: "Tài khoản ngân hàng này Đã được thêm trước đó." });
     }
 
     user.bankAccounts.push({ accountNumber, bankName, accountHolder });

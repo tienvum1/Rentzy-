@@ -262,14 +262,10 @@ const Profile = () => {
         onUpdatePhone={async (newPhone) => {
           try {
             const response = await axios.put(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999'}/api/user/update-phone`, { phone: newPhone }, { withCredentials: true });
-            if (response.data.requiresVerification) {
-              setShowPhonePopup(false);
-              setShowVerifyPhonePopup(true);
-            } else {
-              await login();
-              setShowPhonePopup(false);
-              setMessage(response.data.message || 'Phone updated!');
-            }
+            // Since we no longer require verification, always refresh user data and close popup
+            await login(); // Refresh user data
+            setShowPhonePopup(false);
+            setMessage(response.data.message || 'Số điện thoại đã được cập nhật thành công!');
           } catch (error) {
             setPhoneUpdateErrorMessage(error.response?.data?.message || 'Lỗi khi cập nhật số điện thoại.');
           }
