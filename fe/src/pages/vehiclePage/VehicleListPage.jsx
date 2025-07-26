@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import VehicleCard from "../../components/VehicleCard/VehicleCard";
+import VehicleCard from "../../components/vehicleCard/VehicleCard";
 import "./VehicleListPage.css";
 import SearchBar from "../../components/vehicleFilter/SearchBar";
 import FilterBar from "../../components/vehicleFilter/FilterBar";
