@@ -105,7 +105,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/report', reportRoutes);
 app.use("/api/messages", messageRoutes);
-app.use('/api/chat' , chatBoxRoutes)
+app.use('/api/chat', chatBoxRoutes)
 
 
 
@@ -156,6 +156,16 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send("Something broke!");
 });
+
+// prepare for deploy : 
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '/fe/build')))
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'fe', 'build', 'index.html'))
+  })
+
+}
 
 // Thay app.listen bằng server.listen
 server.listen(PORT, () => {

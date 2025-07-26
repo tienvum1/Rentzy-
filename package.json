@@ -8,7 +8,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon app.js"
+    "start": "nodemon be/app.js" ,
+    "build" : "npm install && npm install --prefix fe && npm run build --prefix fe  "
   },
   "dependencies": {
     "@cloudinary/react": "^1.8.0",
