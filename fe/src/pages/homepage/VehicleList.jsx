@@ -9,7 +9,7 @@ const VehicleList = () => {
   useEffect(() => {
     const fetchTopRented = async () => {
       try {
-        const res = await fetch("http://localhost:4999/api/vehicles/top-rented");
+        const res = await fetch("https://rentzy-38wj.onrender.com/api/vehicles/top-rented");
         const data = await res.json();
         setVehicles(Array.isArray(data) ? data : []);
       } catch (err) {
