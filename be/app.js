@@ -159,13 +159,13 @@ app.use((err, req, res, next) => {
 
 // prepare for deploy : 
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '/fe/build')))
+  app.use(express.static(path.join(__dirname, '..', 'fe', 'build')))
 
   app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'fe', 'build', 'index.html'))
+    res.sendFile(path.resolve(__dirname, '..', 'fe', 'build', 'index.html'))
   })
-
 }
+
 
 // Thay app.listen bằng server.listen
 server.listen(PORT, () => {
