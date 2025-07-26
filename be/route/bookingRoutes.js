@@ -62,5 +62,12 @@ router.get('/get-all-bookings', protect, getAllBookingOfSpecificUser)
 // Xoá booking (chỉ cho phép renter hoặc admin)
 router.delete('/:id', protect, require('../controller/bookingController').deleteBookingByUser);
 
+// Thêm import
+const { 
+  cancelPendingBooking 
+} = require('../controller/bookingController');
+
+// Thêm route mới
+router.post('/:id/cancel-pending', protect, cancelPendingBooking);
 
 module.exports = router;

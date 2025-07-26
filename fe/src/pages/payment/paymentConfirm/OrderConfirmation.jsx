@@ -66,10 +66,11 @@ const OrderConfirmation = () => {
     if (window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) {
       try {
         const config = { withCredentials: true };
-        await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${bookingId}/cancel-expired`, {}, config);
+        // Sử dụng API mới thay vì cancel-expired
+        await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${bookingId}/cancel-pending`, {}, config);
         toast.success('Đã hủy đơn hàng thành công!');
         setTimeout(() => {
-          navigate('/');
+          navigate('/vehicles'); // Điều hướng về trang xe cho thuê
         }, 2000);
       } catch (err) {
         toast.error('Không thể hủy đơn hàng. Vui lòng thử lại!');

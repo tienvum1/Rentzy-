@@ -2192,6 +2192,57 @@ const adminApproveCancel = async (req, res) => {
   }
 };
 
+// API mới: Đơn giản chỉ thay đổi status từ pending thành cancelled
+const cancelPendingBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Tìm booking theo ID
+    const booking = await Booking.findById(id);
+    
+    if (!booking) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Không tìm thấy đơn đặt xe." 
+      });
+    }
+    
+    // Kiểm tra trạng thái hiện tại
+    if (booking.status !== "pending") {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Chỉ có thể hủy đơn đang ở trạng thái pending." 
+      });
+    }
+    
+    // Thay đổi trạng thái thành cancelled
+    booking.status = "canceled";
+    booking.cancelledAt = new Date();
+    booking.cancelledBy = "renter";
+    booking.cancellationReason = "Người dùng hủy đơn";
+    
+    await booking.save();
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: "Đã hủy đơn hàng thành công.",
+      booking: {
+        id: booking._id,
+        status: booking.status,
+        cancelledAt: booking.cancelledAt
+      }
+    });
+    
+  } catch (error) {
+    console.error("Error in cancelPendingBooking:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Lỗi server khi hủy đơn hàng.",
+      error: error.message 
+    });
+  }
+};
+
 module.exports = {
   getBookingByIdForOwner,
   createBooking,
@@ -2203,7 +2254,6 @@ module.exports = {
   updatePaymentStatus,
   cancelBookingByFrontend,
   getAllBookingOfSpecificUser,
-
   getFilteredBookingsOfUser,
   getAllModelOfVehicle,
   getAllStatusOfBooking,
@@ -2227,4 +2277,5 @@ module.exports = {
   deleteBookingByUser,
   ownerCancelBooking,
   calculateDepositRefund,
+  cancelPendingBooking
 };
