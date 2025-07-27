@@ -16,7 +16,7 @@ const FilterHistory = () => {
 
   const fetchFilterHistory = async () => {
     try {
-      const res = await axios.get("/api/vehicles/filter/history");
+      const res = await axios.get("/api/vehicles/filter/history", {withCredentials: true});
       setFilterHistories(res.data.data); // Assume data is array of { _id, text }
     } catch (error) {
       console.error("Failed to fetch filter history", error);
@@ -38,7 +38,7 @@ const FilterHistory = () => {
     if (!newFilter.trim()) return;
     // check if filter contains rude words :
     const response = await axios.get(
-      `/api/chat/checkRudeWords?text=${newFilter}`
+      `/api/chat/checkRudeWords?text=${newFilter}` , {withCredentials: true}
     );
     if (response.data.isRude) {
       toast.error(`Rude words detected: ${response.data.reason}`);
