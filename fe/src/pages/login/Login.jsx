@@ -71,7 +71,7 @@ const Login = () => {
       const userRole = response.data.user?.role;
       console.log(userRole);
       let redirectPath = "/homepage";
-      if (userRole == "owner") redirectPath = "/ownerpage";
+      if (userRole == "owner") redirectPath = "/ownerpage/overview";
       else if (userRole == "admin") redirectPath = "/admin";
 
       // Delay một chút để hiển thị thông báo
