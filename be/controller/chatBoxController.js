@@ -76,7 +76,7 @@ ${JSON.stringify(vehicles)}
             }
         };
 
-        const apiKey = process.env.GEMINI_API_KEY || ""; 
+        const apiKey = process.env.GEMINI_API_KEY || "";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
         const response = await fetch(apiUrl, {
@@ -123,3 +123,84 @@ ${JSON.stringify(vehicles)}
         return res.status(500).json({ text: "Internal server error" });
     }
 };
+
+// Check for rude words in a message using Gemini API : 
+exports.checkRudeWords = async (req, res) => {
+    const { text } = req.query;
+
+    if (!text) {
+        return res.status(400).json({ error: "Text is required" });
+    }
+
+    try {
+        const apiKey = process.env.GEMINI_API_KEY || "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+        // Chat history format expected by Gemini
+        const chatHistory = [
+            {
+                role: "user",
+                parts: [{
+                    text: `
+You are a strict language moderation assistant.
+Check whether the message below contains rude, offensive, abusive, or inappropriate language.
+Always return a JSON object in this format:
+
+{
+  "isRude": true | false,
+  "reason": "short explanation"
+}
+
+Message:
+"${text}"
+`
+                }]
+            }
+        ];
+
+        const payload = {
+            contents: chatHistory,
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: "OBJECT",
+                    properties: {
+                        isRude: { type: "BOOLEAN" },
+                        reason: { type: "STRING" }
+                    },
+                    required: ["isRude", "reason"]
+                }
+            }
+        };
+
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        let content = '';
+        if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+            content = result.candidates[0].content.parts[0].text;
+        } else {
+            console.error("Unexpected Gemini response:", result);
+            return res.status(500).json({ error: "No valid response from Gemini" });
+        }
+
+        try {
+            const parsed = JSON.parse(content);
+            return res.status(200).json(parsed);
+        } catch (err) {
+            console.error("Failed to parse Gemini response as JSON:", content);
+            return res.status(500).json({ error: "Gemini response was not valid JSON", raw: content });
+        }
+
+    } catch (error) {
+        console.error("Gemini rude word check failed:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+}

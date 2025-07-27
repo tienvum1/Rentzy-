@@ -4,7 +4,8 @@ const User = require("../models/User");
 
 const protect = async (req, res, next) => {
   let token;
-
+  console.error('req.cookies: ' , req.cookies )
+  
   // Check for token in cookies (for web) or Authorization header (for mobile/API clients)
   if (req.cookies && req.cookies.token) {
     token = req.cookies.token;

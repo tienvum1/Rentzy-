@@ -3,6 +3,7 @@ const express = require('express');
 const { protect, adminOnly } = require('../middleware/authMiddleware'); // Assuming you have an auth middleware
 const multer = require('multer');
 
+const FilterHistory = require('../models/FilterHistory');
 const Vehicle = require("../models/Vehicle");
 const User = require('../models/User');
 const Booking = require('../models/Booking');
@@ -479,3 +480,65 @@ exports.getVehiclesByOwnerId = async (req, res) => {
     res.status(500).json({ success: false, message: "Không thể lấy danh sách xe của chủ xe.", error: error.message });
   }
 };
+
+// VAN KHAI: create search filter history
+exports.createFilterHistory = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const userId = req.user._id;
+
+    if (!text) {
+      return res.status(400).json({ message: 'Filter text is required' });
+    }
+
+    const newHistory = new FilterHistory({ text, userId });
+    await newHistory.save();
+
+    res.status(201).json({ message: 'Filter history saved', data: newHistory });
+  } catch (error) {
+    console.error('Error saving filter history:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// VAN KHAI: delete search filter history
+exports.deleteFilterHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ message: 'Filter history ID is required' });
+    }
+
+    const deleted = await FilterHistory.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: 'Filter history not found' });
+    }
+
+    res.status(200).json({ message: 'Filter history deleted', data: deleted });
+  } catch (error) {
+    console.error('Error deleting filter history:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+// VAN KHAI: Get all distinct filter history with _id
+exports.getAllDistinctFilterHistory = async (req, res) => {
+  try {
+    const allFilters = await FilterHistory.find({ userId: req.user._id }).select('text _id');
+
+    // Optional: remove duplicate text entries, keep the first one
+    const seen = new Set();
+    const distinctFilters = allFilters.filter(item => {
+      if (seen.has(item.text)) return false;
+      seen.add(item.text);
+      return true;
+    });
+
+    res.status(200).json({ success: true, data: distinctFilters });
+  } catch (error) {
+    console.error('Error getting distinct filter history:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+

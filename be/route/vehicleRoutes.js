@@ -52,4 +52,11 @@ router.put(
   vehicleController.updateVehicle
 );
 
+// route to create filter history : 
+router.post('/filter/history', protect, vehicleController.createFilterHistory)
+// route to delete filter history : 
+router.delete('/filter/history/:id', protect, vehicleController.deleteFilterHistory)
+// route to get all distinct filter history : 
+router.get('/filter/history', protect, vehicleController.getAllDistinctFilterHistory)
+
 module.exports = router;

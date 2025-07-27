@@ -11,9 +11,10 @@ import {
   FaShuttleVan,
   FaCarAlt,
   FaCaravan,
-  FaSortAmountDown
+  FaSortAmountDown,
 } from "react-icons/fa";
 import "./FilterBar.css";
+import { useNavigate } from "react-router-dom";
 
 // Icon components với thiết kế đẹp hơn
 const PickupIcon = () => <FaTruck className="vehicle-icon" />;
@@ -28,13 +29,13 @@ export const fuelOptions = [
   { value: "gasoline", label: "Xăng", icon: <FaGasPump /> },
   { value: "diesel", label: "Dầu", icon: <FaGasPump /> },
   { value: "electric", label: "Điện", icon: <FaGasPump /> },
-  { value: "hybrid", label: "Hybrid", icon: <FaGasPump /> }
+  { value: "hybrid", label: "Hybrid", icon: <FaGasPump /> },
 ];
 
 // Loại xe
 export const transmissionOptions = [
   { value: "manual", label: "Số sàn", icon: <FaSlidersH /> },
-  { value: "automatic", label: "Số tự động", icon: <FaSlidersH /> }
+  { value: "automatic", label: "Số tự động", icon: <FaSlidersH /> },
 ];
 
 // Khu vực xe (quận Đà Nẵng)
@@ -45,7 +46,7 @@ export const areaOptions = [
   { value: "Ngu Hanh Son", label: "Ngũ Hành Sơn", icon: <FaMapMarkerAlt /> },
   { value: "Lien Chieu", label: "Liên Chiểu", icon: <FaMapMarkerAlt /> },
   { value: "Cam Le", label: "Cẩm Lệ", icon: <FaMapMarkerAlt /> },
-  { value: "Hoa Vang", label: "Hòa Vang", icon: <FaMapMarkerAlt /> }
+  { value: "Hoa Vang", label: "Hòa Vang", icon: <FaMapMarkerAlt /> },
 ];
 
 // Số chỗ: như ảnh bạn gửi, có thể là object gồm icon, label, count
@@ -55,7 +56,7 @@ export const seatOptions = [
   { value: "mpv7", label: "MPV 7 chỗ", count: 23, icon: <MPV7Icon /> },
   { value: "sedan5", label: "Sedan 5 chỗ", count: 78, icon: <Sedan5Icon /> },
   { value: "suv5", label: "SUV 5 chỗ", count: 109, icon: <SUV5Icon /> },
-  { value: "suv7", label: "SUV 7 chỗ", count: 124, icon: <SUV7Icon /> }
+  { value: "suv7", label: "SUV 7 chỗ", count: 124, icon: <SUV7Icon /> },
 ];
 
 // Hãng xe (brand)
@@ -67,8 +68,8 @@ export const brandOptions = [
   "Honda",
   "VinFast",
   "Ford",
-  "Mercedes-Benz"
-].map(b => ({ value: b, label: b, icon: <FaIndustry /> }));
+  "Mercedes-Benz",
+].map((b) => ({ value: b, label: b, icon: <FaIndustry /> }));
 
 const FilterBar = ({ onFilter, onClearAllFilters, onSort }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -81,6 +82,7 @@ const FilterBar = ({ onFilter, onClearAllFilters, onSort }) => {
   });
   const [activeFilters, setActiveFilters] = useState(0);
   const barRef = useRef();
+  const nagigate = useNavigate();
 
   // Đóng dropdown khi click ra ngoài
   useEffect(() => {
@@ -95,38 +97,48 @@ const FilterBar = ({ onFilter, onClearAllFilters, onSort }) => {
 
   // Đếm số filter đang active
   useEffect(() => {
-    const count = Object.values(selected).filter(value => value !== null).length;
+    const count = Object.values(selected).filter(
+      (value) => value !== null
+    ).length;
     setActiveFilters(count);
   }, [selected]);
 
   // Toggle chọn filter
   const handleSelect = (type, value) => {
-    setSelected(prev => ({
+    setSelected((prev) => ({
       ...prev,
-      [type]: prev[type] === value ? null : value
+      [type]: prev[type] === value ? null : value,
     }));
     if (onFilter) onFilter(type, value);
   };
 
   // Clear tất cả filter
   const clearAllFilters = () => {
-    setSelected({ seat: null, fuel: null, transmission: null, area: null, brand: null });
+    setSelected({
+      seat: null,
+      fuel: null,
+      transmission: null,
+      area: null,
+      brand: null,
+    });
     if (onClearAllFilters) onClearAllFilters();
   };
 
   // Helper render dropdown với animation
   const renderDropdown = (type, options) => (
     <div className="filter-dropdown">
-      {options.map(opt => (
+      {options.map((opt) => (
         <div
           key={opt.value}
-          className={`dropdown-item${selected[type] === opt.value ? " selected" : ""}`}
+          className={`dropdown-item${
+            selected[type] === opt.value ? " selected" : ""
+          }`}
           onClick={() => handleSelect(type, opt.value)}
         >
           {opt.icon && <span className="dropdown-icon">{opt.icon}</span>}
           <span className="dropdown-text">
             {opt.label}
-            {typeof opt.count === 'number' && (
+            {typeof opt.count === "number" && (
               <span className="dropdown-count"> ({opt.count} xe)</span>
             )}
           </span>
@@ -138,7 +150,7 @@ const FilterBar = ({ onFilter, onClearAllFilters, onSort }) => {
   return (
     <div className="filter-bar" ref={barRef}>
       <button
-        className={`filter-btn ${activeFilters === 0 ? 'active' : ''}`}
+        className={`filter-btn ${activeFilters === 0 ? "active" : ""}`}
         onClick={clearAllFilters}
       >
         <FaCrown /> Tất cả
@@ -147,51 +159,74 @@ const FilterBar = ({ onFilter, onClearAllFilters, onSort }) => {
       {/* Số chỗ */}
       <div className="filter-dropdown-container">
         <button
-          className={`filter-btn ${selected.seat ? 'active' : ''}`}
-          onClick={() => setOpenDropdown(openDropdown === 'seat' ? null : 'seat')}
+          className={`filter-btn ${selected.seat ? "active" : ""}`}
+          onClick={() =>
+            setOpenDropdown(openDropdown === "seat" ? null : "seat")
+          }
         >
           <FaCarSide /> Số chỗ
           {selected.seat && <span className="filter-badge">1</span>}
         </button>
-        {openDropdown === 'seat' && renderDropdown('seat', seatOptions)}
+        {openDropdown === "seat" && renderDropdown("seat", seatOptions)}
       </div>
 
       {/* Hãng xe */}
       <div className="filter-dropdown-container">
         <button
-          className={`filter-btn ${selected.brand ? 'active' : ''}`}
-          onClick={() => setOpenDropdown(openDropdown === 'brand' ? null : 'brand')}
+          className={`filter-btn ${selected.brand ? "active" : ""}`}
+          onClick={() =>
+            setOpenDropdown(openDropdown === "brand" ? null : "brand")
+          }
         >
           <FaIndustry /> Hãng xe
           {selected.brand && <span className="filter-badge">1</span>}
         </button>
-        {openDropdown === 'brand' && renderDropdown('brand', brandOptions)}
+        {openDropdown === "brand" && renderDropdown("brand", brandOptions)}
       </div>
 
       {/* Loại xe */}
       <div className="filter-dropdown-container">
         <button
-          className={`filter-btn ${selected.transmission ? 'active' : ''}`}
-          onClick={() => setOpenDropdown(openDropdown === 'transmission' ? null : 'transmission')}
+          className={`filter-btn ${selected.transmission ? "active" : ""}`}
+          onClick={() =>
+            setOpenDropdown(
+              openDropdown === "transmission" ? null : "transmission"
+            )
+          }
         >
           <FaSlidersH /> Loại xe
           {selected.transmission && <span className="filter-badge">1</span>}
         </button>
-        {openDropdown === 'transmission' && renderDropdown('transmission', transmissionOptions)}
+        {openDropdown === "transmission" &&
+          renderDropdown("transmission", transmissionOptions)}
       </div>
 
       {/* Nhiên liệu */}
       <div className="filter-dropdown-container">
         <button
-          className={`filter-btn ${selected.fuel ? 'active' : ''}`}
-          onClick={() => setOpenDropdown(openDropdown === 'fuel' ? null : 'fuel')}
+          className={`filter-btn ${selected.fuel ? "active" : ""}`}
+          onClick={() =>
+            setOpenDropdown(openDropdown === "fuel" ? null : "fuel")
+          }
         >
           <FaGasPump /> Nhiên liệu
           {selected.fuel && <span className="filter-badge">1</span>}
         </button>
-        {openDropdown === 'fuel' && renderDropdown('fuel', fuelOptions)}
+        {openDropdown === "fuel" && renderDropdown("fuel", fuelOptions)}
       </div>
 
+      {/* AI suggest : */}
+      <div className="filter-dropdown-container">
+        <button
+          className={`filter-btn ${selected.fuel ? "active" : ""}`}
+          onClick={() => {
+            // nagigate to filter history page :
+            nagigate("/filter-history");
+          }}
+        >
+          <FaGasPump /> Gợi ý
+        </button>
+      </div>
 
       <button className="filter-btn sort-btn" onClick={onSort}>
         <FaSortAmountDown /> Sắp xếp
