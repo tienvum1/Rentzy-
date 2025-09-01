@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import axios from 'axios'; // Keep if needed for other logic, though seems unused in effect
+// import axios from 'axios'; // Keep if needed for other logic, though seems unused in effect
 import './VerifyEmail.css'; // Keep if needed
 import { useAuth } from '../../context/AuthContext'; // Import useAuth
 
@@ -31,7 +31,7 @@ const LoginSuccess = () => {
         let redirectPath = '/homepage'; // Default redirect
 
         if (userRole === 'owner') {
-          redirectPath = '/ownerpage';
+          redirectPath = '/ownerpage/overview';
         } else if (userRole === 'admin') {
           redirectPath = '/adminpage'; // Assuming admin page
         }

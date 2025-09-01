@@ -61,8 +61,11 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
   // State để điều khiển việc hiển thị modal chọn ngày giờ
   const [showDateTimeModal, setShowDateTimeModal] = useState(false);
 
+  // State để điều khiển xác nhận đặt xe
+  const [confirmChecked, setConfirmChecked] = useState(false);
+
   // Thêm useAuth và useNavigate
-  const { isAuthenticated, token } = useAuth();
+  const { user, isAuthenticated, token } = useAuth();
   const navigate = useNavigate();
 
   // Fetch các ngày đã được đặt của xe
@@ -93,10 +96,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
 
   // Đã loại bỏ hàm calculateBookingDetails. Logic được nhúng trực tiếp vào useMemo.
 
-  const otherCosts = React.useMemo(() => ({
-    deposit: vehicle.deposit,
-    deliveryFee: pickupLocation !== vehicle.location ? 200000 : 0,
-  }), [pickupLocation, vehicle.deposit]);
+  // Xóa otherCosts, không còn deposit
 
   const bookingDetails = React.useMemo(() => {
     if (!selectedDates.startDate || !selectedDates.endDate || !pickupTime || !returnTime) {
@@ -142,13 +142,11 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
     };
   }, [selectedDates.startDate, selectedDates.endDate, pickupTime, returnTime, pickupLocation, vehicle.pricePerDay]);
 
-  const holdFee = vehicle.holdFee || 500000;
-
-  // Tính tổng tiền sau khi trừ giảm giá
+  // Tính tổng tiền trước giảm giá (không còn deposit)
   const totalBeforeDiscount = React.useMemo(() => {
-    const baseAmount = bookingDetails.rentalFee + bookingDetails.deliveryFee + otherCosts.deposit + holdFee;
+    const baseAmount = bookingDetails.rentalFee + bookingDetails.deliveryFee;
     return baseAmount;
-  }, [bookingDetails.rentalFee, bookingDetails.deliveryFee, otherCosts.deposit, holdFee]);
+  }, [bookingDetails.rentalFee, bookingDetails.deliveryFee]);
 
   // Tính giảm giá khi chọn mã
   const handleApplyPromo = (promo) => {
@@ -223,20 +221,32 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
     }
   };
 
+  // Cập nhật hàm onBookNow để bao gồm kiểm tra
+  const handleBookNow = () => {
+    if (!isAuthenticated) {
+      toast.error('Bạn cần đăng nhập để đặt xe.');
+      navigate('/login');
+      return;
+    }
+    if (!user || !user.is_phone_verified) {
+      toast.error('Vui lòng xác thực số điện thoại trong hồ sơ của bạn trước khi đặt xe.');
+      navigate('/profile');
+      return;
+    }
+    // Nếu đã xác thực, gọi hàm onBookNow gốc
+    if (onBookNow) {
+      onBookNow();
+    }
+  };
+
   // Cập nhật hàm handleSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (isSubmitting) return;
-    
+
     if (bookingDetails.finalAmount <= 0) {
       toast.error('Tổng số tiền phải lớn hơn 0.');
-      return;
-    }
-
-    if (!isAuthenticated) {
-      toast.error('Bạn cần đăng nhập để đặt xe.');
-      navigate('/login');
       return;
     }
 
@@ -248,8 +258,11 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         return `${year}-${month}-${day}`;
       };
 
-      // Tính tổng tiền sau khi trừ giảm giá
-      const totalAmount = totalBeforeDiscount - discountAmount;
+      // Tổng tiền thực tế (chỉ để hiển thị, không thanh toán ngay)
+      const totalAmount = bookingDetails.rentalFee + bookingDetails.deliveryFee - discountAmount;
+
+      // Không còn gửi tiền cọc
+      // const depositToPay = vehicle.deposit;
 
       const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/createBooking`, {
         vehicleId: vehicle._id,
@@ -260,14 +273,13 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
         pickupTime: pickupTime,
         returnTime: returnTime,
         totalDays: bookingDetails.totalDays,
-        totalCost: bookingDetails.rentalFee, // tiền thuê xe cơ bản
-        totalAmount: totalAmount, // tổng tiền sau khi trừ giảm giá
+        totalCost: bookingDetails.rentalFee,
+        totalAmount: totalAmount,
         promoCode: selectedPromo ? selectedPromo.code : null,
         discountAmount: discountAmount,
-        deposit: vehicle.deposit,
-        reservationFee: holdFee,
+        // deposit: depositToPay, // Xóa dòng này
         isDelivery: pickupLocation !== vehicle.location,
-        deliveryFee: pickupLocation !== vehicle.location ? 200000 : 0 // Thêm deliveryFee
+        deliveryFee: bookingDetails.deliveryFee
       }, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -277,7 +289,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
 
       if (response.data.success) {
         if (onBookNow) {
-          onBookNow(response.data.data.booking._id, null, totalAmount);
+          onBookNow(response.data.data.booking._id, null, null); // Không truyền tiền cọc
         }
       } else {
         toast.error(response.data.message);
@@ -379,7 +391,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
             <div className="pickup-box-content">
               <b>Nhận xe tại vị trí xe</b>
               <div className="pickup-location-label">
-                <span role="img" aria-label="location">📍</span> {vehicle.location}
+                <span role="img" aria-label="location"></span> {vehicle.location}
               </div>
             </div>
           </div>
@@ -397,7 +409,7 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
             <div className="pickup-box-content">
               <b style={{ color: '#1abc9c' }}>Giao xe tận nơi</b>
               <div className="pickup-location-label">
-                <span role="img" aria-label="location">📍</span>
+                <span role="img" aria-label="location"></span>
                 <div className="address-input-wrapper">
                   {pickupLocation !== vehicle.location ? (
                     <input
@@ -429,20 +441,12 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
             <span>Giá thuê xe</span>
             <span>{bookingDetails.rentalFee.toLocaleString('vi-VN')} VND</span>
           </div>
-          <div className="cost-item">
-            <span>Tiền đặt cọc</span>
-            <span>{otherCosts.deposit.toLocaleString('vi-VN')} VND</span>
-          </div>
-          {otherCosts.deliveryFee > 0 && (
+          {bookingDetails.deliveryFee > 0 && (
             <div className="cost-item">
               <span>Phí giao xe (2 chiều)</span>
-              <span>{otherCosts.deliveryFee.toLocaleString('vi-VN')} VND</span>
+              <span>{bookingDetails.deliveryFee.toLocaleString('vi-VN')} VND</span>
             </div>
           )}
-          <div className="cost-item">
-            <span>Tiền giữ chỗ</span>
-            <span>{holdFee.toLocaleString('vi-VN')} VND</span>
-          </div>
           <div className="cost-item">
             <span>
               <b>Giảm giá</b>
@@ -454,10 +458,11 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
               -{discountAmount.toLocaleString('vi-VN')}đ
             </span>
           </div>
+          {/* Xóa phần hiển thị tiền cọc xe */}
           <div className="cost-item total">
             <span>Tổng cộng</span>
             <span>
-              {(totalBeforeDiscount - discountAmount).toLocaleString('vi-VN')} VND
+              {(bookingDetails.rentalFee + bookingDetails.deliveryFee - discountAmount).toLocaleString('vi-VN')} VND
             </span>
           </div>
         </div>
@@ -538,15 +543,30 @@ const VehicleBookingSection = ({ vehicle, onBookNow }) => {
 
       {/* Nút đặt xe và điều khoản */}
       <div className="booking-actions">
+        {/* Checkbox xác nhận */}
+        <div className="confirm-checkbox-row">
+          <input
+            type="checkbox"
+            id="confirm-booking-checkbox"
+            checked={confirmChecked}
+            onChange={e => setConfirmChecked(e.target.checked)}
+          />
+          <label htmlFor="confirm-booking-checkbox" style={{marginLeft: 8}}>
+            Tôi xác nhận thông tin đặt xe là chính xác và đồng ý với các điều khoản.
+          </label>
+        </div>
         <button
           className="book-now-button"
           onClick={handleSubmit}
-          disabled={!selectedDates.startDate || !selectedDates.endDate || (pickupLocation !== vehicle.location && !pickupLocation) || isSubmitting}
+          disabled={!selectedDates.startDate || !selectedDates.endDate || (pickupLocation !== vehicle.location && !pickupLocation) || isSubmitting || !confirmChecked}
         >
           {isSubmitting ? 'Đang xử lý...' : 'Đặt xe ngay'}
         </button>
         <div className="terms-agreement">
-          Bằng việc chuyển giữ chỗ và thuê xe, bạn đồng ý với khoản sử dụng và Chính sách bảo mật
+          <p className="booking-section__note">
+            Bằng việc chuyển giữ chỗ và thuê xe, bạn đồng ý với{' '}
+            <a href="/terms">khoản sử dụng</a> và <a href="/policy">Chính sách bảo mật</a> của chúng tôi.
+          </p>
         </div>
       </div>
     </div>

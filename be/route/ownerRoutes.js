@@ -3,6 +3,8 @@ const router = express.Router();
 const upload = require('../middleware/upload');
 const { protect } = require('../middleware/authMiddleware');
 const ownerController = require('../controller/ownerController');
+const { getOwnerCancelRequests } = require('../controller/ownerController');
+const { getOwnerRevenue } = require('../controller/ownerController');
 
 // Simple middleware to check if user is admin
 const checkAdmin = (req, res, next) => {
@@ -24,21 +26,16 @@ router.put(
   ownerController.becomeOwner
 );
 
-// Admin Routes for Owner Request Management
-// GET all pending owner requests
-router.get(
-    '/admin/pendingRequests',
-    protect, // Ensure user is authenticated
-    checkAdmin, // Ensure user is admin
-    ownerController.getPendingOwnerRequests
-);
 
-// PUT review an owner request (approve/reject)
-router.put(
-    '/admin/reviewRequest/:userId',
-    protect, // Ensure user is authenticated
-    checkAdmin, // Ensure user is admin
-    ownerController.reviewOwnerRequest
-);
+// Lấy tất cả đơn thuê của chủ xe hiện tại
+router.get('/owner-bookings', protect, ownerController.getOwnerBookings);
+router.get('/cancel-requests', protect, getOwnerCancelRequests);
+// doanh thu của owner
+router.get('/revenue', protect, getOwnerRevenue);
+
+// Thống kê số lượng xe theo tháng cho owner
+router.get('/vehicle-stats-by-month', protect, ownerController.getOwnerVehicleStatsByMonth);
+// Thống kê số lượng đơn thuê theo tháng cho owner
+router.get('/booking-stats-by-month', protect, ownerController.getOwnerBookingStatsByMonth);
 
 module.exports = router;

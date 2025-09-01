@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import './ChangePassword.css'; // Optional: Create a specific CSS file
-
-// Removed ProfileSidebar import - integrate this page into a layout with sidebar instead
-// import ProfileSidebar from '../profile/ProfileSidebar';
-
-import ProfileSidebar from '../profile/ProfileSidebar';
-import Header from '../../components/Header/Header'; // Import Header component
+import './ChangePassword.css';
+import ProfileLayout from '../profile/profileLayout/ProfileLayout';
 
 const ChangePassword = () => {
   const [oldPassword, setOldPassword] = useState('');
@@ -20,70 +15,52 @@ const ChangePassword = () => {
     setMessage(null);
     setLoading(true);
 
-    // Basic frontend validation (backend also validates)
     if (!oldPassword || !newPassword || !confirmNewPassword) {
       setMessage({ type: 'error', text: 'Vui lòng nhập đầy đủ thông tin mật khẩu.' });
       setLoading(false);
       return;
     }
-
     if (newPassword !== confirmNewPassword) {
       setMessage({ type: 'error', text: 'Mật khẩu mới và xác nhận mật khẩu không khớp.' });
       setLoading(false);
       return;
     }
-
-     if (newPassword.length < 6) {
-         setMessage({ type: 'error', text: 'Mật khẩu mới phải có ít nhất 6 ký tự.' });
-         setLoading(false);
-         return;
-     }
-
+    if (newPassword.length < 6) {
+      setMessage({ type: 'error', text: 'Mật khẩu mới phải có ít nhất 6 ký tự.' });
+      setLoading(false);
+      return;
+    }
     try {
       const response = await axios.put(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999'}/api/user/change-password`, {
         oldPassword,
         newPassword,
         confirmNewPassword
       }, {
-        withCredentials: true // Send cookies for authentication
+        withCredentials: true
       });
-
       if (response.status === 200) {
         setMessage({ type: 'success', text: response.data.message || 'Mật khẩu đã được đổi thành công.' });
-        // Clear form on success
         setOldPassword('');
         setNewPassword('');
         setConfirmNewPassword('');
       } else {
-        // Handle unexpected successful responses (e.g., 201, etc.)
         setMessage({ type: 'info', text: response.data.message || 'Yêu cầu đổi mật khẩu đã được xử lý.' });
       }
-
     } catch (error) {
-      console.error('Error changing password:', error.response?.data || error.message);
-      // Display error message from backend if available, otherwise a generic one
       setMessage({ type: 'error', text: error.response?.data?.message || 'Đã xảy ra lỗi khi đổi mật khẩu.' });
     }
     setLoading(false);
   };
 
   return (
-    <>
-<Header />
-    <div className="change-password-layout">
-   
-      <ProfileSidebar/>
+    <ProfileLayout>
       <div className="change-password-container">
         <div className="change-password-card">
           <h2>Đổi mật khẩu</h2>
-
           <form onSubmit={handleSubmit}>
             {message && (
-              <p className={`message ${message.type}`}>
-                {message.text}
-              </p>
+              <p className={`message ${message.type}`}>{message.text}</p>
             )}
-
             <div className="form-group">
               <label htmlFor="oldPassword">Mật khẩu cũ:</label>
               <input
@@ -95,7 +72,6 @@ const ChangePassword = () => {
                 className="form-input"
               />
             </div>
-
             <div className="form-group">
               <label htmlFor="newPassword">Mật khẩu mới:</label>
               <input
@@ -107,7 +83,6 @@ const ChangePassword = () => {
                 className="form-input"
               />
             </div>
-
             <div className="form-group">
               <label htmlFor="confirmNewPassword">Xác nhận mật khẩu mới:</label>
               <input
@@ -119,15 +94,13 @@ const ChangePassword = () => {
                 className="form-input"
               />
             </div>
-
             <button type="submit" disabled={loading} className="submit-button">
               {loading ? 'Đang đổi mật khẩu...' : 'Đổi mật khẩu'}
             </button>
           </form>
         </div>
       </div>
-    </div>
-    </>
+    </ProfileLayout>
   );
 };
 

@@ -17,10 +17,14 @@ const userRoutes = require("./route/userRoutes");
 const vehicleRoutes = require("./route/vehicleRoutes");
 const ownerRoutes = require("./route/ownerRoutes");
 const adminRoutes = require("./route/adminRoutes");
-const carRoutes = require("./route/carRoutes");
 const bookingRoutes = require('./route/bookingRoutes');
 const paymentRoutes = require('./route/paymentRoute');
 const momoRoutes = require('./route/momoRoutes');
+const walletRoutes = require('./route/walletRoutes');
+const transactionRoute = require('./route/transactionRoute');
+const notificationRoutes = require('./route/notificationRoutes');
+const promotionRoutes = require('./route/promotionRoutes');
+const reportRoutes = require('./route/reportRoutes');
 
 const app = express();
 
@@ -71,10 +75,14 @@ app.use("/api/user", userRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/owner", ownerRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/cars", carRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/momo', momoRoutes);
+app.use('/api/wallet', walletRoutes);
+app.use('/api/transactions', transactionRoute);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/promotions', promotionRoutes);
+app.use('/api/report', reportRoutes);
 
 
 app.get("/hello", (req, res) => {

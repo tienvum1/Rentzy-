@@ -1,48 +1,46 @@
 import React from 'react';
-// Add icons import back
-import { FaUser, FaHeart, FaCar, FaSuitcaseRolling, FaClipboardCheck, FaGift, FaAddressBook, FaLock, FaTrash } from 'react-icons/fa';
-import './ProfileSidebar.css';
 import { useNavigate, useLocation } from 'react-router-dom';
-// Remove import menu items from the new file
-// import { profileMenuItems } from '../../utils/profileMenuItems'; // Removed
+import { FaUser, FaHeart, FaCar, FaSuitcaseRolling, FaClipboardCheck, FaGift, FaWallet, FaLock, FaTrash, FaBell } from 'react-icons/fa';
+import './ProfileSidebar.css';
+
+const menuItems = [
+  { id: 'account', icon: <FaUser />, label: 'Tài khoản của tôi', path: '/profile/account' },
+  { id: 'favorites', icon: <FaHeart />, label: 'Xe yêu thích', path: '/profile/favorites' },
+  { id: 'my-bookings', icon: <FaSuitcaseRolling />, label: 'Đơn thuê của tôi', path: '/profile/my-bookings' },
+  { id: 'my-reviews', icon: <FaSuitcaseRolling />, label: 'Đánh giá của tôi', path: '/profile/my-reviews' },
+  { id: 'wallet', icon: <FaWallet />, label: 'Ví của tôi', path: '/profile/wallet' },
+  { id: 'transactions', icon: <FaGift />, label: 'Lịch sử giao dịch', path: '/profile/transactions' },
+  { id: 'my-notifications', icon: <FaBell />, label: 'Thông báo', path: '/profile/my-notifications' },
+  { id: 'owner-management', icon: <FaClipboardCheck />, label: 'Quản lí xe cho owner', path: '/ownerpage/overview' },
+  { id: 'change-password', icon: <FaLock />, label: 'Đổi mật khẩu', path: '/profile/change-password' },
+  { id: 'delete-account', icon: <FaTrash />, label: 'Yêu cầu xoá tài khoản', path: '/profile/delete-account' },
+];
 
 const ProfileSidebar = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    // Define the menu items array directly here with full paths
-    const menuItems = [
-        { path: '/profile', label: 'Tài khoản của tôi', icon: <FaUser /> }, // Path for main profile page
-        { path: '/profile/favorites', label: 'Xe yêu thích', icon: <FaHeart /> },
-        { path: '/profile/my-cars', label: 'Xe của tôi', icon: <FaCar /> },
-        { path: '/profile/my-bookings', label: 'Đơn thuê của tôi', icon: <FaSuitcaseRolling /> },
-        { path: '/ownerpage/overview', label: 'Quản lí xe cho owner', icon: <FaClipboardCheck /> }, // Full path for owner dashboard overview
-    
-        { path: '/profile/transactions', label: 'Lịch sử giao dịch', icon: <FaGift /> },
-        { path: '/profile/addresses', label: 'Địa chỉ của tôi', icon: <FaAddressBook /> },
-        { path: '/profile/change-password', label: 'Đổi mật khẩu', icon: <FaLock /> }, // Full path for change password
-        { path: '/profile/delete-account', label: 'Yêu cầu xoá tài khoản', icon: <FaTrash /> },
-        // Add other profile sub-pages here as needed with their full paths
-    ];
+  // Xác định active dựa trên pathname
+  const isActive = (path) => location.pathname === path;
 
-    return (
-        <div className="profile-sidebar">
-            <h2>Xin chào bạn!</h2>
-            <div className="sidebar-menu">
-                {menuItems.map(item => (
-                    <div
-                        key={item.path} // Use path as key
-                        // Active class check: check if current path starts with item.path
-                        className={`sidebar-menu-item ${location.pathname.startsWith(item.path) ? 'active' : ''}`}
-                        onClick={() => navigate(item.path)} // Navigate directly to item.path
-                    >
-                        <span className="menu-icon">{item.icon}</span>
-                        <span className="menu-label">{item.label}</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
+  return (
+    <div className="sidebar-profile">
+      <div className="sidebar-header">
+        <h3>Quản lý tài khoản</h3>
+      </div>
+      <ul className="sidebar-menu">
+        {menuItems.map((item) => (
+          <li
+            key={item.id}
+            className={isActive(item.path) ? 'active' : ''}
+            onClick={() => navigate(item.path)}
+          >
+            <span className="menu-icon">{item.icon}</span> {item.label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 };
 
 export default ProfileSidebar;

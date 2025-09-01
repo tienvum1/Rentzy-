@@ -60,19 +60,6 @@ const bookingSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-    // Tiền đặt cọc
-    deposit: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    // Tiền giữ chỗ
-    reservationFee: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-
     // Tiền giảm giá
     discountAmount: {
       type: Number,
@@ -89,8 +76,35 @@ const bookingSchema = new mongoose.Schema(
     // Trạng thái đơn thuê
     status: {
       type: String,
-      enum: ['pending', 'DEPOSIT_PAID', 'RENTAL', 'RENTAL_PAID', 'in_progress', 'completed', 'canceled', 'rejected'],
-      default: 'pending',
+      enum: [
+        'pending',        // Đơn mới tạo, chưa thanh toán
+        'deposit_paid',   // Đã thanh toán cọc (30%)
+        'fully_paid',     // Đã hoàn tất thanh toán (100%)
+        'in_progress',    // Đang thuê xe
+        'fully_paid',     // Đã hoàn tất thanh toán (100%)
+        'completed',      // Đã trả xe, hoàn tất
+        'canceled',       // Đã hủy
+        'refunded',       // Đã hoàn tiền
+        'rejected',       // Bị từ chối (hiếm dùng)
+        'cancel_requested' // Đang chờ chủ xe duyệt huỷ
+      ],
+      default: 'pending'
+    },
+
+    // Trạng thái giải ngân cho chủ xe.
+    payoutStatus: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none'
+    },
+    // Số tiền thực nhận (đã trừ phí dịch vụ, bồi thường...).
+    payoutAmount: {
+      type: Number,
+      default: 0
+    },
+    payoutNote: {
+      type: String,
+      default: ''
     },
 
     // Địa chỉ nhận xe
@@ -124,9 +138,7 @@ const bookingSchema = new mongoose.Schema(
     },
 
     // Hình ảnh xe trước khi thuê
-    preRentalImages: [{
-      type: String,
-    }],
+    preRentalImages: [{ type: String }], // Ảnh xe trước khi nhận/giao
 
     // Hình ảnh xe sau khi thuê
     postRentalImages: [{
@@ -159,6 +171,28 @@ const bookingSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Transaction'
     }],
+
+    // --- Thông tin hoàn tiền khi huỷ (FE gửi lên, lưu lại để owner xem và backend dùng khi duyệt) ---
+    totalRefund: {
+      type: Number,
+      default: 0,
+    },
+    ownerHandoverConfirmed: {
+      type: Boolean,
+      default: false
+    },
+    renterHandoverConfirmed: {
+      type: Boolean,
+      default: false
+    },
+    ownerReturnConfirmed: {
+      type: Boolean,
+      default: false
+    },
+    renterReturnConfirmed: {
+      type: Boolean,
+      default: false
+    },
   },
   { timestamps: true }
 );

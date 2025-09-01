@@ -15,9 +15,9 @@ import VehicleFeatures from '../../components/VehicleDetailSections/VehicleFeatu
 import VehicleDescription from '../../components/VehicleDetailSections/VehicleDescription';
 import VehicleAmenities from '../../components/VehicleDetailSections/VehicleAmenities';
 import VehicleTerms from '../../components/VehicleDetailSections/VehicleTerms';
-import VehicleOwnerInfo from '../../components/VehicleDetailSections/VehicleOwnerInfo';
 import VehicleBookingSection from '../../components/VehicleDetailSections/VehicleBookingSection';
 import DateTimeSelector from '../../components/DateTimeSelector/DateTimeSelector';
+import OwnerReviewSection from '../../components/VehicleDetailSections/OwnerReviewSection/OwnerReviewSection';
 
 const VehicleDetail = () => {
     // Hooks
@@ -37,6 +37,11 @@ const VehicleDetail = () => {
     const [selectedDates, setSelectedDates] = useState({ startDate: null, endDate: null });
     const [pickupTime, setPickupTime] = useState('');
     const [returnTime, setReturnTime] = useState('');
+    const [ownerReviewData, setOwnerReviewData] = useState(null);
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportReason, setReportReason] = useState('');
+    const [reportMessage, setReportMessage] = useState('');
+    const [reportLoading, setReportLoading] = useState(false);
 
     // Fetch vehicle details
     useEffect(() => {
@@ -44,12 +49,21 @@ const VehicleDetail = () => {
             setLoading(true);
             setError(null);
             try {
-                const response = await axios.get(`${backendUrl}/api/cars/${id}`);
-                setVehicle(response.data.vehicle);
-                setSelectedImage(response.data.vehicle.primaryImage);
+                const response = await axios.get(`${backendUrl}/api/vehicles/${id}`);
+                // Nếu BE trả lỗi 403 hoặc xe không khả dụng, set error
+                if (response.data?.vehicle) {
+                  // Nếu là chủ xe hoặc admin thì vẫn xem được
+                  setVehicle(response.data.vehicle);
+                  setSelectedImage(response.data.vehicle.primaryImage);
+                } else {
+                  setError('Xe này hiện không khả dụng.');
+                }
             } catch (err) {
-                console.error('Error fetching vehicle details:', err);
-                setError(err.response?.data?.message || 'Failed to fetch vehicle details.');
+                if (err.response && err.response.status === 403) {
+                  setError('Xe này hiện không khả dụng.');
+                } else {
+                  setError(err.response?.data?.message || 'Failed to fetch vehicle details.');
+                }
             }
             setLoading(false);
         };
@@ -80,6 +94,14 @@ const VehicleDetail = () => {
             fetchBookedDates();
         }
     }, [vehicle]); // Add vehicle to the dependency array
+
+    useEffect(() => {
+        if (vehicle && vehicle.owner && vehicle.owner._id) {
+            axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/bookings/${vehicle.owner._id}/reviews`)
+                .then(res => setOwnerReviewData(res.data))
+                .catch(() => setOwnerReviewData(null));
+        }
+    }, [vehicle]);
 
     // Hàm xử lý sau khi đặt xe thành công từ VehicleBookingSection
     const handleBookingSuccess = (bookingId, transactionId, amount) => {
@@ -120,6 +142,31 @@ const VehicleDetail = () => {
         });
     };
 
+    // Hàm gửi báo cáo xe
+    const handleReportSubmit = async (e) => {
+        e.preventDefault();
+        if (!reportReason) {
+            toast.error('Vui lòng chọn lý do báo cáo!');
+            return;
+        }
+        setReportLoading(true);
+        try {
+            await axios.post(
+                `${backendUrl}/api/report/vehicles/${vehicle._id}/report`,
+                { reason: reportReason, message: reportMessage },
+                { withCredentials:true }
+            );
+            toast.success('Báo cáo của bạn đã được gửi!');
+            setShowReportModal(false);
+            setReportReason('');
+            setReportMessage('');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Gửi báo cáo thất bại!');
+        } finally {
+            setReportLoading(false);
+        }
+    };
+
     // Loading state
     if (loading) {
         return (
@@ -133,10 +180,9 @@ const VehicleDetail = () => {
     // Error state
     if (error) {
         return (
-            <div className="error-container">
-                <h2>Lỗi</h2>
-                <p>{error}</p>
-                <button onClick={() => navigate('/vehicles')}>Quay lại danh sách xe</button>
+            <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p style={{color: 'red'}}>{error}</p>
             </div>
         );
     }
@@ -194,11 +240,23 @@ const VehicleDetail = () => {
                         <VehicleDescription description={vehicle.description} />
                         <VehicleAmenities features={vehicle.features} />
                         <VehicleTerms terms={vehicle.rentalPolicy} />
-                        <VehicleOwnerInfo 
-                            owner={vehicle.owner}
-                            rating={vehicle.ownerRating}
-                            responseTime={vehicle.ownerResponseTime}
-                        />
+                    
+                        {ownerReviewData && (
+                            <OwnerReviewSection
+                                ownerId ={vehicle.owner._id}
+                                ownerName={ownerReviewData.owner.name}
+                                ownerAvatar={ownerReviewData.owner.avatar}
+                                ownerBrand={ownerReviewData.owner.brand}
+                                avgRating={ownerReviewData.owner.avgRating}
+                                totalReviews={ownerReviewData.owner.totalReviews}
+                                responseRate={ownerReviewData.owner.responseRate}
+                                totalBookings={ownerReviewData.owner.totalBookings}
+                                responseTime={ownerReviewData.owner.responseTime}
+                                acceptanceRate={ownerReviewData.owner.acceptanceRate}
+                                reviews={ownerReviewData.reviews}
+                                onSeeMore={() => {/* logic mở modal hoặc chuyển trang xem thêm */}}
+                            />
+                        )}
                     </div>
 
                     {/* Right column - Booking section */}
@@ -210,6 +268,32 @@ const VehicleDetail = () => {
                             user={user}
                             bookedDates={bookedDates}
                         />
+                        {/* Nút báo cáo xe này */}
+                        <button className="report-vehicle-btn" onClick={() => setShowReportModal(true)}>
+                            <span className="report-flag-icon">&#9873;</span> Báo cáo xe này
+                        </button>
+                        {/* Modal báo xấu */}
+                        {showReportModal && (
+                            <div className="report-modal-overlay">
+                                <div className="report-modal">
+                                    <button className="close-modal-btn" onClick={() => setShowReportModal(false)}>&times;</button>
+                                    <h2 className="report-modal-title">Báo xấu</h2>
+                                    <form className="report-modal-form" onSubmit={handleReportSubmit}>
+                                        <label className="report-modal-label">Vui lòng chọn lí do</label>
+                                        <select className="report-modal-select" value={reportReason} onChange={e => setReportReason(e.target.value)} required>
+                                            <option value="">Chọn lí do</option>
+                                            <option value="fake_info">Xe không đúng thực tế</option>
+                                            <option value="illegal">Xe vi phạm pháp luật</option>
+                                            <option value="bad_owner">Chủ xe không hợp tác</option>
+                                            <option value="dangerous">Xe nguy hiểm/không an toàn</option>
+                                            <option value="other">Khác</option>
+                                        </select>
+                                        <textarea className="report-modal-textarea" placeholder="Vui lòng nhập lí do hoặc lời nhắn" rows={4} value={reportMessage} onChange={e => setReportMessage(e.target.value)}></textarea>
+                                        <button className="report-modal-submit" type="submit" disabled={reportLoading}>{reportLoading ? 'Đang gửi...' : 'Báo cáo'}</button>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
                         {showDateTimeModal && (
                             <DateTimeSelector
                                 bookedDates={bookedDates}
@@ -218,6 +302,7 @@ const VehicleDetail = () => {
                                 initialEndDate={selectedDates.endDate}
                                 initialPickupTime={pickupTime}
                                 initialReturnTime={returnTime}
+                                disableBookedRanges={true}
                             />
                         )}
                     </div>

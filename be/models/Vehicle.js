@@ -1,137 +1,107 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-/**
- * Schema Vehicle: quản lý thông tin chung cho xe đăng lên hệ thống
- */
-
-const vehicleSchema = new mongoose.Schema(
-  {
-    // Người đăng xe (chủ xe)
-    owner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-
-    // Thương hiệu xe
-    brand: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    // Dòng xe
-    model: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    // Loại xe: car hoặc motorbike
-    type: {
-      type: String,
-      enum: ["car", "motorbike"],
-      required: true,
-    },
-
-    // Biển số xe (không được trùng)
-    licensePlate: {
-      type: String,
-      required: true,
-      unique: true,
-      uppercase: true,
-      trim: true,
-    },
-    // thêm mô tả xe
-    description :{
-      type: String,
-      required: true,
-    },
-      
-
-    // Địa chỉ 
-    location: {
-      type: String,
-      required: true,
-    },
-
-    // Giá thuê mỗi ngày (VND)
-    pricePerDay: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-
-    // Tiền đặt cọc
-    deposit: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-
-    // Mức tiêu hao nhiên liệu (l/100km hoặc tương đương)
-    fuelConsumption: {
-      type: Number,
-      // required: false by default
-    },
-
-    // Mô tả tính năng (VD: Bluetooth, camera lùi, điều hoà...)
-    features: {
-      type: [String],
-      default: [],
-    },
-    // điều khoản thuê xe
-    rentalPolicy: {
-      type: String,
-      default: "",
-    },
-    // Ảnh chính (Cloudinary URL)
-    primaryImage: {
-      type: String,
-      default: "",
-    },
-
-    // Danh sách ảnh phụ (Cloudinary URL)
-    gallery: {
-      type: [String],
-      default: [],
-    },
-
-    /**
-     * Trạng thái admin duyệt xe:
-     * - pending: mới đăng, chờ admin duyệt
-     * - approved: đã duyệt, hiển thị cho khách
-     * - rejected: bị từ chối
-     */
-    approvalStatus: {
-      type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
-    },
-
-    /**
-     * Trạng thái xe trong hệ thống
-     * - available: có sẵn để thuê
-     * - reserved: có khách giữ chỗ
-     * - rented: đang được thuê
-     * - maintenance: bảo trì, không cho thuê
-     * - blocked: admin khóa
-     */
-    status: {
-      type: String,
-      enum: ["available", "reserved", "rented", "maintenance", "blocked"],
-      default: "available",
-    },
-
-
-    // số lượt thuê xe thành công
-    // status = "completed" tăng trường rentalCount của xe lên 1.
-    rentalCount: {
-      type: Number,
-      default: 0,
-    }
+// Vehicle Schema: Quản lý thông tin xe cho thuê
+const vehicleSchema = new mongoose.Schema({
+  // Thương hiệu xe (VD: Toyota, Kia, Ford)
+  brand: {
+    type: String,
+    required: true
   },
-  { timestamps: true }
-);
+  // Dòng xe (VD: Vios, Morning, Ranger)
+  model: {
+    type: String,
+    required: true
+  },
+  // Biển số xe (duy nhất)
+  licensePlate: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  // Địa điểm xe (VD: Hà Nội, TP.HCM...)
+  location: {
+    type: String,
+    required: true
+  },
+  // Giá thuê mỗi ngày (VND)
+  pricePerDay: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  // Số chỗ ngồi
+  seatCount: {
+    type: Number,
+    required: true,
+    min: 1
+  },
+  // Dạng thân xe (Sedan, SUV, ...)
+  bodyType: {
+    type: String,
+    required: true
+  },
+  // Hộp số (automatic, manual)
+  transmission: {
+    type: String,
+    required: true,
+    enum: ['automatic', 'manual']
+  },
+  // Loại nhiên liệu (gasoline, diesel, electric, hybrid)
+  fuelType: {
+    type: String,
+    required: true,
+    enum: ['gasoline', 'diesel', 'electric', 'hybrid']
+  },
+  // Mức tiêu hao nhiên liệu (VD: 6.5 L/100km)
+  fuelConsumption: {
+    type: String
+  },
+  // Danh sách tính năng (VD: Bluetooth, Camera lùi...)
+  features: [{
+    type: String
+  }],
+  // Ảnh chính của xe (Cloudinary URL)
+  primaryImage: {
+    type: String,
+    required: true
+  },
+  // Danh sách ảnh phụ (Cloudinary URL)
+  gallery: [{
+    type: String
+  }],
+  // Link file giấy tờ xe (ảnh hoặc PDF)
+  vehicleDocument: {
+    type: String,
+    required: true
+  },
+  // Mô tả chi tiết về xe
+  description: {
+    type: String,
+    required: true
+  },
+  // Chủ xe (ref tới User)
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  // Trạng thái duyệt xe: pending, approved, rejected
+  approvalStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  // Trạng thái xe: available, blocked
+  status: {
+    type: String,
+    enum: ['available', 'blocked'],
+    default: 'available'
+  },
+  // Số lượt thuê thành công
+  rentalCount: {
+    type: Number,
+    default: 0
+  }
+}, { timestamps: true });
 
-module.exports = mongoose.model("Vehicle", vehicleSchema);
+module.exports = mongoose.model('Vehicle', vehicleSchema);

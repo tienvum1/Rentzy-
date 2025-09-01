@@ -23,13 +23,28 @@ const userSchema = new mongoose.Schema({
   cccd_number: String,
   cccd_front_url: String,
   cccd_back_url: String,
-  is_identity_verified_for_owner: { type: Boolean, default: false }, // Identity verification status for owner role (via CCCD)
 
   driver_license_number: String,
   driver_license_front_url: String,
   driver_license_full_name: String, // Họ tên trên GPLX
   driver_license_birth_date: Date,
-  driver_license_verification_status: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
+  driver_license_image: {
+    type: String,
+  },
+  driver_license_verification_status: {
+    type: String,
+    enum: ['none', 'pending', 'verified', 'rejected'],
+    default: 'none',
+  },
+
+  bankAccounts: [
+    {
+      accountNumber: { type: String, required: true },
+      bankName: { type: String, required: true },
+      accountHolder: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
 
   created_at: { type: Date, default: Date.now },
 
@@ -37,14 +52,28 @@ const userSchema = new mongoose.Schema({
   loginMethods: { type: [String], default: ['password'] },
 
   // Fields for Owner Registration and Admin Review
-  owner_request_status: { type: String, enum: ['pending', 'approved', 'rejected'] },
+  owner_request_status: {
+    type: String,
+    enum: ['none', 'pending', 'approved', 'rejected'],
+    default: 'none'
+  },
   owner_request_submitted_at: { type: Date },
   owner_request_reviewed_at: { type: Date },
   owner_request_rejection_reason: { type: String },
+  phone_otp: {
+    type: String,
+    default: null,
+  },
+  phone_otp_expires: {
+    type: Date,
+    default: null,
+  },
 
   // xác minh email
   
-
+  favorites: [{
+    type: mongoose.Schema.Types.ObjectId,
+  }],
 });
 
 // To check if a user is an owner, check if 'owner' is present in the role array:

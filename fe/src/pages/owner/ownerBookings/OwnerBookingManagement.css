@@ -1,0 +1,118 @@
+/* OwnerBookingManagement.css */
+
+.owner-booking-layout {
+  display: flex;
+  flex-direction: row-reverse;
+  min-height: 100vh;
+  margin-left: 240px;
+  background: #f8fafc;
+}
+
+.owner-booking-content {
+  flex: 1 1 0%;
+  min-width: 0;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  margin-right: 0;
+  margin-left: 0;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  padding: 32px 32px 0 32px;
+}
+
+.owner-booking-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #1a237e;
+  margin-bottom: 24px;
+  letter-spacing: 0.01em;
+  text-align: left;
+}
+
+.owner-booking-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.08);
+  padding: 0;
+}
+
+.owner-booking-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  background: #fff;
+}
+
+.owner-booking-table th, .owner-booking-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.owner-booking-table th {
+  background: #1976d2;
+  color: #fff;
+  font-weight: 600;
+}
+
+.owner-booking-table tr:nth-child(even) {
+  background: #f6fbff;
+}
+
+.owner-booking-table tr:hover {
+  background: #e3f2fd;
+}
+
+.owner-booking-view-link {
+  color: #1976d2;
+  background: #e3f2fd;
+  border-radius: 6px;
+  padding: 4px 14px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.18s, color 0.18s;
+  border: 1px solid #1976d2;
+  margin: 0;
+  display: inline-block;
+}
+.owner-booking-view-link:hover {
+  background: #1976d2;
+  color: #fff;
+}
+
+.owner-booking-error {
+  color: #d32f2f;
+  margin-top: 16px;
+  text-align: center;
+}
+
+.owner-booking-empty {
+  color: #757575;
+  font-style: italic;
+  margin-top: 16px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .owner-booking-layout {
+    flex-direction: column;
+  }
+  .owner-booking-content {
+    width: 100vw;
+    max-width: 100vw;
+    margin: 0;
+    padding: 18px 4px 0 4px;
+  }
+  .owner-booking-title {
+    font-size: 1.2rem;
+    margin-bottom: 14px;
+  }
+  .owner-booking-table th, .owner-booking-table td {
+    padding: 8px 6px;
+    font-size: 0.97rem;
+  }
+} 

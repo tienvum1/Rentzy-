@@ -3,6 +3,16 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './Header.css';
 
+const checkIsShowConsignButton = (user, isAuthenticated) => {
+  if (!isAuthenticated || !user) return false;
+  // Nếu là owner và đã được duyệt thì không hiện nút
+  if (user.role.includes('owner') && user.owner_request_status == 'approved') {
+    return false;
+  }
+  // Nếu chưa phải owner hoặc owner chưa được duyệt thì hiện nút
+  return true;
+};
+
 const Header = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
@@ -41,20 +51,15 @@ const Header = () => {
 
   const handleViewProfile = () => {
     setShowDropdown(false);
-    navigate('/profile');
+    navigate('/profile/account');
   };
 
-  // Temporary: Fetch user profile again if authenticated state changes (for debugging)
-  // The ideal place for this logic might be within the AuthContext itself.
   useEffect(() => {
-    if (isAuthenticated && user && !user.avatar_url) { // Only fetch if authenticated and avatar is missing (adjust condition as needed)
-        // Assuming AuthContext provides a way to refresh user data
-        // If you have a function like fetchUserProfile in your AuthContext, call it here.
-        // Example (replace with your actual context method if different):
+    if (isAuthenticated && user && !user.avatar_url) {
         // fetchUserProfile(); 
         console.log("User authenticated but avatar missing. Consider refreshing profile.");
     }
-  }, [isAuthenticated, user]); // Dependency array
+  }, [isAuthenticated, user]);
 
   return (
     <header className="header-modern">
@@ -67,17 +72,13 @@ const Header = () => {
         <span className="header__brand-name-modern">Rentzy</span>
       </div>
       <nav className="header__nav">
-        <Link to="/" className="header__link">Home</Link>
-        <Link to="/vehicles" className="header__link">Vehicles</Link>
-        <Link to="/features" className="header__link">Features</Link>
-        <Link to="/contact" className="header__link">Contact</Link>
+        <Link to="/" className="header__link">Trang chủ</Link>
+        <Link to="/vehicles" className="header__link">Xe cho thuê</Link>
+        <Link to="/features" className="header__link">Tính năng</Link>
+        <Link to="/contact" className="header__link">Liên hệ</Link>
       </nav>
       <div className="header__actions">
-
-        {isAuthenticated && user && (
-            // Check if user is NOT an approved owner to show the consign button
-            !user.role.includes('owner') || (user.role.includes('owner') && user.owner_request_owner_status !== 'approved')
-        ) && (
+        {checkIsShowConsignButton(user, isAuthenticated) && (
           <button
             className="header__consign-btn"
             onClick={() => navigate('/consignForm')}
@@ -99,15 +100,14 @@ const Header = () => {
   className="avatar-img"
   style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
 />
-            
             </div>
             {showDropdown && (
               <div className="header__dropdown" ref={dropdownRef}>
                 <button className="header__dropdown-item" onClick={handleViewProfile}>
-                  Xem hồ sơ
+                  Trang cá nhân
                 </button>
                 <button className="header__dropdown-item" onClick={handleLogout}>
-                  Logout
+                  Đăng xuất
                 </button>
               </div>
             )}
@@ -118,10 +118,10 @@ const Header = () => {
               className="header__login"
               onClick={() => navigate('/login')}
             >
-              Login
+              Đăng nhập
             </button>
             <button className="header__signup" onClick={() => navigate('/register')}>
-              Sign up
+              Đăng ký
             </button>
           </>
         )}

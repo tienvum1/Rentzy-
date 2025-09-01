@@ -1,68 +1,86 @@
 const Transaction = require('../models/Transaction');
 const Booking = require('../models/Booking');
+const Wallet = require('../models/Wallet');
 
-
-// Get user's transactions with booking and renter info
-exports.getUserTransactions = async (req, res) => {
+// Get transaction history with exact structure
+exports.getTransactionHistory = async (req, res) => {
   try {
-    const status = req.query.status;
-    const userId = req.user._id;
+    const userId = req.query.userId || req.user._id;
+    const {
+      status,
+      type,
+      paymentMethod,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 10,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
 
-    // Tìm tất cả booking của user
-    const userBookings = await Booking.find({ renter: userId }).select('_id');
-    const bookingIds = userBookings.map(booking => booking._id);
+    // 1. Query only by user field
+    const query = { user: userId };
 
-    // Tìm transactions dựa trên bookingIds
-    const query = { booking: { $in: bookingIds } };
-    if (status) {
-      query.status = status;
+    // 2. Apply filters
+    if (status) query.status = status;
+    if (type) query.type = type;
+    if (paymentMethod) query.paymentMethod = paymentMethod;
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
     }
 
+    // 3. Pagination & sort
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    // 4. Query transaction
     const transactions = await Transaction.find(query)
-      .populate({
-        path: 'booking',
-        select: 'renter vehicle startDate endDate totalAmount status',
-        populate: [
-          {
-            path: 'vehicle',
-            select: 'brand model primaryImage'
-          },
-          {
-            path: 'renter',
-            select: 'name email phone'
-          }
-        ]
-      })
-      .sort({ createdAt: -1 });
+      .sort(sort)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const totalTransactions = await Transaction.countDocuments(query);
+    const totalPages = Math.ceil(totalTransactions / parseInt(limit));
+
+    // 5. Format response
+    const formattedTransactions = transactions.map(transaction => ({
+      _id: transaction._id,
+      booking: transaction.booking,
+      wallet: transaction.wallet,
+      user: transaction.user,
+      amount: transaction.amount,
+      type: transaction.type,
+      status: transaction.status,
+      paymentMethod: transaction.paymentMethod,
+      paymentMetadata: transaction.paymentMetadata,
+      createdAt: transaction.createdAt,
+      updatedAt: transaction.updatedAt
+    }));
 
     res.status(200).json({
       success: true,
-      transactions: transactions.map(transaction => ({
-        _id: transaction._id,
-        booking: {
-          _id: transaction.booking._id,
-          renter: transaction.booking.renter,
-          vehicle: transaction.booking.vehicle,
-          startDate: transaction.booking.startDate,
-          endDate: transaction.booking.endDate,
-          totalAmount: transaction.booking.totalAmount,
-          status: transaction.booking.status
-        },
-        amount: transaction.amount,
-        type: transaction.type,
-        status: transaction.status,
-        paymentMethod: transaction.paymentMethod,
-        paymentMetadata: transaction.paymentMetadata,
-        createdAt: transaction.createdAt,
-        updatedAt: transaction.updatedAt
-      }))
+      data: {
+        transactions: formattedTransactions,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages,
+          totalTransactions,
+          hasNextPage: parseInt(page) < totalPages,
+          hasPrevPage: parseInt(page) > 1
+        }
+      }
     });
   } catch (error) {
-    console.error('Error in getUserTransactions:', error);
+    console.error('Error in getTransactionHistory:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: 'Lỗi server khi lấy lịch sử giao dịch',
       error: error.message
     });
   }
 };
+
+

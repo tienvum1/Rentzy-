@@ -1,0 +1,164 @@
+.revenue-content {
+    flex: 1;
+    padding: 2.5rem 3.5rem;
+    background: #fff;
+    border-radius: 18px;
+    margin: 2.5rem auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+    max-width: 700px;
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .revenue-content h1 {
+    font-size: 2.2rem;
+    margin-bottom: 1.2rem;
+    color: #2d3a4b;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  
+  .revenue-content label {
+  
+    font-size: 1.1rem;
+    color: #444;
+    margin-right: 8px;
+  }
+  
+  .revenue-content select {
+    font-size: 1.05rem;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #f7f8fa;
+    margin-left: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .revenue-content strong {
+    font-size: 1.15rem;
+    color: #222;
+  }
+  
+  .revenue-content span {
+    color: #007bff;
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  
+  .recharts-responsive-container {
+    margin-top: 18px;
+  }
+  
+  .revenue-content.improved {
+    background: #f9fbfd;
+    box-shadow: 0 8px 40px rgba(34,51,77,0.13);
+    border-radius: 28px;
+    padding: 3.5rem 4.5rem 3.5rem 4.5rem;
+    min-width: 340px;
+    max-width: 950px;
+    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .revenue-content.improved h1 {
+    font-size: 2.7rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 2.2rem;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .revenue-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 32px;
+    background: #f1f5f9;
+    padding: 18px 32px;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(34,51,77,0.06);
+    font-size: 1.18rem;
+    justify-content: center;
+  }
+
+  .revenue-total-box {
+    background: linear-gradient(90deg, #e0f2fe 60%, #bae6fd 100%);
+    border-radius: 18px;
+    padding: 32px 48px;
+    margin-bottom: 36px;
+    font-size: 1.45rem;
+    color: #0a2540;
+    font-weight: 600;
+    box-shadow: 0 4px 18px rgba(34,51,77,0.10);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    justify-content: center;
+    min-width: 340px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .revenue-total-box span {
+    color: #2563eb;
+    font-size: 2.1rem;
+    font-weight: 900;
+    margin-left: 12px;
+    letter-spacing: 1px;
+  }
+
+  .recharts-tooltip-label {
+    font-weight: bold;
+    color: #2563eb !important;
+    font-size: 1.18rem;
+  }
+
+  .recharts-default-tooltip {
+    border-radius: 10px !important;
+    box-shadow: 0 2px 8px rgba(34,51,77,0.13) !important;
+    background: #fff !important;
+    font-size: 1.15rem;
+  }
+  
+  .revenue-content label, .revenue-content select {
+    font-size: 1.18rem;
+  }
+
+  @media (max-width: 1200px) {
+    .revenue-content.improved {
+      padding: 2rem 0.5rem;
+      max-width: 99vw;
+    }
+    .revenue-total-box {
+      padding: 18px 10px;
+      font-size: 1.1rem;
+      min-width: unset;
+      max-width: 98vw;
+    }
+    .revenue-filter-bar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 8px;
+      font-size: 1rem;
+    }
+  }
+  @media (max-width: 700px) {
+    .revenue-content.improved {
+      padding: 0.5rem 0.2rem;
+      max-width: 100vw;
+    }
+    .revenue-total-box {
+      padding: 10px 4px;
+      font-size: 1rem;
+    }
+    .recharts-responsive-container {
+      padding: 0;
+    }
+  } 

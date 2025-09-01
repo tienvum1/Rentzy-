@@ -7,86 +7,109 @@
     background-color: #f8f8f8; /* Light grey background */
 }
 
-/* Styles for the profile sidebar */
-.profile-sidebar {
-    width: 250px; /* Adjust width as needed */
-    background-color: #fff; /* White background for the sidebar */
-    padding: 20px;
-    margin-right: 20px; /* Space between sidebar and main content */
-    border-radius: 8px; /* Optional: rounded corners */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: subtle shadow */
+/* Profile Sidebar as a component, not main layout */
+.sidebar-profile {
+    width: 100%;
+    max-width: 350px;
+    background: linear-gradient(135deg, #f5f5f5 70%, #ffffff 100%);
+    color: #000000;
+    padding: 18px 10px 10px 10px;
+    box-shadow: 0 2px 12px rgba(44,62,80,0.10);
+    display: flex;
+    flex-direction: column;
+    position: static;
+    height: auto;
+    z-index: 1;
+    margin-bottom: 18px;
 }
 
-/* Styles for the greeting */
-.profile-sidebar h2 {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #eee; /* Separator line below greeting */
+.sidebar-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 10px;
+    border-bottom: 1.5px solid #3b536a;
 }
 
-/* Styles for the menu container */
+.sidebar-header h3 {
+    margin: 0;
+    font-size: 1.08em;
+    color: #ff914d;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
 .sidebar-menu {
     list-style: none;
     padding: 0;
     margin: 0;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-/* Styles for individual menu items */
-.sidebar-menu-item {
+.sidebar-menu li {
+    padding: 10px 10px;
+    margin-bottom: 2px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.22s, color 0.22s, box-shadow 0.18s, transform 0.15s;
     display: flex;
     align-items: center;
-    padding: 15px 0; /* Vertical padding */
-    cursor: pointer;
-    border-bottom: 1px solid #eee; /* Separator line between items */
-    color: #333; /* Dark text color */
-    transition: background-color 0.2s ease;
+    font-size: 1.08em;
+    font-weight: 500;
+    gap: 10px;
+    border: 1.2px solid transparent;
 }
 
-.sidebar-menu-item:last-child {
-    border-bottom: none; /* No border for the last item */
+.sidebar-menu li:hover {
+    background: #34495e;
+    color: #ff914d;
+    transform: translateX(2px) scale(1.02);
+    box-shadow: 0 1px 4px rgba(255,145,77,0.08);
 }
 
-.sidebar-menu-item:hover {
-    background-color: #f0f0f0; /* Subtle hover effect */
+.sidebar-menu li.active {
+    background: linear-gradient(90deg, #ff914d 60%, #ffb86c 100%);
+    color: #fff;
+    font-weight: bold;
+    border: 1.2px solid #ff914d;
+    box-shadow: 0 2px 8px #ff914d33;
+    transform: scale(1.03);
 }
 
-/* Styles for the active menu item */
-.sidebar-menu-item.active {
-    color: #000; /* Maybe slightly darker text for active */
-    font-weight: 500; /* Make active text a bit bolder */
-    position: relative; /* Needed for the green bar */
-    background-color: #f0f0f0; /* Light background for active state */
+.menu-icon {
+    margin-right: 7px;
+    font-size: 1.22em;
+    color: #ff914d;
+    transition: color 0.18s;
+}
+.sidebar-menu li.active .menu-icon {
+    color: #fff;
 }
 
-/* Green bar indicator for the active item */
-.sidebar-menu-item.active::before {
-    content: '';
-    position: absolute;
-    left: -20px; /* Position relative to the sidebar padding */
-    top: 0;
-    bottom: 0;
-    width: 4px; /* Width of the green bar */
-    background-color: #4CAF50; /* Green color */
-    border-top-right-radius: 2px;
-    border-bottom-right-radius: 2px;
+@media (max-width: 900px) {
+    .sidebar-profile {
+        max-width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 1px 6px rgba(44,62,80,0.10);
+        margin-bottom: 12px;
+    }
+    .sidebar-menu {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: center;
+    }
+    .sidebar-menu li {
+        flex: 1 1 110px;
+        min-width: 100px;
+        text-align: center;
+        justify-content: center;
+        font-size: 0.98em;
+        padding: 8px 4px;
+    }
 }
-
-
-/* Styles for the icon within a menu item */
-.sidebar-menu-item .menu-icon {
-    margin-right: 15px; /* Space between icon and text */
-    font-size: 18px; /* Icon size */
-    width: 20px; /* Fixed width for icons to align text */
-    text-align: center;
-}
-
-/* Styles for the text label within a menu item */
-.sidebar-menu-item .menu-label {
-    flex-grow: 1; /* Allow label to take up remaining space */
-}
-
 
 /* Add any existing CSS for other sections below this */
 

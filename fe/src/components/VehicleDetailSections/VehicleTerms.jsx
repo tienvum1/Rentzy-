@@ -9,7 +9,6 @@ const VehicleTerms = () => {
         "Không chở hàng cấm, dễ cháy nổ hoặc thực phẩm nặng mùi.",
         "Thông báo ngay khi xảy ra tai nạn, hỏng hóc.",
         "Trả xe đúng giờ và đúng địa điểm đã thỏa thuận.",
-
     ];
 
     return (
@@ -28,37 +27,43 @@ const VehicleTerms = () => {
                     <thead>
                         <tr>
                             <th></th>
-                            <th>Ngày Thường</th>
-                            <th>Ngày Lễ, Tết</th>
+                            <th>Chính sách hoàn tiền</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>
                                 <span className="cancel-icon success">✔️</span>
-                                <b> Hoàn 100% Tiền Giữ Chỗ</b>
+                                <b> Hoàn 100% tiền đã thanh toán</b>
                             </td>
-                            <td>Trước Chuyến Đi &gt; 10 Ngày</td>
-                            <td>Không Áp Dụng</td>
+                            <td>Huỷ trong vòng 1 giờ sau khi đặt</td>
                         </tr>
                         <tr>
                             <td>
-                                <span className="cancel-icon success">✔️</span>
-                                <b> Hoàn 30% Tiền Giữ Chỗ</b>
+                                <span className="cancel-icon warning">⚠️</span>
+                                <b> Hoàn 50% tiền cọc, mất 50%</b>
                             </td>
-                            <td>Trước Chuyến Đi &gt; 5 Ngày</td>
-                            <td>Trước Chuyến Đi &gt; 30 Ngày</td>
+                            <td>Huỷ trước 7 ngày</td>
                         </tr>
                         <tr>
                             <td>
                                 <span className="cancel-icon fail">❌</span>
-                                <b> Không Hoàn Tiền Giữ Chỗ</b>
+                                <b> Mất 100% tiền cọc</b>
                             </td>
-                            <td>Trong Vòng 5 Ngày Trước Chuyến Đi</td>
-                            <td>Trong Vòng 30 Ngày Trước Chuyến Đi</td>
+                            <td>Huỷ trong vòng 7 ngày trước khi nhận xe</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span className="cancel-icon fail">❌</span>
+                                <b> Không hoàn tiền (tổng tiền đã thanh toán)</b>
+                            </td>
+                            <td>Huỷ sau thời điểm nhận xe hoặc không tới nhận xe</td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            <div style={{ fontSize: 14, color: '#64748b', marginTop: 10 }}>
+                <b>Lưu ý:</b> Chính sách này chỉ áp dụng cho phần tiền cọc đã thanh toán (thường là 30% tổng đơn hàng).
             </div>
             <p className="vehicle-terms__footer">
                 Cảm ơn quý khách. Chúc bạn có chuyến đi an toàn và thú vị!

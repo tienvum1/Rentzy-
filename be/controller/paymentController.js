@@ -47,6 +47,7 @@ const axios = require('axios');
 const Booking = require('../models/Booking');
 const Transaction = require('../models/Transaction');
 const { cancelExpiredBooking } = require('./bookingController'); // Import the new function
+const Wallet = require('../models/Wallet');
 
 // MoMo configuration (Sử dụng thông tin test hoặc thông tin thật của bạn)
 const MOMO_CONFIG = {
@@ -248,16 +249,16 @@ const checkPayment = async (req, res) => {
             // Cập nhật trạng thái booking
             const booking = await Booking.findById(bookingId);
             if (booking) {
-                // Nếu giao dịch là DEPOSIT, cập nhật trạng thái booking thành DEPOSIT_PAID
+                // Nếu giao dịch là DEPOSIT, cập nhật trạng thái booking thành deposit_paid
                 if (transaction.type === 'DEPOSIT') {
                     if (booking.status === 'pending') { 
-                        booking.status = 'DEPOSIT_PAID';
+                        booking.status = 'deposit_paid';
                     }
                 }
-                // Nếu giao dịch là RENTAL, cập nhật trạng thái booking thành CONFIRMED
+                // Nếu giao dịch là RENTAL, cập nhật trạng thái booking thành confirmed
                 else if (transaction.type === 'RENTAL') {
-                    if (booking.status === 'DEPOSIT_PAID' || booking.status === 'CONFIRMED') {
-                        booking.status = 'CONFIRMED';
+                    if (booking.status === 'deposit_paid' || booking.status === 'confirmed') {
+                        booking.status = 'confirmed';
                     }
                 }
                 await booking.save();
@@ -343,11 +344,11 @@ const handleWebhook = async (req, res) => {
                 if (booking) {
                     if (transaction.type === 'DEPOSIT') {
                         if (booking.status === 'pending') {
-                            booking.status = 'DEPOSIT_PAID';
+                            booking.status = 'deposit_paid';
                         }
                     } else if (transaction.type === 'RENTAL') {
-                        if (booking.status === 'DEPOSIT_PAID' || booking.status === 'CONFIRMED') {
-                            booking.status = 'CONFIRMED';
+                        if (booking.status === 'deposit_paid' || booking.status === 'confirmed') {
+                            booking.status = 'confirmed';
                         }
                     }
                     await booking.save();
@@ -383,7 +384,7 @@ const handleWebhook = async (req, res) => {
                             }
                         }
                     } else if (transaction.type === 'RENTAL') {
-                        // Nếu giao dịch RENTAL thất bại, không thay đổi trạng thái booking (vẫn là DEPOSIT_PAID)
+                        // Nếu giao dịch RENTAL thất bại, không thay đổi trạng thái booking (vẫn là deposit_paid)
                         console.log('MoMo IPN Webhook: RENTAL payment failed, booking status remains as is:', bookingId);
                     }
                 }
@@ -464,7 +465,7 @@ const verifyMoMoPayment = async (req, res) => {
         // Cập nhật trạng thái booking
         const booking = await Booking.findById(transaction.booking);
         if (booking) {
-            booking.status = 'DEPOSIT_PAID';
+            booking.status = 'deposit_paid';
             await booking.save();
         }
 
@@ -510,10 +511,10 @@ const createRentalPayment = async (req, res) => {
         }
 
         // Kiểm tra trạng thái booking: đã thanh toán tiền giữ chỗ và chưa hoàn thành
-        if (booking.status !== 'DEPOSIT_PAID') {
+        if (booking.status !== 'deposit_paid') {
             return res.status(400).json({
                 success: false,
-                message: 'Booking is not in DEPOSIT_PAID status. Cannot proceed with rental payment.'
+                message: 'Booking is not in deposit_paid status. Cannot proceed with rental payment.'
             });
         }
 
@@ -667,7 +668,7 @@ const checkRentalPayment = async (req, res) => {
                 await transaction.save();
 
                 // Update booking status to RENTAL_PAID
-                booking.status = 'RENTAL_PAID';
+                booking.status = 'fully_paid';
                 await booking.save();
 
                 // Redirect to booking details page with success message
@@ -726,7 +727,7 @@ const checkRentalPayment = async (req, res) => {
                 await transaction.save();
 
                 // Update booking status to RENTAL_PAID
-                booking.status = 'RENTAL_PAID';
+                booking.status = 'fully_paid';
                 await booking.save();
 
                 return res.json({
@@ -757,6 +758,234 @@ const checkRentalPayment = async (req, res) => {
     }
 };
 
+// Hàm thanh toán tiền cọc bằng wallet (thực chất là thanh toán trước 30%)
+const createWalletDepositPayment = async (req, res) => {
+    try {
+        const { amount, orderInfo, orderCode } = req.body; // orderCode là booking._id
+        const userId = req.user._id;
+
+        console.log('Creating wallet upfront (30%) payment with data:', {
+            amount,
+            orderInfo,
+            orderCode,
+            userId
+        });
+
+        // Validate required fields
+        if (!amount || !orderInfo || !orderCode) {
+            return res.status(400).json({
+                success: false,
+                message: 'Thiếu thông tin: amount, orderInfo, orderCode'
+            });
+        }
+
+        // Validate amount
+        if (isNaN(amount) || amount <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Số tiền không hợp lệ'
+            });
+        }
+
+        // Kiểm tra booking có còn hợp lệ không
+        const bookingStatusCheck = await cancelExpiredBooking(orderCode);
+        if (!bookingStatusCheck.success) {
+            if (bookingStatusCheck.message === "Booking expired and canceled.") {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Đơn đã hết hạn và bị huỷ. Vui lòng đặt lại.'
+                });
+            } else if (bookingStatusCheck.message === "Booking not in pending status.") {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Đơn không còn ở trạng thái chờ thanh toán.'
+                });
+            } else if (bookingStatusCheck.message === "Booking not found.") {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Không tìm thấy đơn đặt xe.'
+                });
+            }
+        }
+
+        // Kiểm tra ví của user
+        const wallet = await Wallet.findOne({ user: userId });
+        if (!wallet) {
+            return res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy ví. Vui lòng nạp tiền vào ví trước.'
+            });
+        }
+
+        // Kiểm tra số dư ví
+        if (wallet.balance < amount) {
+            return res.status(400).json({
+                success: false,
+                message: `Số dư ví không đủ. Hiện tại: ${wallet.balance.toLocaleString('vi-VN')} VND, Cần: ${amount.toLocaleString('vi-VN')} VND`
+            });
+        }
+
+        // Tạo transaction cho thanh toán trước 30%
+        const transaction = new Transaction({
+            booking: orderCode,
+            amount: amount,
+            user: userId , 
+            type: 'RENTAL', // 30% upfront payment
+            status: 'COMPLETED', // Thanh toán ngay lập tức
+            paymentMethod: 'WALLET',
+            paymentMetadata: {
+                orderCode: orderCode,
+                paymentMethod: 'WALLET',
+                paymentStatus: 'COMPLETED',
+                walletId: wallet._id,
+                userId: userId
+            }
+        });
+        await transaction.save();
+
+        // Trừ tiền từ ví
+        wallet.balance -= amount;
+        await wallet.save();
+
+        // Cập nhật booking
+        const booking = await Booking.findById(orderCode);
+        if (booking) {
+            booking.transactions.push(transaction._id);
+            // Không dùng 'deposit_paid' vì không hợp lệ, chuyển sang 'in_progress' hoặc giữ 'pending' nếu chưa giao xe
+            booking.status = 'deposit_paid'; // Đánh dấu đã thanh toán trước 30% và bắt đầu thuê xe
+            await booking.save();
+        }
+
+        console.log(`Wallet upfront payment completed: ${amount} VND for booking ${orderCode}`);
+
+        res.json({
+            success: true,
+            message: 'Thanh toán trước 30% thành công',
+            transactionId: transaction._id,
+            bookingId: orderCode,
+            amount: amount,
+            walletBalance: wallet.balance
+        });
+
+    } catch (error) {
+        console.error('Error creating wallet upfront payment:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi tạo thanh toán trước 30%'
+        });
+    }
+};
+
+// Hàm thanh toán phần còn lại bằng wallet
+const createWalletRentalPayment = async (req, res) => {
+    try {
+        const { bookingId, amount } = req.body;
+        const userId = req.user._id;
+
+        console.log('Creating wallet rental payment with data:', {
+            bookingId,
+            amount,
+            userId
+        });
+
+        // Validate required fields
+        if (!bookingId || !amount) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: bookingId, amount'
+            });
+        }
+
+        // Validate amount
+        if (isNaN(amount) || amount <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid amount'
+            });
+        }
+
+        // Kiểm tra booking
+        const booking = await Booking.findById(bookingId);
+        if (!booking) {
+            return res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy đơn đặt xe'
+            });
+        }
+
+        // Kiểm tra trạng thái booking
+        if (booking.status !== 'deposit_paid') {
+            return res.status(400).json({
+                success: false,
+                message: 'Đơn đặt xe chưa được thanh toán tiền cọc hoặc đã hoàn thành'
+            });
+        }
+
+        // Kiểm tra ví của user
+        const wallet = await Wallet.findOne({ user: userId });
+        if (!wallet) {
+            return res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy ví. Vui lòng nạp tiền vào ví trước.'
+            });
+        }
+
+        // Kiểm tra số dư ví
+        if (wallet.balance < amount) {
+            return res.status(400).json({
+                success: false,
+                message: `Số dư ví không đủ. Hiện tại: ${wallet.balance.toLocaleString('vi-VN')} VND, Cần: ${amount.toLocaleString('vi-VN')} VND`
+            });
+        }
+
+        // Tạo transaction cho phần còn lại
+        const transaction = new Transaction({
+            booking: bookingId,
+            amount: amount,
+            user: userId , 
+            type: 'RENTAL',
+            status: 'COMPLETED', // Thanh toán ngay lập tức
+            paymentMethod: 'WALLET',
+            paymentMetadata: {
+                orderCode: bookingId,
+                paymentMethod: 'WALLET',
+                paymentStatus: 'COMPLETED',
+                walletId: wallet._id,
+                userId: userId
+            }
+        });
+        await transaction.save();
+
+        // Trừ tiền từ ví
+        wallet.balance -= amount;
+        await wallet.save();
+
+        // Cập nhật booking
+        booking.transactions.push(transaction._id);
+        booking.status = 'fully_paid';
+        await booking.save();
+
+        console.log(`Wallet rental payment completed: ${amount} VND for booking ${bookingId}`);
+
+        res.json({
+            success: true,
+            message: 'Thanh toán phần còn lại thành công',
+            transactionId: transaction._id,
+            bookingId: bookingId,
+            amount: amount,
+            walletBalance: wallet.balance
+        });
+
+    } catch (error) {
+        console.error('Error creating wallet rental payment:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi tạo thanh toán phần còn lại'
+        });
+    }
+};
+
+
 module.exports = {
     createPayment,
     checkPayment,
@@ -764,4 +993,7 @@ module.exports = {
     verifyMoMoPayment,
     createRentalPayment,
     checkRentalPayment,
+    createWalletDepositPayment,
+    createWalletRentalPayment,
+
 };
